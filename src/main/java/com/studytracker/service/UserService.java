@@ -336,12 +336,17 @@ public class UserService {
             }
         }
 
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+
+        if (Boolean.TRUE.equals(user.getBanned())) {
+            String reason = user.getBanReason() != null ? user.getBanReason() : "Violated community guidelines";
+            throw new IllegalArgumentException("Account banned. Reason: " + reason);
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         String token = jwtTokenProvider.generateToken(user.getEmail());
 

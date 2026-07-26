@@ -29,4 +29,7 @@ public class UserSessionStatsDto {
     private long periodXpEarned;
     private boolean isSuspicious;
     private java.util.List<String> suspiciousReasons;
+    private boolean isBanned;
+    private String banReason;
+    private Instant bannedAt;
 }

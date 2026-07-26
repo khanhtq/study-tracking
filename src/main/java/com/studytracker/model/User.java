@@ -104,6 +104,16 @@ public class User implements UserDetails {
     @Column(name = "last_otp_sent_at")
     private Instant lastOtpSentAt;
 
+    @Builder.Default
+    @Column(name = "banned", columnDefinition = "boolean default false")
+    private Boolean banned = false;
+
+    @Column(name = "ban_reason")
+    private String banReason;
+
+    @Column(name = "banned_at")
+    private Instant bannedAt;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority(role != null ? role.name() : Role.ROLE_USER.name()));
@@ -126,7 +136,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !Boolean.TRUE.equals(banned);
     }
 
     @Override

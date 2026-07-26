@@ -106,4 +106,44 @@ public class AdminServiceTest {
         assertEquals("HIGH", alert.getSeverity());
         assertFalse(alert.getReasons().isEmpty());
     }
+
+    @Test
+    void banUser_ShouldSetBannedTrue_WhenUserIsNormal() {
+        UUID userId = normalUser.getId();
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(normalUser));
+
+        adminService.banUser(userId, "Cheating study time");
+
+        assertTrue(normalUser.getBanned());
+        assertEquals("Cheating study time", normalUser.getBanReason());
+        assertNotNull(normalUser.getBannedAt());
+        verify(userRepository).save(normalUser);
+    }
+
+    @Test
+    void banUser_ShouldThrow_WhenUserIsAdmin() {
+        User adminUser = User.builder()
+                .id(UUID.randomUUID())
+                .role(com.studytracker.model.Role.ROLE_ADMIN)
+                .build();
+
+        when(userRepository.findById(adminUser.getId())).thenReturn(java.util.Optional.of(adminUser));
+
+        assertThrows(IllegalArgumentException.class, () -> adminService.banUser(adminUser.getId(), "Some reason"));
+        verify(userRepository, never()).save(adminUser);
+    }
+
+    @Test
+    void unbanUser_ShouldSetBannedFalse() {
+        normalUser.setBanned(true);
+        normalUser.setBanReason("Previous reason");
+        when(userRepository.findById(normalUser.getId())).thenReturn(java.util.Optional.of(normalUser));
+
+        adminService.unbanUser(normalUser.getId());
+
+        assertFalse(normalUser.getBanned());
+        assertNull(normalUser.getBanReason());
+        assertNull(normalUser.getBannedAt());
+        verify(userRepository).save(normalUser);
+    }
 }

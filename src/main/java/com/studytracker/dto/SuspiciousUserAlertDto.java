@@ -25,4 +25,6 @@ public class SuspiciousUserAlertDto {
     private Long manualSessionsCount24h;
     private Long xpEarned24h;
     private Instant lastActiveAt;
+    private boolean isBanned;
+    private String banReason;
 }

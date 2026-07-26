@@ -45,4 +45,19 @@ public class AdminController {
     public ResponseEntity<List<StudySession>> getUserSessions(@PathVariable UUID userId) {
         return ResponseEntity.ok(adminService.getUserSessions(userId));
     }
+
+    @PutMapping("/users/{userId}/ban")
+    public ResponseEntity<Void> banUser(
+            @PathVariable UUID userId,
+            @RequestBody(required = false) com.studytracker.dto.BanUserRequest request) {
+        String reason = request != null ? request.getReason() : null;
+        adminService.banUser(userId, reason);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/{userId}/unban")
+    public ResponseEntity<Void> unbanUser(@PathVariable UUID userId) {
+        adminService.unbanUser(userId);
+        return ResponseEntity.ok().build();
+    }
 }

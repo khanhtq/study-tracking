@@ -146,6 +146,9 @@ public class AdminService {
                     .periodXpEarned(periodXpEarned)
                     .isSuspicious(isSuspicious)
                     .suspiciousReasons(suspiciousReasons)
+                    .isBanned(Boolean.TRUE.equals(user.getBanned()))
+                    .banReason(user.getBanReason())
+                    .bannedAt(user.getBannedAt())
                     .build();
         }).collect(Collectors.toList());
     }
@@ -246,7 +249,35 @@ public class AdminService {
                 .manualSessionsCount24h(manualSessionsCount24h)
                 .xpEarned24h(xpEarned24h)
                 .lastActiveAt(user.getLastActiveAt())
+                .isBanned(Boolean.TRUE.equals(user.getBanned()))
+                .banReason(user.getBanReason())
                 .build());
+    }
+
+    @Transactional
+    public void banUser(UUID userId, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        if (user.getRole() == com.studytracker.model.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("Cannot ban an administrator account");
+        }
+
+        user.setBanned(true);
+        user.setBanReason(reason != null && !reason.isBlank() ? reason.trim() : "Violated community guidelines");
+        user.setBannedAt(Instant.now());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void unbanUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        user.setBanned(false);
+        user.setBanReason(null);
+        user.setBannedAt(null);
+        userRepository.save(user);
     }
 
     private int getSeverityWeight(SuspiciousUserAlertDto alert) {
