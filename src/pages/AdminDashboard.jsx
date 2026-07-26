@@ -9,26 +9,25 @@ import AdminSuspiciousAlerts from '../components/admin/AdminSuspiciousAlerts';
 import UserSessionDetailModal from '../components/admin/UserSessionDetailModal';
 import UserSearchModal from '../components/UserSearchModal';
 import PublicProfileModal from '../components/PublicProfileModal';
-import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, Music, Users, LogOut } from 'lucide-react';
-import { useMusic } from '../context/MusicContext';
-import { motion } from 'framer-motion';
+import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, LogOut, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
-  const { user, logout, refreshProgress } = useAuth();
+  const { user, logout } = useAuth();
   const { t } = useLanguage();
-  const { setIsModalOpen: setIsMusicModalOpen } = useMusic();
 
   const [activeTab, setActiveTab] = useState('online'); // 'online' | 'stats'
   const [overviewStats, setOverviewStats] = useState(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [selectedUserForModal, setSelectedUserForModal] = useState(null);
 
-  // Modals for Chat, Friends, User Search, Public Profile
+  // Admin Account Menu Dropdown state
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+
+  // Modals for Direct Messaging, User Search, Public Profile
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isFriendsOpen, setIsFriendsOpen] = useState(false);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
@@ -67,61 +66,70 @@ export default function AdminDashboard() {
                 {t('admin_dashboard')}
               </h1>
               <p className="text-xs text-slate-400 mt-0.5">
-                Giao diện quản trị hệ thống, giám sát người dùng & hỗ trợ trực tuyến
+                {t('admin_subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Quick Action Tools for Admin: Chat, Search Users, Music */}
+            {/* Quick Action Tools for Admin: Direct Messaging & Search Users */}
             <button
-              onClick={() => setIsFriendsOpen(true)}
-              className="px-3.5 py-2 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-200 text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
-              title="Mở danh sách bạn bè & nhắn tin"
+              onClick={() => { setActiveChatUser(null); setIsChatOpen(true); }}
+              className="px-3.5 py-2 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-200 text-xs font-bold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
+              title={t('admin_btn_chat')}
             >
               <MessageSquare className="w-4 h-4 text-indigo-400" />
-              <span>Tin Nhắn / Bạn Bè</span>
+              <span>{t('admin_btn_chat')}</span>
             </button>
 
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="px-3.5 py-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all flex items-center gap-2"
-              title="Tìm kiếm thông tin người dùng"
+              className="px-3.5 py-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+              title={t('admin_btn_search_user')}
             >
               <Search className="w-4 h-4 text-indigo-400" />
-              <span>Tìm Người Dùng</span>
-            </button>
-
-            <button
-              onClick={() => setIsMusicModalOpen(true)}
-              className="px-3.5 py-2 rounded-2xl bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-200 text-xs font-bold transition-all flex items-center gap-2"
-              title="Bật trình phát nhạc Lofi"
-            >
-              <Music className="w-4 h-4 text-purple-400" />
-              <span>Nhạc Lofi</span>
+              <span>{t('admin_btn_search_user')}</span>
             </button>
 
             <button
               onClick={fetchOverview}
-              className="p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
+              className="p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all cursor-pointer"
               title="Làm mới dữ liệu Admin"
             >
               <RefreshCw className={`w-4 h-4 ${loadingOverview ? 'animate-spin' : ''}`} />
             </button>
 
-            <div className="px-3.5 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-extrabold flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              {user?.displayName || 'Admin'} ({user?.email})
-            </div>
+            {/* Interactive Admin Account Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+                className="px-3.5 py-2 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-300 text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+                title={t('admin_account_menu_title')}
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>{user?.displayName || 'Admin'} ({user?.email})</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-indigo-400 transition-transform ${isAccountMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-            <button
-              onClick={logout}
-              className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
-              title="Đăng xuất khỏi hệ thống"
-            >
-              <LogOut className="w-4 h-4 text-rose-400" />
-              <span>Đăng xuất</span>
-            </button>
+              <AnimatePresence>
+                {isAccountMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                    className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 space-y-1"
+                  >
+                    <button
+                      onClick={() => { setIsAccountMenuOpen(false); logout(); }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:bg-rose-500/20 border border-transparent hover:border-rose-500/30 flex items-center gap-2 transition-all cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-400" />
+                      <span>{t('admin_account_menu_logout')}</span>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -203,18 +211,6 @@ export default function AdminDashboard() {
       <PublicProfileModal
         userId={selectedProfileUserId}
         onClose={() => setSelectedProfileUserId(null)}
-        onOpenChat={(targetUser) => {
-          setActiveChatUser(targetUser);
-          setIsChatOpen(true);
-        }}
-      />
-
-      {/* Friends & Social Modal */}
-      <FriendsModal
-        isOpen={isFriendsOpen}
-        onClose={() => setIsFriendsOpen(false)}
-        onViewProfile={(userId) => setSelectedProfileUserId(userId)}
-        onRefreshUserProgress={refreshProgress}
         onOpenChat={(targetUser) => {
           setActiveChatUser(targetUser);
           setIsChatOpen(true);
