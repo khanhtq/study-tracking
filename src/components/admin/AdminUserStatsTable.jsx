@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw } from 'lucide-react';
+import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
 
@@ -178,16 +178,16 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                           {user.isBanned ? (
                             <span
                               className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
-                              title={`Đã bị cấm: ${user.banReason || 'Vi phạm quy định'}`}
+                              title={`Ban reason: ${user.banReason || 'Rule violation'}`}
                             >
-                              ⛔ Đã bị cấm
+                              {t('admin_badge_banned')}
                             </span>
                           ) : user.isSuspicious && (
                             <span
                               className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
                               title={user.suspiciousReasons?.join(' | ')}
                             >
-                              🚨 Bất thường
+                              {t('admin_badge_suspicious')}
                             </span>
                           )}
                         </div>
@@ -206,7 +206,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                     ) : user.isStudying ? (
                       <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold text-[11px] inline-flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                        Đang học
+                        {t('member_status_studying')}
                       </span>
                     ) : user.isOnline ? (
                       <span className="px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-semibold text-[11px] inline-flex items-center gap-1">
@@ -254,52 +254,52 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                     <div className="flex items-center justify-end gap-2">
                       {onOpenChat && user.role !== 'ROLE_ADMIN' && (
                         <button
-                          onClick={() => onOpenChat({ id: user.userId, displayName: user.displayName, email: user.email })}
-                          className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 shadow-sm"
-                          title="Nhắn tin trực tiếp với người dùng"
+                          onClick={() => onOpenChat({ userId: user.userId || user.id, id: user.userId || user.id, displayName: user.displayName, email: user.email })}
+                          className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
+                          title={t('admin_btn_send_msg')}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          Nhắn tin
+                          {t('admin_btn_send_msg')}
                         </button>
                       )}
 
                       <button
                         onClick={() => onSelectUser(user)}
-                        className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-slate-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1"
-                        title="Xem lịch sử học tập"
+                        className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-slate-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1 cursor-pointer"
+                        title={t('admin_btn_history')}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        Lịch sử
+                        {t('admin_btn_history')}
                       </button>
 
                       {user.role !== 'ROLE_ADMIN' && (
                         <>
                           <button
                             onClick={() => handleResetProgress(user)}
-                            className="px-2 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all inline-flex items-center gap-1"
-                            title="Reset kết quả về 0 XP và xóa toàn bộ lịch sử học"
+                            className="px-2 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all inline-flex items-center gap-1 cursor-pointer"
+                            title={t('admin_btn_reset_xp')}
                           >
                             <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
-                            Reset 0 XP
+                            {t('admin_btn_reset_xp')}
                           </button>
 
                           {user.isBanned ? (
                             <button
                               onClick={() => handleUnban(user)}
-                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1"
-                              title="Mở khóa tài khoản"
+                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1 cursor-pointer"
+                              title={t('admin_btn_unban')}
                             >
                               <Unlock className="w-3.5 h-3.5 text-emerald-400" />
-                              Mở khóa
+                              {t('admin_btn_unban')}
                             </button>
                           ) : (
                             <button
                               onClick={() => setUserToBan(user)}
-                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all inline-flex items-center gap-1"
-                              title="Cấm tài khoản"
+                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all inline-flex items-center gap-1 cursor-pointer"
+                              title={t('admin_btn_ban')}
                             >
                               <Lock className="w-3.5 h-3.5 text-rose-400" />
-                              Cấm
+                              {t('admin_btn_ban')}
                             </button>
                           )}
                         </>

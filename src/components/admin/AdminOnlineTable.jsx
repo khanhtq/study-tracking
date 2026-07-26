@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Filter, Radio, BookOpen, Clock, Loader2, ShieldCheck, User } from 'lucide-react';
+import { Search, Filter, Radio, BookOpen, Clock, Loader2, ShieldCheck, User, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-function OnlineRow({ user, onSelectUser }) {
+function OnlineRow({ user, onSelectUser, onOpenChat }) {
   const { t } = useLanguage();
   const [elapsed, setElapsed] = useState('');
 
@@ -93,21 +93,21 @@ function OnlineRow({ user, onSelectUser }) {
         </span>
         {onOpenChat && user.role !== 'ROLE_ADMIN' && (
           <button
-            onClick={() => onOpenChat({ id: user.userId, displayName: user.displayName, avatarUrl: user.avatarUrl, email: user.email })}
-            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-1 shadow-sm"
-            title="Nhắn tin trực tiếp với người dùng"
+            onClick={() => onOpenChat({ userId: user.userId || user.id, id: user.userId || user.id, displayName: user.displayName, avatarUrl: user.avatarUrl, email: user.email })}
+            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+            title={t('admin_btn_send_msg')}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            Nhắn tin
+            {t('admin_btn_send_msg')}
           </button>
         )}
 
         {onSelectUser && (
           <button
             onClick={() => onSelectUser(user)}
-            className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700/60 hover:bg-slate-700 hover:text-white transition-all shadow-sm"
+            className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700/60 hover:bg-slate-700 hover:text-white transition-all shadow-sm cursor-pointer"
           >
-            {t('admin_view_history')}
+            {t('admin_btn_history')}
           </button>
         )}
       </div>

@@ -26,6 +26,7 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
   const [restrictionNotice, setRestrictionNotice] = useState(null);
   const [canSend, setCanSend] = useState(true);
   const [unreadTotal, setUnreadTotal] = useState(0);
+  const [loadedPartnerId, setLoadedPartnerId] = useState(null);
 
   const messagesEndRef = useRef(null);
 
@@ -60,26 +61,28 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
 
   // Handle pre-selected target user from props
   useEffect(() => {
-    if (activeTargetUser && activeTargetUser.userId) {
-      const existing = conversations.find(c => c.partnerId === activeTargetUser.userId);
-      if (existing) {
-        setSelectedPartner(existing);
-      } else {
-        const tempPartner = {
-          partnerId: activeTargetUser.userId,
-          partnerDisplayName: activeTargetUser.displayName || 'Người dùng',
-          partnerAvatarUrl: activeTargetUser.avatarUrl,
-          partnerSelectedTitle: activeTargetUser.selectedTitle || 'Tân Binh Tập Trung',
-          partnerLevel: activeTargetUser.currentLevel || 1,
-          isPartnerOnline: activeTargetUser.isOnline || false,
-          canSendMessage: true,
-          restrictionReason: '',
-        };
-        setSelectedPartner(tempPartner);
-      }
-      setIsMinimized(false);
+    const targetId = activeTargetUser?.userId || activeTargetUser?.id;
+    if (!targetId) return;
+
+    if (selectedPartner?.partnerId === targetId) return;
+
+    const existing = conversations.find(c => c.partnerId === targetId);
+    if (existing) {
+      setSelectedPartner(existing);
+    } else {
+      const tempPartner = {
+        partnerId: targetId,
+        partnerDisplayName: activeTargetUser.displayName || activeTargetUser.partnerDisplayName || 'Người dùng',
+        partnerAvatarUrl: activeTargetUser.avatarUrl || activeTargetUser.partnerAvatarUrl,
+        partnerSelectedTitle: activeTargetUser.selectedTitle || activeTargetUser.partnerSelectedTitle || 'Tân Binh Tập Trung',
+        partnerLevel: activeTargetUser.currentLevel || activeTargetUser.partnerLevel || 1,
+        isPartnerOnline: activeTargetUser.isOnline || false,
+        canSendMessage: true,
+        restrictionReason: '',
+      };
+      setSelectedPartner(tempPartner);
     }
-  }, [activeTargetUser]);
+  }, [activeTargetUser, conversations, selectedPartner?.partnerId]);
 
   // Load messages for selected partner
   useEffect(() => {
@@ -88,15 +91,22 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
     let isMounted = true;
     const fetchMessages = async () => {
       try {
-        setLoadingMessages(true);
+        if (loadedPartnerId !== selectedPartner.partnerId) {
+          setLoadingMessages(true);
+        }
         const data = await messageApi.getConversationMessages(selectedPartner.partnerId, 0, 50);
         if (isMounted) {
-          const list = (data.content || []).reverse();
+          const list = (data?.content || []).reverse();
           setMessages(list);
+          setLoadedPartnerId(selectedPartner.partnerId);
           setTimeout(scrollToBottom, 100);
         }
       } catch (err) {
         console.warn('Lỗi tải tin nhắn:', err);
+        if (isMounted) {
+          setMessages([]);
+          setLoadedPartnerId(selectedPartner.partnerId);
+        }
       } finally {
         if (isMounted) setLoadingMessages(false);
       }
@@ -153,7 +163,7 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
       unsubscribeWs();
       clearInterval(msgInterval);
     };
-  }, [selectedPartner, user]);
+  }, [selectedPartner?.partnerId, user]);
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();
