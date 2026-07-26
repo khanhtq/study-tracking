@@ -340,8 +340,8 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
         if (Boolean.TRUE.equals(user.getBanned())) {
-            String reason = user.getBanReason() != null ? user.getBanReason() : "Violated community guidelines";
-            throw new IllegalArgumentException("Account banned. Reason: " + reason);
+            String reason = user.getBanReason() != null ? user.getBanReason() : "Vi phạm quy chuẩn cộng đồng";
+            throw new IllegalArgumentException("Tài khoản của bạn đã bị cấm. Lý do: " + reason);
         }
 
         authenticationManager.authenticate(

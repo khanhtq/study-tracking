@@ -29,7 +29,13 @@ public class UserSessionStatsDto {
     private long periodXpEarned;
     private boolean isSuspicious;
     private java.util.List<String> suspiciousReasons;
+    @com.fasterxml.jackson.annotation.JsonProperty("isBanned")
     private boolean isBanned;
     private String banReason;
     private Instant bannedAt;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("banned")
+    public boolean getBanned() {
+        return isBanned;
+    }
 }
