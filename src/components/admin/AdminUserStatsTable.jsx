@@ -5,6 +5,7 @@ import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, Shield
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
 import UnbanUserModal from './UnbanUserModal';
+import ResetUserXpModal from './ResetUserXpModal';
 
 export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   const { t } = useLanguage();
@@ -14,6 +15,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   const [search, setSearch] = useState('');
   const [userToBan, setUserToBan] = useState(null);
   const [userToUnban, setUserToUnban] = useState(null);
+  const [userToResetXp, setUserToResetXp] = useState(null);
 
   const fetchStats = async () => {
     try {
@@ -30,33 +32,6 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   useEffect(() => {
     fetchStats();
   }, [range]);
-
-  const handleUnban = async (user) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn mở khóa cho tài khoản ${user.displayName} (${user.email})?`)) {
-      return;
-    }
-    try {
-      await adminApi.unbanUser(user.userId);
-      fetchStats();
-    } catch (err) {
-      console.error('Lỗi khi mở khóa tài khoản:', err);
-      alert(err.message || 'Lỗi mở khóa tài khoản');
-    }
-  };
-
-  const handleResetProgress = async (user) => {
-    if (!window.confirm(`⚠️ CẢNH BÁO XÓA DỮ LIỆU:\n\nBạn có chắc chắn muốn RESET KẾT QUẢ của người dùng "${user.displayName}" (${user.email}) về 0 XP (Level 1) và XÓA TOÀN BỘ LỊCH SỬ HỌC?\n\nHành động này không thể hoàn tác!`)) {
-      return;
-    }
-    try {
-      await adminApi.resetUserProgress(user.userId);
-      alert(`Đã reset 0 XP và xóa toàn bộ lịch sử học của ${user.displayName} thành công!`);
-      fetchStats();
-    } catch (err) {
-      console.error('Lỗi khi reset kết quả người dùng:', err);
-      alert(err.message || 'Lỗi reset kết quả');
-    }
-  };
 
   const formatDuration = (seconds) => {
     if (!seconds) return '0h 0m';
@@ -279,7 +254,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                       {user.role !== 'ROLE_ADMIN' && (
                         <>
                           <button
-                            onClick={() => handleResetProgress(user)}
+                            onClick={() => setUserToResetXp(user)}
                             className="px-2 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all inline-flex items-center gap-1 cursor-pointer"
                             title={t('admin_btn_reset_xp')}
                           >
@@ -331,6 +306,14 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
         <UnbanUserModal
           user={userToUnban}
           onClose={() => setUserToUnban(null)}
+          onSuccess={fetchStats}
+        />
+      )}
+
+      {userToResetXp && (
+        <ResetUserXpModal
+          user={userToResetXp}
+          onClose={() => setUserToResetXp(null)}
           onSuccess={fetchStats}
         />
       )}

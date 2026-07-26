@@ -2,13 +2,16 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { ShieldAlert, AlertTriangle, LogOut, Mail, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function BannedUserNoticeModal({ banNotice, onLogout }) {
+  const { t } = useLanguage();
+
   const reason = !banNotice
     ? ''
     : typeof banNotice === 'string'
     ? banNotice
-    : banNotice.reason || banNotice.message || 'Vi phạm quy chuẩn cộng đồng.';
+    : banNotice.reason || banNotice.message || t('banned_notice_default_reason');
 
   return createPortal(
     <AnimatePresence>
@@ -35,9 +38,11 @@ export default function BannedUserNoticeModal({ banNotice, onLogout }) {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-black text-rose-200 tracking-tight">Tài Khoản Đã Bị Cấm</h2>
+                <h2 className="text-2xl font-black text-rose-200 tracking-tight">
+                  {t('banned_notice_title')}
+                </h2>
                 <p className="text-xs text-rose-400/80 font-semibold tracking-wider uppercase mt-1">
-                  Account Suspended
+                  {t('banned_notice_subtitle')}
                 </p>
               </div>
             </div>
@@ -46,7 +51,7 @@ export default function BannedUserNoticeModal({ banNotice, onLogout }) {
             <div className="p-5 rounded-2xl bg-rose-950/40 border border-rose-500/40 space-y-2.5 shadow-inner">
               <div className="flex items-center gap-2 text-xs font-extrabold text-rose-400 uppercase tracking-wider">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
-                <span>Lý do bị cấm từ Ban Quản Trị:</span>
+                <span>{t('banned_notice_reason_label')}</span>
               </div>
               <div className="bg-slate-950/60 p-3.5 rounded-xl border border-rose-500/20">
                 <p className="text-sm font-bold text-rose-100 leading-relaxed italic break-words">
@@ -60,7 +65,7 @@ export default function BannedUserNoticeModal({ banNotice, onLogout }) {
               <p className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
                 <span>
-                  Tài khoản của bạn tạm thời không thể tham gia hệ thống. Nếu bạn tin rằng đây là sự nhầm lẫn, vui lòng gửi khiếu nại qua email hỗ trợ của Ban Quản Trị.
+                  {t('banned_notice_contact_support')}
                 </span>
               </p>
             </div>
@@ -72,7 +77,7 @@ export default function BannedUserNoticeModal({ banNotice, onLogout }) {
                 className="w-full py-4 rounded-2xl bg-gradient-to-r from-rose-600 via-rose-700 to-amber-700 hover:from-rose-500 hover:to-rose-600 text-white font-black text-sm shadow-xl shadow-rose-950/80 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
               >
                 <LogOut className="w-5 h-5" />
-                <span>Đăng Xuất Tài Khoản</span>
+                <span>{t('banned_notice_logout_btn')}</span>
               </button>
             </div>
           </motion.div>

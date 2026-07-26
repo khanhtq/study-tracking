@@ -579,6 +579,14 @@ const translations = {
     admin_account_menu_logout: "Đăng xuất",
     admin_account_menu_title: "Tài khoản Quản trị viên (Bấm để xem tùy chọn)",
 
+    // Banned Notice Modal / Screen
+    banned_notice_title: "Tài Khoản Đã Bị Khóa",
+    banned_notice_subtitle: "Thông báo cấm tài khoản",
+    banned_notice_reason_label: "Lý do bị cấm từ Ban Quản Trị:",
+    banned_notice_default_reason: "Vi phạm quy chuẩn cộng đồng.",
+    banned_notice_contact_support: "Tài khoản của bạn tạm thời không thể tham gia hệ thống. Nếu bạn tin rằng đây là sự nhầm lẫn, vui lòng gửi khiếu nại qua email hỗ trợ của Ban Quản Trị.",
+    banned_notice_logout_btn: "Đăng Xuất Tài Khoản",
+
     // session history
     history_title: "Study History",
     no_sessions: "No sessions logged yet.",
@@ -721,6 +729,14 @@ const translations = {
     admin_badge_suspicious: "🚨 Suspicious",
     admin_account_menu_logout: "Log Out",
     admin_account_menu_title: "Administrator Account (Click for options)",
+
+    // Banned Notice Modal / Screen
+    banned_notice_title: "Account Suspended",
+    banned_notice_subtitle: "Account Suspended Notice",
+    banned_notice_reason_label: "Reason for ban from Admin:",
+    banned_notice_default_reason: "Violation of community guidelines.",
+    banned_notice_contact_support: "Your account is temporarily restricted from accessing the system. If you believe this is a mistake, please contact support via email.",
+    banned_notice_logout_btn: "Log Out Account",
 
     // guest mode
     guest_login: "Guest Login",
@@ -1213,6 +1229,14 @@ const translations = {
     music_unknown_artist: "未知艺术家",
     music_unknown_title: "未知曲目",
     music_stream_error: "无法播放此曲目，正在跳至下一首...",
+
+    // Banned Notice Modal / Screen
+    banned_notice_title: "账号已被封禁",
+    banned_notice_subtitle: "账号封禁通知",
+    banned_notice_reason_label: "管理员封禁原因：",
+    banned_notice_default_reason: "违反社区准则。",
+    banned_notice_contact_support: "您的账号暂时无法访问系统。如果您认为这是一个误会，请发送电子邮件至支持团队进行申诉。",
+    banned_notice_logout_btn: "退出账号",
   }
 };
 
