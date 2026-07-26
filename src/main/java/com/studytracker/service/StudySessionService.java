@@ -51,6 +51,12 @@ public class StudySessionService {
         }
 
         Instant now = Instant.now();
+
+        // Chống trùng lặp thời gian với các session thủ công đã ghi nhận
+        if (studySessionRepository.existsOverlappingSession(user, now, now.plusSeconds(1), null)) {
+            throw new IllegalArgumentException("Không thể bắt đầu session mới do trùng với khoảng thời gian của một phiên học khác");
+        }
+
         StudySession session = StudySession.builder()
                 .user(user)
                 .subject(subject != null ? subject.trim() : null)
@@ -113,6 +119,13 @@ public class StudySessionService {
         }
 
         Instant endedAt = Instant.now();
+
+        // Anti-Cheat: Nếu quá 2 phút (120s) không có heartbeat, chốt endedAt = lastHeartbeatAt để tránh treo máy
+        Instant lastActiveTime = session.getLastHeartbeatAt() != null ? session.getLastHeartbeatAt() : session.getStartedAt();
+        if (Duration.between(lastActiveTime, endedAt).getSeconds() > 120) {
+            endedAt = lastActiveTime;
+        }
+
         int durationSeconds = (int) Duration.between(session.getStartedAt(), endedAt).toSeconds();
         
         // Chống treo máy qua đêm (giới hạn tối đa 12h)
@@ -172,11 +185,34 @@ public class StudySessionService {
         Instant startedAt = request.getStartedAt();
         int durationSeconds = request.getDurationSeconds();
         
+        if (startedAt == null) {
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống");
+        }
+
+        if (durationSeconds < 1) {
+            throw new IllegalArgumentException("Thời lượng phiên học phải từ 1 giây trở lên");
+        }
+
         if (durationSeconds > MAX_DURATION_SECONDS) {
-            durationSeconds = MAX_DURATION_SECONDS;
+            throw new IllegalArgumentException("Thời lượng phiên học thủ công không được vượt quá 12 giờ");
         }
 
         Instant endedAt = startedAt.plusSeconds(durationSeconds);
+        Instant nowWithTolerance = Instant.now().plusSeconds(60); // 60s clock skew tolerance
+
+        if (startedAt.isAfter(nowWithTolerance)) {
+            throw new IllegalArgumentException("Thời gian bắt đầu học không thể nằm ở tương lai");
+        }
+
+        if (endedAt.isAfter(nowWithTolerance)) {
+            throw new IllegalArgumentException("Thời gian kết thúc phiên học không thể nằm ở tương lai");
+        }
+
+        // Anti-Cheat: Kiểm tra trùng lặp khoảng thời gian [startedAt, endedAt] với các session khác của user
+        if (studySessionRepository.existsOverlappingSession(user, startedAt, endedAt, null)) {
+            throw new IllegalArgumentException("Khoảng thời gian học này bị trùng lặp với một phiên học khác");
+        }
+
         int xpEarned = xpService.calculateXpEarned(durationSeconds);
 
         // Cộng XP và cập nhật level cho user

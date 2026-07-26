@@ -24,6 +24,15 @@ public interface StudySessionRepository extends JpaRepository<StudySession, UUID
     List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtIsNullAndStartedAtBefore(Instant cutoff);
     long countByEndedAtIsNotNull();
 
+    @Query("SELECT COUNT(s) > 0 FROM StudySession s WHERE s.user = :user AND " +
+           "(:excludeId IS NULL OR s.id <> :excludeId) AND " +
+           "((s.endedAt IS NOT NULL AND s.startedAt < :endedAt AND s.endedAt > :startedAt) OR " +
+           "(s.endedAt IS NULL AND s.startedAt < :endedAt))")
+    boolean existsOverlappingSession(@Param("user") User user, 
+                                    @Param("startedAt") Instant startedAt, 
+                                    @Param("endedAt") Instant endedAt,
+                                    @Param("excludeId") UUID excludeId);
+
     @Modifying
     void deleteByUser(User user);
 
