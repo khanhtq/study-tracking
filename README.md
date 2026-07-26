@@ -1,4 +1,4 @@
-# 🎨 Study XP Tracker — Frontend Web Application
+# Study XP Tracker — Frontend Web Application
 
 Giao diện ứng dụng web Single Page Application (SPA) hiện đại dành cho hệ thống **Study XP Tracker**, được xây dựng trên nền tảng **React 19**, **Vite 8**, **Tailwind CSS v4**, **Framer Motion** và **Recharts**.
 
@@ -6,7 +6,7 @@ Giao diện được thiết kế theo phong cách **Glassmorphism**, hiệu ứ
 
 ---
 
-## 🌟 1. Tính năng nổi bật & Trải nghiệm Người dùng (UX Features)
+## 1. Tính năng nổi bật & Trải nghiệm Người dùng (UX Features)
 
 ### 1.1. Bộ đếm thời gian học tập & Tính điểm XP (Focus Timer Engine)
 * **Chế độ đa dạng:** Hỗ trợ Đồng hồ bấm giờ (Stopwatch) và Bộ đếm ngược (Pomodoro Timer).
@@ -14,9 +14,9 @@ Giao diện được thiết kế theo phong cách **Glassmorphism**, hiệu ứ
 * **Cơ chế Thưởng Pomodoro:** Tự động tính thêm **+10% XP** khi hoàn thành phiên học từ 25 phút trở lên.
 * **Đồng bộ Anti-cheat:** Kết nối trực tiếp với Server để đảm bảo điểm XP được kiểm tra tính hợp lệ trên Backend.
 
-### 1.2. Trải nghiệm Gamification & Thăng cấp hoành tráng (Level Up & Achievements)
+### 1.2. Trải nghiệm Gamification & Thăng cấp (Level Up & Achievements)
 * **Cơ chế thăng cấp:** Tự động tính toán lượng XP cần thiết cho cấp tiếp theo theo công thức $XP = 100 \times Level^{1.5}$.
-* **Hiệu ứng ăn mừng:** Màn hình tự động bắn pháo hoa **Canvas Confetti 🎉** kết hợp Modal chúc mừng thăng cấp hoành tráng.
+* **Hiệu ứng ăn mừng:** Màn hình tự động bắn pháo hoa Canvas Confetti kết hợp Modal chúc mừng thăng cấp.
 * **Danh hiệu & Huy hiệu (Titles & Badges):** Mở khóa danh hiệu độc quyền khi đạt các mốc level nhất định.
 
 ### 1.3. Thống kê & Biểu đồ trực quan (Analytics & Heatmap)
@@ -25,9 +25,9 @@ Giao diện được thiết kế theo phong cách **Glassmorphism**, hiệu ứ
 
 ### 1.4. Đa ngôn ngữ (Internationalization - i18n)
 * Hỗ trợ chuyển đổi tức thì giữa 3 ngôn ngữ mà không cần tải lại trang:
-  * 🇻🇳 **Tiếng Việt** (Mặc định)
-  * 🇬🇧 **English**
-  * 🇨🇳 **中文 (Chinese)**
+  * **Tiếng Việt** (Mặc định)
+  * **English**
+  * **中文 (Chinese)**
 
 ### 1.5. Trình phát nhạc Lofi/Study (YouTube Music Player)
 * Widget phát nhạc học tập nhỏ gọn, hỗ trợ nghe các bản nhạc Lofi, Piano, Ambient được lọc từ YouTube.
@@ -47,12 +47,12 @@ Giao diện được thiết kế theo phong cách **Glassmorphism**, hiệu ứ
 
 ---
 
-## 🛠️ 2. Công nghệ & Thư viện (Frontend Tech Stack)
+## 2. Công nghệ & Thư viện (Frontend Tech Stack)
 
 | Thư viện / Công nghệ | Phiên bản | Vai trò & Mục đích |
 | :--- | :--- | :--- |
 | **React** | `19.2.7` | Thư viện UI cốt lõi |
-| **Vite** | `8.1.1` | Build tool & Dev server siêu tốc |
+| **Vite** | `8.1.1` | Build tool & Dev server |
 | **Tailwind CSS** | `4.3.3` | Framework Styling theo Utility-first |
 | **Framer Motion** | `12.42.2` | Thư viện tạo hiệu ứng chuyển động & animation |
 | **Recharts** | `3.9.2` | Vẽ biểu đồ thống kê thời lượng học |
@@ -60,11 +60,11 @@ Giao diện được thiết kế theo phong cách **Glassmorphism**, hiệu ứ
 | **StompJS & SockJS** | `7.3.0` | Client kết nối WebSocket real-time |
 | **Lucide React** | `1.25.0` | Bộ biểu tượng (Icon set) hiện đại |
 | **Google OAuth** | `0.13.5` | Đăng nhập nhanh bằng tài khoản Google |
-| **Oxlint** | `1.71.0` | Linter mã nguồn siêu nhanh |
+| **Oxlint** | `1.71.0` | Linter mã nguồn |
 
 ---
 
-## 📁 3. Cấu trúc Thư mục Frontend
+## 3. Cấu trúc Thư mục Frontend
 
 ```
 frontend/
@@ -111,7 +111,7 @@ frontend/
 
 ---
 
-## 🚀 4. Hướng dẫn Cài đặt & Khởi chạy Frontend
+## 4. Hướng dẫn Cài đặt & Khởi chạy Frontend
 
 ### Yêu cầu hệ thống:
 * **Node.js** 18.x trở lên.
@@ -150,5 +150,5 @@ npm run preview
 
 ---
 
-## 📝 Author & Licence
-Phát triển bởi đội ngũ **Study XP Tracker Team**.
+## Author & License
+* **Tác giả:** Tran Quoc Khanh
