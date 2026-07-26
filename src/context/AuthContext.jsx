@@ -387,6 +387,17 @@ export const AuthProvider = ({ children }) => {
     setActiveSessionState(null);
   };
 
+  useEffect(() => {
+    const handleAuthExpired = (e) => {
+      setToken(null);
+      setUser(null);
+      setProgress(null);
+      setActiveSessionState(null);
+    };
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+  }, []);
+
   const updateActiveSession = (session) => {
     setActiveSessionState(session);
   };

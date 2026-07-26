@@ -121,13 +121,33 @@ export const apiCall = async (endpoint, options = {}) => {
   }
 
   if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const isBanError = errorData.banned || (errorData.message && (
+      errorData.message.toLowerCase().includes('banned') ||
+      errorData.message.toLowerCase().includes('cấm') ||
+      errorData.message.toLowerCase().includes('khóa')
+    ));
+
+    if (isBanError) {
+      const banNotice = {
+        banned: true,
+        reason: errorData.banReason || errorData.message || 'Tài khoản của bạn đã bị khóa do vi phạm quy chuẩn cộng đồng.'
+      };
+      localStorage.setItem('ban_notice', JSON.stringify(banNotice));
+      window.dispatchEvent(new CustomEvent('ban-notice-trigger', { detail: banNotice }));
+    }
+
     if ((response.status === 403 || response.status === 401) && !isGuestMode() && !cleanEndpoint.startsWith('/auth/')) {
-      // Auto logout on token expiration (only for logged-in registered users, not hitting /auth/)
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.dispatchEvent(new Event('auth-expired'));
+      window.dispatchEvent(new CustomEvent('auth-expired', {
+        detail: isBanError ? {
+          banned: true,
+          reason: errorData.banReason || errorData.message
+        } : null
+      }));
     }
-    const errorData = await response.json().catch(() => ({}));
+
     const errorKey = getErrorKey(response.status, cleanEndpoint);
     throw new ApiError(
       errorData.message || `API error: ${response.status}`,

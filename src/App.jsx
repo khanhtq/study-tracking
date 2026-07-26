@@ -17,12 +17,62 @@ import { MusicProvider } from './context/MusicContext';
 import MusicWidget from './components/music/MusicWidget';
 import MusicModal from './components/music/MusicModal';
 
+import BannedUserNoticeModal from './components/BannedUserNoticeModal';
+
 function MainApp() {
-  const { user, token, loading } = useAuth();
-  const [view, setView] = useState('landing');
+  const { user, token, loading, logout } = useAuth();
+  const [view, setView] = useState(() => {
+    if (localStorage.getItem('ban_notice')) return 'login';
+    return 'landing';
+  });
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const { t } = useLanguage();
   const canShowMusic = Boolean(token) && !user?.isGuest;
+
+  const [banNotice, setBanNotice] = useState(() => {
+    const saved = localStorage.getItem('ban_notice');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { return { reason: saved }; }
+    }
+    return null;
+  });
+
+  React.useEffect(() => {
+    const handleAuthExpired = (e) => {
+      setView('login');
+      let notice = e.detail;
+      const saved = localStorage.getItem('ban_notice');
+      if (saved) {
+        try { notice = JSON.parse(saved); } catch (err) { notice = { reason: saved }; }
+      }
+      if (notice) {
+        setBanNotice(notice);
+      }
+    };
+
+    const handleBanTrigger = (e) => {
+      setView('login');
+      if (e.detail) {
+        setBanNotice(e.detail);
+      }
+    };
+
+    window.addEventListener('auth-expired', handleAuthExpired);
+    window.addEventListener('ban-notice-trigger', handleBanTrigger);
+    return () => {
+      window.removeEventListener('auth-expired', handleAuthExpired);
+      window.removeEventListener('ban-notice-trigger', handleBanTrigger);
+    };
+  }, []);
+
+  const handleLogoutFromBanScreen = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('ban_notice');
+    setBanNotice(null);
+    if (logout) logout();
+    setView('login');
+  };
 
   if (loading) {
     return (
@@ -114,6 +164,7 @@ function MainApp() {
       )}
       {canShowMusic && <MusicWidget />}
       {canShowMusic && <MusicModal />}
+      <BannedUserNoticeModal banNotice={banNotice} onLogout={handleLogoutFromBanScreen} />
     </>
   );
 }

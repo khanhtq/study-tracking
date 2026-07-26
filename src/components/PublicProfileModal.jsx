@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { userApi, friendsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare } from 'lucide-react';
+import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BanUserModal from './admin/BanUserModal';
+import UnbanUserModal from './admin/UnbanUserModal';
 
 const getFullAvatarUrl = (url) => {
   if (!url) return null;
@@ -23,6 +25,8 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imgErr, setImgErr] = useState(false);
+  const [userToBan, setUserToBan] = useState(null);
+  const [userToUnban, setUserToUnban] = useState(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -379,12 +383,50 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                         )}
                       </div>
                     )}
+
+                    {isAdmin && (
+                      <div className="flex items-center gap-2">
+                        {profile.banned || profile.isBanned ? (
+                          <button
+                            onClick={() => setUserToUnban({ ...profile, userId: profile.userId || userId })}
+                            className="px-3.5 py-2 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Unlock className="w-4 h-4 text-emerald-400" />
+                            <span>Mở khóa</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setUserToBan({ ...profile, userId: profile.userId || userId })}
+                            className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Lock className="w-4 h-4 text-rose-400" />
+                            <span>Cấm tài khoản</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
           ) : null}
         </motion.div>
+
+        {userToBan && (
+          <BanUserModal
+            user={userToBan}
+            onClose={() => setUserToBan(null)}
+            onSuccess={() => { setProfile({ ...profile, banned: true, isBanned: true }); }}
+          />
+        )}
+
+        {userToUnban && (
+          <UnbanUserModal
+            user={userToUnban}
+            onClose={() => setUserToUnban(null)}
+            onSuccess={() => { setProfile({ ...profile, banned: false, isBanned: false, banReason: null }); }}
+          />
+        )}
       </div>
     </AnimatePresence>
   );
