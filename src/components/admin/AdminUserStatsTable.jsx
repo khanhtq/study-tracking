@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw } from 'lucide-react';
+import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
 
@@ -254,7 +254,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                     <div className="flex items-center justify-end gap-2">
                       {onOpenChat && user.role !== 'ROLE_ADMIN' && (
                         <button
-                          onClick={() => onOpenChat({ id: user.userId, displayName: user.displayName, email: user.email })}
+                          onClick={() => onOpenChat({ userId: user.userId || user.id, id: user.userId || user.id, displayName: user.displayName, email: user.email })}
                           className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 shadow-sm cursor-pointer"
                           title={t('admin_btn_send_msg')}
                         >

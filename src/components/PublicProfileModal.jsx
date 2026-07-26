@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { userApi, friendsApi } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +17,8 @@ const getFullAvatarUrl = (url) => {
 
 export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
   const { t } = useLanguage();
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ROLE_ADMIN';
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -284,96 +287,98 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                       </button>
                     )}
 
-                    <div className="flex items-center gap-2">
-                      {profile.friendshipStatus === 'NONE' && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              const res = await friendsApi.sendRequest(userId);
-                              setProfile({ ...profile, friendshipStatus: 'PENDING_SENT', friendshipId: res?.friendshipId });
-                            } catch (err) {
-                              alert(err.message || 'Không thể gửi lời mời kết bạn.');
-                            }
-                          }}
-                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
-                        >
-                          <UserPlus className="w-4 h-4" />
-                          <span>Kết bạn</span>
-                        </button>
-                      )}
-
-                      {profile.friendshipStatus === 'PENDING_SENT' && (
-                        <button
-                          onClick={async () => {
-                            try {
-                              if (profile.friendshipId) await friendsApi.declineRequest(profile.friendshipId);
-                              setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
-                            } catch (err) {
-                              alert(err.message || 'Không thể hủy lời mời.');
-                            }
-                          }}
-                          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
-                        >
-                          <Clock className="w-4 h-4" />
-                          <span>Đã gửi lời mời (Hủy)</span>
-                        </button>
-                      )}
-
-                      {profile.friendshipStatus === 'PENDING_RECEIVED' && (
-                        <div className="flex items-center gap-2">
+                    {!isAdmin && (
+                      <div className="flex items-center gap-2">
+                        {profile.friendshipStatus === 'NONE' && (
                           <button
                             onClick={async () => {
                               try {
-                                if (profile.friendshipId) await friendsApi.acceptRequest(profile.friendshipId);
-                                setProfile({ ...profile, friendshipStatus: 'FRIENDS' });
+                                const res = await friendsApi.sendRequest(userId);
+                                setProfile({ ...profile, friendshipStatus: 'PENDING_SENT', friendshipId: res?.friendshipId });
                               } catch (err) {
-                                alert(err.message || 'Không thể đồng ý.');
+                                alert(err.message || 'Không thể gửi lời mời kết bạn.');
                               }
                             }}
-                            className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer flex items-center gap-1"
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                           >
-                            <Check className="w-3.5 h-3.5" />
-                            <span>Chấp nhận</span>
+                            <UserPlus className="w-4 h-4" />
+                            <span>Kết bạn</span>
                           </button>
+                        )}
+
+                        {profile.friendshipStatus === 'PENDING_SENT' && (
                           <button
                             onClick={async () => {
                               try {
                                 if (profile.friendshipId) await friendsApi.declineRequest(profile.friendshipId);
                                 setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
                               } catch (err) {
-                                alert(err.message || 'Lỗi xử lý.');
+                                alert(err.message || 'Không thể hủy lời mời.');
                               }
                             }}
-                            className="px-3 py-1.5 bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
                           >
-                            Từ chối
+                            <Clock className="w-4 h-4" />
+                            <span>Đã gửi lời mời (Hủy)</span>
                           </button>
-                        </div>
-                      )}
+                        )}
 
-                      {profile.friendshipStatus === 'FRIENDS' && (
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-bold rounded-xl flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Bạn bè</span>
-                          </span>
-                          <button
-                            onClick={async () => {
-                              if (!window.confirm('Bạn có chắc chắn muốn hủy kết bạn?')) return;
-                              try {
-                                await friendsApi.unfriend(userId);
-                                setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
-                              } catch (err) {
-                                alert(err.message || 'Không thể hủy kết bạn.');
-                              }
-                            }}
-                            className="px-2.5 py-1 bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 text-xs font-medium rounded-xl transition-all cursor-pointer"
-                          >
-                            Hủy kết bạn
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        {profile.friendshipStatus === 'PENDING_RECEIVED' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  if (profile.friendshipId) await friendsApi.acceptRequest(profile.friendshipId);
+                                  setProfile({ ...profile, friendshipStatus: 'FRIENDS' });
+                                } catch (err) {
+                                  alert(err.message || 'Không thể đồng ý.');
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer flex items-center gap-1"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Chấp nhận</span>
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  if (profile.friendshipId) await friendsApi.declineRequest(profile.friendshipId);
+                                  setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
+                                } catch (err) {
+                                  alert(err.message || 'Lỗi xử lý.');
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                            >
+                              Từ chối
+                            </button>
+                          </div>
+                        )}
+
+                        {profile.friendshipStatus === 'FRIENDS' && (
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-bold rounded-xl flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Bạn bè</span>
+                            </span>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Bạn có chắc chắn muốn hủy kết bạn?')) return;
+                                try {
+                                  await friendsApi.unfriend(userId);
+                                  setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
+                                } catch (err) {
+                                  alert(err.message || 'Không thể hủy kết bạn.');
+                                }
+                              }}
+                              className="px-2.5 py-1 bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 text-xs font-medium rounded-xl transition-all cursor-pointer"
+                            >
+                              Hủy kết bạn
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
