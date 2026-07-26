@@ -12,12 +12,12 @@ import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, Music, Users } from 'lucide-react';
+import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, Music, Users, LogOut } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 import { motion } from 'framer-motion';
 
 export default function AdminDashboard() {
-  const { user, refreshProgress } = useAuth();
+  const { user, logout, refreshProgress } = useAuth();
   const { t } = useLanguage();
   const { setIsModalOpen: setIsMusicModalOpen } = useMusic();
 
@@ -113,6 +113,15 @@ export default function AdminDashboard() {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               {user?.displayName || 'Admin'} ({user?.email})
             </div>
+
+            <button
+              onClick={logout}
+              className="px-3.5 py-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+              title="Đăng xuất khỏi hệ thống"
+            >
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>Đăng xuất</span>
+            </button>
           </div>
         </div>
 
@@ -156,9 +165,21 @@ export default function AdminDashboard() {
           transition={{ duration: 0.2 }}
         >
           {activeTab === 'online' ? (
-            <AdminOnlineTable onSelectUser={(u) => setSelectedUserForModal(u)} />
+            <AdminOnlineTable
+              onSelectUser={(u) => setSelectedUserForModal(u)}
+              onOpenChat={(targetUser) => {
+                setActiveChatUser(targetUser);
+                setIsChatOpen(true);
+              }}
+            />
           ) : (
-            <AdminUserStatsTable onSelectUser={(u) => setSelectedUserForModal(u)} />
+            <AdminUserStatsTable
+              onSelectUser={(u) => setSelectedUserForModal(u)}
+              onOpenChat={(targetUser) => {
+                setActiveChatUser(targetUser);
+                setIsChatOpen(true);
+              }}
+            />
           )}
         </motion.div>
       </div>

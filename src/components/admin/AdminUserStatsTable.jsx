@@ -5,7 +5,7 @@ import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, Shield
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
 
-export default function AdminUserStatsTable({ onSelectUser }) {
+export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   const { t } = useLanguage();
   const [usersStats, setUsersStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,9 +252,20 @@ export default function AdminUserStatsTable({ onSelectUser }) {
                   {/* Action */}
                   <td className="py-3 px-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {onOpenChat && user.role !== 'ROLE_ADMIN' && (
+                        <button
+                          onClick={() => onOpenChat({ id: user.userId, displayName: user.displayName, email: user.email })}
+                          className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 shadow-sm"
+                          title="Nhắn tin trực tiếp với người dùng"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          Nhắn tin
+                        </button>
+                      )}
+
                       <button
                         onClick={() => onSelectUser(user)}
-                        className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1"
+                        className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-slate-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1"
                         title="Xem lịch sử học tập"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
