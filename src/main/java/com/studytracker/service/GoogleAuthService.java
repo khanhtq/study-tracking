@@ -68,6 +68,10 @@ public class GoogleAuthService {
             if ((user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) && pictureUrl != null) {
                 user.setAvatarUrl(pictureUrl);
             }
+            if (Boolean.TRUE.equals(user.getBanned())) {
+                String reason = user.getBanReason() != null ? user.getBanReason() : "Vi phạm quy chuẩn cộng đồng";
+                throw new IllegalArgumentException("Tài khoản của bạn đã bị cấm. Lý do: " + reason);
+            }
             user = userRepository.save(user);
         } else {
             // Tạo mới user hoàn toàn từ Google với passwordHash ngẫu nhiên thỏa mãn NOT NULL constraint

@@ -25,6 +25,12 @@ public class SuspiciousUserAlertDto {
     private Long manualSessionsCount24h;
     private Long xpEarned24h;
     private Instant lastActiveAt;
+    @com.fasterxml.jackson.annotation.JsonProperty("isBanned")
     private boolean isBanned;
     private String banReason;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("banned")
+    public boolean getBanned() {
+        return isBanned;
+    }
 }

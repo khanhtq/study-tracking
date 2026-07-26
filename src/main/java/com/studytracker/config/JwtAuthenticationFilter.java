@@ -44,7 +44,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userEmail = jwtTokenProvider.extractUsername(jwt);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-                if (jwtTokenProvider.validateToken(jwt, userDetails) && userDetails.isAccountNonLocked()) {
+                if (jwtTokenProvider.validateToken(jwt, userDetails)) {
+                    if (!userDetails.isAccountNonLocked()) {
+                        String banReason = "Vi phạm quy chuẩn cộng đồng";
+                        if (userDetails instanceof com.studytracker.model.User) {
+                            com.studytracker.model.User user = (com.studytracker.model.User) userDetails;
+                            if (user.getBanReason() != null && !user.getBanReason().isBlank()) {
+                                banReason = user.getBanReason();
+                            }
+                        }
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json;charset=UTF-8");
+                        String safeReason = banReason.replace("\"", "\\\"").replace("\n", " ");
+                        String jsonBody = String.format("{\"status\":403,\"error\":\"FORBIDDEN\",\"message\":\"Tài khoản của bạn đã bị cấm. Lý do: %s\",\"banned\":true,\"banReason\":\"%s\"}",
+                                safeReason, safeReason);
+                        response.getWriter().write(jsonBody);
+                        return;
+                    }
+
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
