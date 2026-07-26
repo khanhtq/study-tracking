@@ -31,10 +31,7 @@ public class StudySessionService {
     private static final int MAX_DURATION_SECONDS = 43200; // 12 hours
 
     /**
-     * Bắt đầu một session học tập mới (Timer mode).
-     */
-    /**
-     * Bắt đầu một session học tập mới (Timer mode).
+     * Start a new study session in timer mode.
      */
     @Transactional
     public StudySessionResponse startSession(User user, SessionStartRequest request) {
@@ -43,18 +40,18 @@ public class StudySessionService {
                 ? request.getStudyMethod() : "FREE_MODE";
         Integer targetDurationSeconds = request != null ? request.getTargetDurationSeconds() : null;
 
-        // Kiểm tra xem user có session nào chưa kết thúc không
+        // Check whether the user already has an active session.
         Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(user);
         if (activeSessionOpt.isPresent()) {
-            // Nếu có session đang chạy, trả về session đó
+            // If a session is already running, return it.
             return mapToResponse(activeSessionOpt.get());
         }
 
         Instant now = Instant.now();
 
-        // Chống trùng lặp thời gian với các session thủ công đã ghi nhận
+        // Prevent overlap with previously recorded manual sessions.
         if (studySessionRepository.existsOverlappingSession(user, now, now.plusSeconds(1), null)) {
-            throw new IllegalArgumentException("Không thể bắt đầu session mới do trùng với khoảng thời gian của một phiên học khác");
+            throw new IllegalArgumentException("Cannot start a new session because it overlaps with another study session.");
         }
 
         StudySession session = StudySession.builder()
@@ -73,7 +70,7 @@ public class StudySessionService {
     }
 
     /**
-     * Overload để tương thích ngược nếu gọi chỉ với subject.
+     * Backward-compatible overload for calls that only provide a subject.
      */
     @Transactional
     public StudySessionResponse startSession(User user, String subject) {
@@ -83,7 +80,7 @@ public class StudySessionService {
     }
 
     /**
-     * Gửi heartbeat để cập nhật thời gian hoạt động gần nhất của session.
+     * Send a heartbeat to update the session's most recent activity time.
      */
     @Transactional
     public void heartbeat(User user, UUID sessionId) {
@@ -95,7 +92,7 @@ public class StudySessionService {
         }
 
         if (session.getEndedAt() != null) {
-            return; // Session đã kết thúc, bỏ qua heartbeat
+            return; // The session has already ended, so ignore the heartbeat.
         }
 
         session.setLastHeartbeatAt(Instant.now());
@@ -103,7 +100,7 @@ public class StudySessionService {
     }
 
     /**
-     * Kết thúc session học tập đang chạy.
+     * Stop the currently running study session.
      */
     @Transactional
     public SessionStopResponse stopSession(User user, UUID sessionId) {
@@ -120,7 +117,8 @@ public class StudySessionService {
 
         Instant endedAt = Instant.now();
 
-        // Anti-Cheat: Nếu quá 2 phút (120s) không có heartbeat, chốt endedAt = lastHeartbeatAt để tránh treo máy
+        // Anti-cheat: if no heartbeat arrives for more than 2 minutes (120s),
+        // clamp endedAt to the last heartbeat time to avoid a stuck session.
         Instant lastActiveTime = session.getLastHeartbeatAt() != null ? session.getLastHeartbeatAt() : session.getStartedAt();
         if (Duration.between(lastActiveTime, endedAt).getSeconds() > 120) {
             endedAt = lastActiveTime;
@@ -128,21 +126,21 @@ public class StudySessionService {
 
         int durationSeconds = (int) Duration.between(session.getStartedAt(), endedAt).toSeconds();
         
-        // Chống treo máy qua đêm (giới hạn tối đa 12h)
+        // Prevent overnight sessions from running too long (maximum 12h).
         if (durationSeconds > MAX_DURATION_SECONDS) {
             durationSeconds = MAX_DURATION_SECONDS;
             endedAt = session.getStartedAt().plusSeconds(MAX_DURATION_SECONDS);
         }
         
         if (durationSeconds < 1) {
-            durationSeconds = 1; // Tối thiểu 1 giây
+            durationSeconds = 1; // Minimum duration is 1 second.
         }
 
         int baseXp = xpService.calculateXpEarned(durationSeconds);
         boolean isCompleted = false;
         int finalXp = baseXp;
 
-        // Thưởng 15% Bonus XP nếu người dùng học đủ thời gian preset
+        // Award a 15% XP bonus if the user studies for the preset duration.
         if (session.getTargetDurationSeconds() != null && session.getTargetDurationSeconds() > 0) {
             if (durationSeconds >= (session.getTargetDurationSeconds() - 5)) {
                 isCompleted = true;
@@ -150,7 +148,7 @@ public class StudySessionService {
             }
         }
         
-        // Cộng XP và cập nhật level của user
+        // Add XP and update the user's level.
         XpService.XpCalculationResult xpResult = xpService.addXp(user, finalXp);
         userRepository.save(user);
 
@@ -178,7 +176,7 @@ public class StudySessionService {
     }
 
     /**
-     * Nhập thủ công một session đã học.
+     * Manually record a completed study session.
      */
     @Transactional
     public StudySessionResponse createManualSession(User user, SessionManualRequest request) {
@@ -186,36 +184,36 @@ public class StudySessionService {
         int durationSeconds = request.getDurationSeconds();
         
         if (startedAt == null) {
-            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống");
+            throw new IllegalArgumentException("Start time must not be empty.");
         }
 
         if (durationSeconds < 1) {
-            throw new IllegalArgumentException("Thời lượng phiên học phải từ 1 giây trở lên");
+            throw new IllegalArgumentException("Study session duration must be at least 1 second.");
         }
 
         if (durationSeconds > MAX_DURATION_SECONDS) {
-            throw new IllegalArgumentException("Thời lượng phiên học thủ công không được vượt quá 12 giờ");
+            throw new IllegalArgumentException("Manual study session duration must not exceed 12 hours.");
         }
 
         Instant endedAt = startedAt.plusSeconds(durationSeconds);
-        Instant nowWithTolerance = Instant.now().plusSeconds(60); // 60s clock skew tolerance
+        Instant nowWithTolerance = Instant.now().plusSeconds(60); // Allow 60 seconds of clock skew.
 
         if (startedAt.isAfter(nowWithTolerance)) {
-            throw new IllegalArgumentException("Thời gian bắt đầu học không thể nằm ở tương lai");
+            throw new IllegalArgumentException("Study start time cannot be in the future.");
         }
 
         if (endedAt.isAfter(nowWithTolerance)) {
-            throw new IllegalArgumentException("Thời gian kết thúc phiên học không thể nằm ở tương lai");
+            throw new IllegalArgumentException("Study session end time cannot be in the future.");
         }
 
-        // Anti-Cheat: Kiểm tra trùng lặp khoảng thời gian [startedAt, endedAt] với các session khác của user
+        // Anti-cheat: check whether the [startedAt, endedAt] range overlaps with any other session for the user.
         if (studySessionRepository.existsOverlappingSession(user, startedAt, endedAt, null)) {
-            throw new IllegalArgumentException("Khoảng thời gian học này bị trùng lặp với một phiên học khác");
+            throw new IllegalArgumentException("This study period overlaps with another session.");
         }
 
         int xpEarned = xpService.calculateXpEarned(durationSeconds);
 
-        // Cộng XP và cập nhật level cho user
+        // Add XP and update the user's level.
         xpService.addXp(user, xpEarned);
         userRepository.save(user);
 
@@ -235,7 +233,7 @@ public class StudySessionService {
     }
 
     /**
-     * Lấy session đang hoạt động (nếu có).
+     * Get the active session, if any.
      */
     public Optional<StudySessionResponse> getActiveSession(User user) {
         return studySessionRepository.findByUserAndEndedAtIsNull(user)
@@ -243,7 +241,7 @@ public class StudySessionService {
     }
 
     /**
-     * Lấy lịch sử session học tập của user.
+     * Get the user's study session history.
      */
     public List<StudySessionResponse> getSessionsHistory(User user) {
         return studySessionRepository.findByUserOrderByStartedAtDesc(user)
