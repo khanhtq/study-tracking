@@ -453,6 +453,7 @@ export const adminApi = {
   getOverviewStats: () => apiCall('/admin/stats/overview'),
   getOnlineUsersDetailed: () => apiCall('/admin/users/online'),
   getUserStatsList: (range = 'all') => apiCall(`/admin/users/stats?range=${range}`),
+  getSuspiciousUsers: () => apiCall('/admin/users/suspicious'),
   getUserSessions: (userId) => apiCall(`/admin/users/${userId}/sessions`),
 };
 

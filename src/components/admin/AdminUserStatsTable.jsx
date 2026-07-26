@@ -146,6 +146,14 @@ export default function AdminUserStatsTable({ onSelectUser }) {
                               Admin
                             </span>
                           )}
+                          {user.isSuspicious && (
+                            <span
+                              className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
+                              title={user.suspiciousReasons?.join(' | ')}
+                            >
+                              🚨 Bất thường
+                            </span>
+                          )}
                         </div>
                         <div className="text-[11px] text-slate-400">{user.email}</div>
                       </div>

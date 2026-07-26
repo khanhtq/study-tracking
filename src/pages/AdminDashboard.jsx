@@ -5,6 +5,7 @@ import { adminApi } from '../api';
 import AdminOverviewCards from '../components/admin/AdminOverviewCards';
 import AdminOnlineTable from '../components/admin/AdminOnlineTable';
 import AdminUserStatsTable from '../components/admin/AdminUserStatsTable';
+import AdminSuspiciousAlerts from '../components/admin/AdminSuspiciousAlerts';
 import UserSessionDetailModal from '../components/admin/UserSessionDetailModal';
 import Footer from '../components/Footer';
 import { ShieldCheck, ArrowLeft, Radio, BarChart3, RefreshCw } from 'lucide-react';
@@ -90,6 +91,9 @@ export default function AdminDashboard({ onBackToDashboard }) {
 
         {/* Overview KPI Cards */}
         <AdminOverviewCards stats={overviewStats} loading={loadingOverview} />
+
+        {/* Suspicious Activity Alerts Widget */}
+        <AdminSuspiciousAlerts onSelectUser={(u) => setSelectedUserForModal(u)} />
 
         {/* Main Tab Navigation */}
         <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80 w-fit">
