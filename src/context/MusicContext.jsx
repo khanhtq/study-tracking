@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 import { getSuggestedPlaylists, searchMusicTracks, getMusicStreamUrl } from '../api';
 
 const MusicContext = createContext(null);
 
 export const MusicProvider = ({ children }) => {
+  const { token, user } = useAuth();
   const audioRef = useRef(new Audio());
   const iframeRef = useRef(null);
   const streamRequestRef = useRef(null);
@@ -46,6 +48,29 @@ export const MusicProvider = ({ children }) => {
     playlistRef.current = playlist;
     playlistsRef.current = playlists;
   }, [currentTrack, playlist, playlists]);
+
+  useEffect(() => {
+    if (token && !user?.isGuest) return;
+
+    streamRequestRef.current?.abort();
+    const audio = audioRef.current;
+    audio.pause();
+    try {
+      audio.removeAttribute('src');
+      audio.load();
+    } catch (e) { /* ignore */ }
+
+    setIsPlaying(false);
+    setCurrentTrack(null);
+    setPlaylist([]);
+    setCurrentIndex(-1);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoadingStream(false);
+    setUseEmbedFallback(false);
+    setIsModalOpen(false);
+    setIsMinimized(true);
+  }, [token, user?.isGuest]);
 
   // Load Suggested Playlists on Mount
   useEffect(() => {

@@ -22,6 +22,7 @@ function MainApp() {
   const [view, setView] = useState('landing');
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const { t } = useLanguage();
+  const canShowMusic = Boolean(token) && !user?.isGuest;
 
   if (loading) {
     return (
@@ -111,6 +112,8 @@ function MainApp() {
           <Landing onNavigate={setView} />
         )
       )}
+      {canShowMusic && <MusicWidget />}
+      {canShowMusic && <MusicModal />}
     </>
   );
 }
@@ -122,12 +125,9 @@ export default function App() {
         <AuthProvider>
           <MusicProvider>
             <MainApp />
-            <MusicWidget />
-            <MusicModal />
           </MusicProvider>
         </AuthProvider>
       </ThemeProvider>
     </LanguageProvider>
   );
 }
-
