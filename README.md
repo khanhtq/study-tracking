@@ -1,10 +1,10 @@
-# 🛡️ Study XP Tracker — Backend Service
+# Study XP Tracker — Backend Service
 
 Hệ thống API RESTful và Real-time Server dành cho ứng dụng **Study XP Tracker**, được phát triển dựa trên **Java 21** và **Spring Boot 3.3.1**. Backend chịu trách nhiệm xử lý toàn bộ logic tính toán kinh nghiệm (XP), quản lý cấp độ, cơ chế chống gian lận, bảng xếp hạng Redis, giao tiếp thời gian thực (WebSocket) và quản lý người dùng.
 
 ---
 
-## 🎯 1. Bài toán kỹ thuật & Giải pháp Backend
+## 1. Bài toán kỹ thuật & Giải pháp Backend
 
 Backend của Study XP Tracker được thiết kế nhằm giải quyết các thách thức kỹ thuật quan trọng trong ứng dụng gamification & theo dõi học tập:
 
@@ -45,7 +45,7 @@ Backend của Study XP Tracker được thiết kế nhằm giải quyết các 
 
 ---
 
-## 🛠️ 2. Công nghệ & Thư viện (Backend Tech Stack)
+## 2. Công nghệ & Thư viện (Backend Tech Stack)
 
 | Thành phần | Công nghệ / Thư viện | Mô tả |
 | :--- | :--- | :--- |
@@ -63,7 +63,7 @@ Backend của Study XP Tracker được thiết kế nhằm giải quyết các 
 
 ---
 
-## 🏗️ 3. Cấu trúc Thư mục Backend
+## 3. Cấu trúc Thư mục Backend
 
 ```
 backend/
@@ -91,7 +91,7 @@ backend/
 
 ---
 
-## 🚀 4. Hướng dẫn Cài đặt & Khởi chạy Backend
+## 4. Hướng dẫn Cài đặt & Khởi chạy Backend
 
 ### Yêu cầu hệ thống:
 * **JDK 21** trở lên.
@@ -107,7 +107,7 @@ docker compose up -d
 *Lệnh này sẽ khởi chạy PostgreSQL tại cổng `5432` và Redis tại cổng `6379`.*
 
 ### Bước 2: Cấu hình Môi trường
-Kiểm tra cấu hình tại [backend/src/main/resources/application.yml](file:///e:/Project/study-tracking/backend/src/main/resources/application.yml) hoặc cập nhật các biến môi trường:
+Kiểm tra cấu hình tại `application.yml` hoặc cập nhật các biến môi trường:
 ```yaml
 spring:
   datasource:
@@ -143,7 +143,7 @@ mvn test
 
 ---
 
-## 📡 5. Tóm tắt danh sách API Endpoint chính
+## 5. Tóm tắt danh sách API Endpoint chính
 
 | Nhóm | Endpoint | Method | Mô tả |
 | :--- | :--- | :--- | :--- |
@@ -163,5 +163,5 @@ mvn test
 
 ---
 
-## 📝 Licence & Author
-Phát triển bởi đội ngũ **Study XP Tracker Team**.
+## Author & License
+* **Tác giả:** Tran Quoc Khanh
