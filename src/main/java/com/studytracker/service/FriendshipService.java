@@ -128,8 +128,8 @@ public class FriendshipService {
 
     @Transactional
     public void unfriend(User currentUser, UUID friendId) {
-        User friend = userRepository.findById(friendId)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng."));
+        userRepository.findById(friendId)
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng."));
 
         Friendship friendship = friendshipRepository.findBetweenUserIds(currentUser.getId(), friendId)
                 .orElseThrow(() -> new IllegalArgumentException("Mối quan hệ bạn bè không tồn tại."));
@@ -252,7 +252,7 @@ public class FriendshipService {
             return FriendshipStatusDto.builder().status("SELF").build();
         }
 
-        User targetUser = userRepository.findById(targetUserId)
+        userRepository.findById(targetUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng."));
 
         Optional<Friendship> friendshipOpt = friendshipRepository.findBetweenUserIds(currentUser.getId(), targetUserId);

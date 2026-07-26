@@ -64,12 +64,12 @@ public class CloudinaryStorageProviderImpl implements FileStorageProvider {
         try {
             log.info("[Storage Status] Đang upload ảnh trực tiếp lên Cloudinary cloud: {}", cloudName);
             String folderName = "study_xp_tracker/" + (subDirectory != null ? subDirectory : "avatars");
-            Map uploadParams = ObjectUtils.asMap(
+                Map<String, Object> uploadParams = ObjectUtils.asMap(
                     "folder", folderName,
                     "overwrite", true,
                     "resource_type", "auto"
             );
-            Map uploadResult = this.cloudinary.uploader().upload(file.getBytes(), uploadParams);
+                Map<String, Object> uploadResult = this.cloudinary.uploader().upload(file.getBytes(), uploadParams);
             String secureUrl = (String) uploadResult.get("secure_url");
             log.info("[Storage Status] Upload Cloudinary thành công! URL: {}", secureUrl);
             return secureUrl;
@@ -124,7 +124,7 @@ public class CloudinaryStorageProviderImpl implements FileStorageProvider {
             if (publicId != null) {
                 try {
                     log.info("[Cloudinary Storage] Tự động xóa file cũ trên Cloudinary public_id: {}", publicId);
-                    Map result = this.cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+                    Map<String, Object> result = this.cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
                     log.info("[Cloudinary Storage] Kết quả xóa file cũ Cloudinary: {}", result);
                 } catch (Exception e) {
                     log.error("[Cloudinary Storage] Lỗi khi xóa file cũ trên Cloudinary URL: {}", fileUrl, e);

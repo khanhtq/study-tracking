@@ -31,7 +31,6 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final StudySessionRepository studySessionRepository;
-    private final UserService userService;
 
     @Transactional(readOnly = true)
     public AdminOverviewStatsResponse getOverviewStats() {

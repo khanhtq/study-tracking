@@ -6,7 +6,6 @@ import com.studytracker.dto.SendMessageRequest;
 import com.studytracker.model.*;
 import com.studytracker.repository.FriendshipRepository;
 import com.studytracker.repository.MessageRepository;
-import com.studytracker.repository.StudySessionRepository;
 import com.studytracker.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,7 +24,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
