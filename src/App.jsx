@@ -56,8 +56,8 @@ function MainApp() {
     <>
       <SEO view={activeView} />
       {token ? (
-        view === 'admin' && user?.role === 'ROLE_ADMIN' ? (
-          <AdminDashboard onBackToDashboard={() => setView('dashboard')} />
+        user?.role === 'ROLE_ADMIN' ? (
+          <AdminDashboard />
         ) : view === 'profile' ? (
           <Profile onBackToDashboard={() => setView('dashboard')} />
         ) : (

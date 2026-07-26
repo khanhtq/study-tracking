@@ -457,6 +457,7 @@ export const adminApi = {
   getUserSessions: (userId) => apiCall(`/admin/users/${userId}/sessions`),
   banUser: (userId, reason) => apiCall(`/admin/users/${userId}/ban`, { method: 'PUT', body: JSON.stringify({ reason }) }),
   unbanUser: (userId) => apiCall(`/admin/users/${userId}/unban`, { method: 'PUT' }),
+  resetUserProgress: (userId) => apiCall(`/admin/users/${userId}/reset-progress`, { method: 'PUT' }),
 };
 
 export const friendsApi = {

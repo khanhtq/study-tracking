@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert } from 'lucide-react';
+import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
 
@@ -39,6 +39,20 @@ export default function AdminUserStatsTable({ onSelectUser }) {
     } catch (err) {
       console.error('Lỗi khi mở khóa tài khoản:', err);
       alert(err.message || 'Lỗi mở khóa tài khoản');
+    }
+  };
+
+  const handleResetProgress = async (user) => {
+    if (!window.confirm(`⚠️ CẢNH BÁO XÓA DỮ LIỆU:\n\nBạn có chắc chắn muốn RESET KẾT QUẢ của người dùng "${user.displayName}" (${user.email}) về 0 XP (Level 1) và XÓA TOÀN BỘ LỊCH SỬ HỌC?\n\nHành động này không thể hoàn tác!`)) {
+      return;
+    }
+    try {
+      await adminApi.resetUserProgress(user.userId);
+      alert(`Đã reset 0 XP và xóa toàn bộ lịch sử học của ${user.displayName} thành công!`);
+      fetchStats();
+    } catch (err) {
+      console.error('Lỗi khi reset kết quả người dùng:', err);
+      alert(err.message || 'Lỗi reset kết quả');
     }
   };
 
@@ -248,25 +262,36 @@ export default function AdminUserStatsTable({ onSelectUser }) {
                       </button>
 
                       {user.role !== 'ROLE_ADMIN' && (
-                        user.isBanned ? (
+                        <>
                           <button
-                            onClick={() => handleUnban(user)}
-                            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1"
-                            title="Mở khóa tài khoản"
+                            onClick={() => handleResetProgress(user)}
+                            className="px-2 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/10 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-all inline-flex items-center gap-1"
+                            title="Reset kết quả về 0 XP và xóa toàn bộ lịch sử học"
                           >
-                            <Unlock className="w-3.5 h-3.5 text-emerald-400" />
-                            Mở khóa
+                            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                            Reset 0 XP
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => setUserToBan(user)}
-                            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all inline-flex items-center gap-1"
-                            title="Cấm tài khoản"
-                          >
-                            <Lock className="w-3.5 h-3.5 text-rose-400" />
-                            Cấm
-                          </button>
-                        )
+
+                          {user.isBanned ? (
+                            <button
+                              onClick={() => handleUnban(user)}
+                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1"
+                              title="Mở khóa tài khoản"
+                            >
+                              <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                              Mở khóa
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setUserToBan(user)}
+                              className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all inline-flex items-center gap-1"
+                              title="Cấm tài khoản"
+                            >
+                              <Lock className="w-3.5 h-3.5 text-rose-400" />
+                              Cấm
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </td>

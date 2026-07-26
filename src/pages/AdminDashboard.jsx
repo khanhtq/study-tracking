@@ -7,24 +7,31 @@ import AdminOnlineTable from '../components/admin/AdminOnlineTable';
 import AdminUserStatsTable from '../components/admin/AdminUserStatsTable';
 import AdminSuspiciousAlerts from '../components/admin/AdminSuspiciousAlerts';
 import UserSessionDetailModal from '../components/admin/UserSessionDetailModal';
+import UserSearchModal from '../components/UserSearchModal';
+import PublicProfileModal from '../components/PublicProfileModal';
+import FriendsModal from '../components/FriendsModal';
+import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { ShieldCheck, ArrowLeft, Radio, BarChart3, RefreshCw } from 'lucide-react';
+import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, Music, Users } from 'lucide-react';
+import { useMusic } from '../context/MusicContext';
 import { motion } from 'framer-motion';
 
-export default function AdminDashboard({ onBackToDashboard }) {
-  const { user } = useAuth();
+export default function AdminDashboard() {
+  const { user, refreshProgress } = useAuth();
   const { t } = useLanguage();
-
-  const handleBack = () => {
-    if (onBackToDashboard) {
-      onBackToDashboard();
-    }
-  };
+  const { setIsModalOpen: setIsMusicModalOpen } = useMusic();
 
   const [activeTab, setActiveTab] = useState('online'); // 'online' | 'stats'
   const [overviewStats, setOverviewStats] = useState(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [selectedUserForModal, setSelectedUserForModal] = useState(null);
+
+  // Modals for Chat, Friends, User Search, Public Profile
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isFriendsOpen, setIsFriendsOpen] = useState(false);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeChatUser, setActiveChatUser] = useState(null);
 
   const fetchOverview = async () => {
     try {
@@ -52,38 +59,58 @@ export default function AdminDashboard({ onBackToDashboard }) {
         {/* Top Bar Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel rounded-3xl p-6 border border-indigo-500/20">
           <div className="flex items-center gap-4">
-            <button
-              onClick={handleBack}
-              className="p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-indigo-400 transition-all shadow-sm group"
-              title="Quay lại Dashboard"
-            >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            </button>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border border-indigo-500/30 shadow-md">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-                  <ShieldCheck className="w-5 h-5" />
-                </span>
-                <h1 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
-                  {t('admin_dashboard')}
-                </h1>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                {t('admin_subtitle')}
+              <h1 className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
+                {t('admin_dashboard')}
+              </h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Giao diện quản trị hệ thống, giám sát người dùng & hỗ trợ trực tuyến
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Quick Action Tools for Admin: Chat, Search Users, Music */}
+            <button
+              onClick={() => setIsFriendsOpen(true)}
+              className="px-3.5 py-2 rounded-2xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-200 text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
+              title="Mở danh sách bạn bè & nhắn tin"
+            >
+              <MessageSquare className="w-4 h-4 text-indigo-400" />
+              <span>Tin Nhắn / Bạn Bè</span>
+            </button>
+
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="px-3.5 py-2 rounded-2xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold transition-all flex items-center gap-2"
+              title="Tìm kiếm thông tin người dùng"
+            >
+              <Search className="w-4 h-4 text-indigo-400" />
+              <span>Tìm Người Dùng</span>
+            </button>
+
+            <button
+              onClick={() => setIsMusicModalOpen(true)}
+              className="px-3.5 py-2 rounded-2xl bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-200 text-xs font-bold transition-all flex items-center gap-2"
+              title="Bật trình phát nhạc Lofi"
+            >
+              <Music className="w-4 h-4 text-purple-400" />
+              <span>Nhạc Lofi</span>
+            </button>
+
             <button
               onClick={fetchOverview}
               className="p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-all"
-              title="Làm mới dữ liệu"
+              title="Làm mới dữ liệu Admin"
             >
               <RefreshCw className={`w-4 h-4 ${loadingOverview ? 'animate-spin' : ''}`} />
             </button>
-            <div className="px-3 py-1.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+
+            <div className="px-3.5 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-extrabold flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
               {user?.displayName || 'Admin'} ({user?.email})
             </div>
           </div>
@@ -143,6 +170,43 @@ export default function AdminDashboard({ onBackToDashboard }) {
           onClose={() => setSelectedUserForModal(null)}
         />
       )}
+
+      {/* User Search Modal */}
+      <UserSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectUser={(userId) => setSelectedProfileUserId(userId)}
+      />
+
+      {/* Public Profile Modal */}
+      <PublicProfileModal
+        userId={selectedProfileUserId}
+        onClose={() => setSelectedProfileUserId(null)}
+        onOpenChat={(targetUser) => {
+          setActiveChatUser(targetUser);
+          setIsChatOpen(true);
+        }}
+      />
+
+      {/* Friends & Social Modal */}
+      <FriendsModal
+        isOpen={isFriendsOpen}
+        onClose={() => setIsFriendsOpen(false)}
+        onViewProfile={(userId) => setSelectedProfileUserId(userId)}
+        onRefreshUserProgress={refreshProgress}
+        onOpenChat={(targetUser) => {
+          setActiveChatUser(targetUser);
+          setIsChatOpen(true);
+        }}
+      />
+
+      {/* Direct Messaging Chat Modal */}
+      <ChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        activeTargetUser={activeChatUser}
+        onSelectProfile={(userId) => setSelectedProfileUserId(userId)}
+      />
 
       <Footer />
     </div>
