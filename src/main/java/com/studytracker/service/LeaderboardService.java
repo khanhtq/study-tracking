@@ -81,7 +81,7 @@ public class LeaderboardService {
 
         for (UUID userId : userIds) {
             User user = userEntityMap.get(userId);
-            if (user != null) {
+            if (user != null && user.getRole() != com.studytracker.model.Role.ROLE_ADMIN) {
                 result.add(LeaderboardEntryDto.builder()
                         .rank(rank)
                         .userId(user.getId())
@@ -91,8 +91,8 @@ public class LeaderboardService {
                         .currentLevel(user.getCurrentLevel())
                         .totalXp(userXpMap.getOrDefault(userId, user.getTotalXp()))
                         .build());
+                rank++;
             }
-            rank++;
         }
 
         return result;
