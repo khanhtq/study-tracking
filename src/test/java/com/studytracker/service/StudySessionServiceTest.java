@@ -62,7 +62,7 @@ public class StudySessionServiceTest {
                 () -> studySessionService.createManualSession(testUser, request)
         );
 
-        assertTrue(exception.getMessage().contains("tương lai"));
+        assertTrue(exception.getMessage().toLowerCase().contains("future"));
         verify(studySessionRepository, never()).save(any());
     }
 
@@ -79,7 +79,7 @@ public class StudySessionServiceTest {
                 () -> studySessionService.createManualSession(testUser, request)
         );
 
-        assertTrue(exception.getMessage().contains("tương lai"));
+        assertTrue(exception.getMessage().toLowerCase().contains("future"));
         verify(studySessionRepository, never()).save(any());
     }
 
@@ -98,7 +98,7 @@ public class StudySessionServiceTest {
                 () -> studySessionService.createManualSession(testUser, request)
         );
 
-        assertTrue(exception.getMessage().contains("trùng lặp"));
+        assertTrue(exception.getMessage().toLowerCase().contains("overlaps"));
         verify(studySessionRepository, never()).save(any());
     }
 
