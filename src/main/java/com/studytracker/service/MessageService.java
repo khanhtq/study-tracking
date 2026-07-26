@@ -51,6 +51,11 @@ public class MessageService {
             return new CanSendResult(false, "Không thể gửi tin nhắn cho chính mình.");
         }
 
+        // Admin role can message ANY user in the system without restrictions
+        if (sender.getRole() == Role.ROLE_ADMIN) {
+            return new CanSendResult(true, null);
+        }
+
         MessagePermission permission = recipient.getMessagePermission();
         if (permission == null) {
             permission = MessagePermission.EVERYONE;

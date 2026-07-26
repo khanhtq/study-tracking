@@ -55,6 +55,10 @@ public class FriendshipService {
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng."));
 
+        if (requester.getRole() == com.studytracker.model.Role.ROLE_ADMIN || targetUser.getRole() == com.studytracker.model.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("Tài khoản Quản trị viên không gửi hoặc nhận lời mời kết bạn.");
+        }
+
         Optional<Friendship> existingOpt = friendshipRepository.findBetweenUserIds(currentUser.getId(), targetUserId);
 
         if (existingOpt.isPresent()) {
