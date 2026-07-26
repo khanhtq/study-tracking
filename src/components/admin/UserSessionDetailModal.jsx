@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { X, BookOpen, Clock, Zap, Timer, Edit3, Loader2 } from 'lucide-react';
+import { X, BookOpen, Clock, Zap, Timer, Edit3, Loader2, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BanUserModal from './BanUserModal';
+import UnbanUserModal from './UnbanUserModal';
 
-export default function UserSessionDetailModal({ user, onClose }) {
+export default function UserSessionDetailModal({ user, onClose, onRefresh }) {
   const { t } = useLanguage();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [userToBan, setUserToBan] = useState(null);
+  const [userToUnban, setUserToUnban] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -67,12 +71,33 @@ export default function UserSessionDetailModal({ user, onClose }) {
                 <span className="font-semibold text-slate-200">{user.displayName}</span> ({user.email})
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              {Boolean(user.isBanned || user.banned) ? (
+                <button
+                  onClick={() => setUserToUnban(user)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Mở khóa tài khoản"
+                >
+                  <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                  Mở khóa
+                </button>
+              ) : (
+                <button
+                  onClick={() => setUserToBan(user)}
+                  className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                  title="Khóa tài khoản"
+                >
+                  <Lock className="w-3.5 h-3.5 text-rose-400" />
+                  Cấm
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* User quick stats banner */}
@@ -148,6 +173,22 @@ export default function UserSessionDetailModal({ user, onClose }) {
             )}
           </div>
         </motion.div>
+
+        {userToBan && (
+          <BanUserModal
+            user={userToBan}
+            onClose={() => setUserToBan(null)}
+            onSuccess={() => { if (onRefresh) onRefresh(); onClose(); }}
+          />
+        )}
+
+        {userToUnban && (
+          <UnbanUserModal
+            user={userToUnban}
+            onClose={() => setUserToUnban(null)}
+            onSuccess={() => { if (onRefresh) onRefresh(); onClose(); }}
+          />
+        )}
       </div>
     </AnimatePresence>
   );

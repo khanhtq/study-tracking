@@ -4,6 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert, RotateCcw, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import BanUserModal from './BanUserModal';
+import UnbanUserModal from './UnbanUserModal';
 
 export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   const { t } = useLanguage();
@@ -12,6 +13,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
   const [range, setRange] = useState('all');
   const [search, setSearch] = useState('');
   const [userToBan, setUserToBan] = useState(null);
+  const [userToUnban, setUserToUnban] = useState(null);
 
   const fetchStats = async () => {
     try {
@@ -159,8 +161,10 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
-              {filteredUsers.map((user) => (
-                <tr key={user.userId} className={`hover:bg-slate-800/30 transition-all ${user.isBanned ? 'bg-rose-950/10' : ''}`}>
+              {filteredUsers.map((user) => {
+                const isUserBanned = Boolean(user.isBanned || user.banned);
+                return (
+                <tr key={user.userId} className={`hover:bg-slate-800/30 transition-all ${isUserBanned ? 'bg-rose-950/10' : ''}`}>
                   {/* User Name & Email */}
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
@@ -175,7 +179,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                               Admin
                             </span>
                           )}
-                          {user.isBanned ? (
+                          {isUserBanned ? (
                             <span
                               className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
                               title={`Ban reason: ${user.banReason || 'Rule violation'}`}
@@ -198,7 +202,7 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
 
                   {/* Online Status */}
                   <td className="py-3 px-3">
-                    {user.isBanned ? (
+                    {isUserBanned ? (
                       <span className="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold text-[11px] inline-flex items-center gap-1">
                         <Lock className="w-3 h-3 text-rose-400" />
                         Locked
@@ -283,9 +287,9 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                             {t('admin_btn_reset_xp')}
                           </button>
 
-                          {user.isBanned ? (
+                          {isUserBanned ? (
                             <button
-                              onClick={() => handleUnban(user)}
+                              onClick={() => setUserToUnban(user)}
                               className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1 cursor-pointer"
                               title={t('admin_btn_unban')}
                             >
@@ -307,17 +311,26 @@ export default function AdminUserStatsTable({ onSelectUser, onOpenChat }) {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Ban User Modal */}
+      {/* Ban / Unban Modals */}
       {userToBan && (
         <BanUserModal
           user={userToBan}
           onClose={() => setUserToBan(null)}
+          onSuccess={fetchStats}
+        />
+      )}
+
+      {userToUnban && (
+        <UnbanUserModal
+          user={userToUnban}
+          onClose={() => setUserToUnban(null)}
           onSuccess={fetchStats}
         />
       )}

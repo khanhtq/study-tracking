@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { getErrorMessage } from '../api';
 import { ShieldAlert, LogIn, UserPlus, Flame, Sun, Moon, UserCheck, User } from 'lucide-react';
+import BannedUserNoticeModal from '../components/BannedUserNoticeModal';
 
 export default function Login({ onToggleView, onBackToLanding, onNavigateVerifyOtp, onNavigateForgotPassword }) {
   const { login, loginWithGoogle, loginAsGuest } = useAuth();
@@ -16,6 +17,25 @@ export default function Login({ onToggleView, onBackToLanding, onNavigateVerifyO
   const [guestDisplayName, setGuestDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [banNotice, setBanNotice] = useState(null);
+
+  useEffect(() => {
+    const savedNotice = localStorage.getItem('ban_notice');
+    if (savedNotice) {
+      try {
+        const parsed = JSON.parse(savedNotice);
+        const reasonStr = parsed.reason || parsed.message || 'Tài khoản của bạn đã bị khóa do vi phạm quy chuẩn cộng đồng.';
+        setError(reasonStr);
+      } catch (e) {
+        setError(savedNotice);
+      }
+    }
+  }, []);
+
+  const handleCloseBanNotice = () => {
+    localStorage.removeItem('ban_notice');
+    setBanNotice(null);
+  };
 
   const validateForm = () => {
     if (authMode === 'guest') {
@@ -70,7 +90,13 @@ export default function Login({ onToggleView, onBackToLanding, onNavigateVerifyO
         }
       }
     } catch (err) {
-      setError(getErrorMessage(err, 'login_failed', t));
+      const errMsg = getErrorMessage(err, 'login_failed', t);
+      setError(errMsg);
+      if (errMsg && (errMsg.toLowerCase().includes('cấm') || errMsg.toLowerCase().includes('khóa') || errMsg.toLowerCase().includes('banned'))) {
+        const notice = { banned: true, reason: errMsg };
+        setBanNotice(notice);
+        localStorage.setItem('ban_notice', JSON.stringify(notice));
+      }
     } finally {
       setLoading(false);
     }
@@ -230,7 +256,13 @@ export default function Login({ onToggleView, onBackToLanding, onNavigateVerifyO
                       try {
                         await loginWithGoogle(credentialResponse.credential);
                       } catch (err) {
-                        setError(getErrorMessage(err, 'login_failed', t));
+                        const errMsg = getErrorMessage(err, 'login_failed', t);
+                        setError(errMsg);
+                        if (errMsg && (errMsg.toLowerCase().includes('cấm') || errMsg.toLowerCase().includes('khóa') || errMsg.toLowerCase().includes('banned'))) {
+                          const notice = { banned: true, reason: errMsg };
+                          setBanNotice(notice);
+                          localStorage.setItem('ban_notice', JSON.stringify(notice));
+                        }
                       } finally {
                         setLoading(false);
                       }

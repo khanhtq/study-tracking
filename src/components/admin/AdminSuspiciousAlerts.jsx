@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
-import { AlertTriangle, ShieldAlert, Eye, RefreshCw, CheckCircle2, Flame, UserX } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, Eye, RefreshCw, CheckCircle2, Flame, UserX, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import BanUserModal from './BanUserModal';
+import UnbanUserModal from './UnbanUserModal';
 
 export default function AdminSuspiciousAlerts({ onSelectUser }) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userToBan, setUserToBan] = useState(null);
+  const [userToUnban, setUserToUnban] = useState(null);
 
   const fetchAlerts = async () => {
     try {
@@ -170,18 +174,55 @@ export default function AdminSuspiciousAlerts({ onSelectUser }) {
               {/* Card Footer Action */}
               <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
                 <span>XP 24h qua: <strong className="text-amber-400">+{alert.xpEarned24h} XP</strong></span>
-                <button
-                  onClick={() => onSelectUser({ userId: alert.userId, displayName: alert.displayName, email: alert.email })}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 font-semibold transition-all flex items-center gap-1.5"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  Xem chi tiết session
-                </button>
+                <div className="flex items-center gap-2">
+                  {Boolean(alert.isBanned || alert.banned) ? (
+                    <button
+                      onClick={() => setUserToUnban(alert)}
+                      className="px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/30 text-emerald-300 font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                      title="Mở khóa tài khoản"
+                    >
+                      <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                      Mở khóa
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setUserToBan(alert)}
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/30 text-rose-300 font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                      title="Khóa tài khoản"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      Cấm
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onSelectUser({ userId: alert.userId, displayName: alert.displayName, email: alert.email })}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    Xem chi tiết
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      {userToBan && (
+        <BanUserModal
+          user={userToBan}
+          onClose={() => setUserToBan(null)}
+          onSuccess={fetchAlerts}
+        />
+      )}
+
+      {userToUnban && (
+        <UnbanUserModal
+          user={userToUnban}
+          onClose={() => setUserToUnban(null)}
+          onSuccess={fetchAlerts}
+        />
+      )}
     </div>
   );
 }
