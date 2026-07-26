@@ -2,12 +2,12 @@ package com.studytracker.controller;
 
 import com.studytracker.dto.AdminOverviewStatsResponse;
 import com.studytracker.dto.OnlineUserResponse;
+import com.studytracker.dto.SuspiciousUserAlertDto;
 import com.studytracker.dto.UserSessionStatsDto;
 import com.studytracker.model.StudySession;
 import com.studytracker.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +34,11 @@ public class AdminController {
     public ResponseEntity<List<UserSessionStatsDto>> getUserStatsList(
             @RequestParam(defaultValue = "all") String range) {
         return ResponseEntity.ok(adminService.getUserStatsList(range));
+    }
+
+    @GetMapping("/users/suspicious")
+    public ResponseEntity<List<SuspiciousUserAlertDto>> getSuspiciousUsers() {
+        return ResponseEntity.ok(adminService.getSuspiciousUsers());
     }
 
     @GetMapping("/users/{userId}/sessions")

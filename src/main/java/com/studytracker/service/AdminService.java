@@ -2,7 +2,9 @@ package com.studytracker.service;
 
 import com.studytracker.dto.AdminOverviewStatsResponse;
 import com.studytracker.dto.OnlineUserResponse;
+import com.studytracker.dto.SuspiciousUserAlertDto;
 import com.studytracker.dto.UserSessionStatsDto;
+import com.studytracker.model.SessionSource;
 import com.studytracker.model.StudySession;
 import com.studytracker.model.User;
 import com.studytracker.repository.StudySessionRepository;
@@ -16,6 +18,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -93,6 +97,7 @@ public class AdminService {
     public List<UserSessionStatsDto> getUserStatsList(String range) {
         Instant periodCutoff = calculatePeriodCutoff(range);
         Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
+        Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
         List<User> allUsers = userRepository.findAll();
 
         return allUsers.stream().map(user -> {
@@ -121,6 +126,10 @@ public class AdminService {
                     .mapToLong(StudySession::getXpEarned)
                     .sum();
 
+            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, cutoff24h);
+            boolean isSuspicious = alertOpt.isPresent();
+            List<String> suspiciousReasons = alertOpt.map(SuspiciousUserAlertDto::getReasons).orElse(null);
+
             return UserSessionStatsDto.builder()
                     .userId(user.getId())
                     .displayName(user.getDisplayName() != null ? user.getDisplayName() : "User")
@@ -136,8 +145,115 @@ public class AdminService {
                     .periodSessionsCount(periodSessionsCount)
                     .periodStudySeconds(periodStudySeconds)
                     .periodXpEarned(periodXpEarned)
+                    .isSuspicious(isSuspicious)
+                    .suspiciousReasons(suspiciousReasons)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SuspiciousUserAlertDto> getSuspiciousUsers() {
+        List<User> allUsers = userRepository.findAll();
+        Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
+
+        List<SuspiciousUserAlertDto> suspiciousAlerts = new ArrayList<>();
+
+        for (User user : allUsers) {
+            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, cutoff24h);
+            alertOpt.ifPresent(suspiciousAlerts::add);
+        }
+
+        suspiciousAlerts.sort(Comparator.comparingInt(this::getSeverityWeight));
+        return suspiciousAlerts;
+    }
+
+    private Optional<SuspiciousUserAlertDto> evaluateUserSuspiciousActivity(User user, Instant cutoff24h) {
+        List<StudySession> userSessions = studySessionRepository.findByUserOrderByStartedAtDesc(user);
+        List<StudySession> recentSessions = userSessions.stream()
+                .filter(s -> s.getStartedAt() != null && s.getStartedAt().isAfter(cutoff24h))
+                .collect(Collectors.toList());
+
+        long totalStudySeconds24h = recentSessions.stream()
+                .filter(s -> s.getEndedAt() != null && s.getDurationSeconds() != null)
+                .mapToLong(StudySession::getDurationSeconds)
+                .sum();
+
+        long manualSessionsCount24h = recentSessions.stream()
+                .filter(s -> s.getEndedAt() != null && s.getSource() == SessionSource.MANUAL)
+                .count();
+
+        long manualStudySeconds24h = recentSessions.stream()
+                .filter(s -> s.getEndedAt() != null && s.getSource() == SessionSource.MANUAL && s.getDurationSeconds() != null)
+                .mapToLong(StudySession::getDurationSeconds)
+                .sum();
+
+        long totalSessionsCount24h = recentSessions.stream()
+                .filter(s -> s.getEndedAt() != null)
+                .count();
+
+        long xpEarned24h = recentSessions.stream()
+                .filter(s -> s.getEndedAt() != null && s.getXpEarned() != null)
+                .mapToLong(StudySession::getXpEarned)
+                .sum();
+
+        List<String> reasons = new ArrayList<>();
+        String severity = null;
+
+        // Rule 1: Exceeds 16 hours of study in 24h
+        if (totalStudySeconds24h > 57600) {
+            double hours = Math.round((totalStudySeconds24h / 3600.0) * 10.0) / 10.0;
+            reasons.add(String.format("Studied %.1f hours in the last 24 hours (exceeds 16h limit)", hours));
+            severity = "HIGH";
+        }
+
+        // Rule 2: Excessive XP gain (> 10,000 XP in 24h)
+        if (xpEarned24h > 10000) {
+            reasons.add(String.format("Earned %d XP in the last 24 hours (excessive XP spike)", xpEarned24h));
+            if (!"HIGH".equals(severity)) {
+                severity = "HIGH";
+            }
+        }
+
+        // Rule 3: Frequent or excessive manual sessions (> 4 manual sessions or > 8h manual study)
+        if (manualSessionsCount24h > 4 || manualStudySeconds24h > 28800) {
+            double manualHours = Math.round((manualStudySeconds24h / 3600.0) * 10.0) / 10.0;
+            reasons.add(String.format("Created %d manual sessions (%.1f hours) in the last 24 hours", manualSessionsCount24h, manualHours));
+            if (severity == null) {
+                severity = "MEDIUM";
+            }
+        }
+
+        // Rule 4: High total session volume (> 10 sessions in 24h)
+        if (totalSessionsCount24h > 10) {
+            reasons.add(String.format("Created %d sessions in the last 24 hours", totalSessionsCount24h));
+            if (severity == null) {
+                severity = "WARNING";
+            }
+        }
+
+        if (reasons.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(SuspiciousUserAlertDto.builder()
+                .userId(user.getId())
+                .displayName(user.getDisplayName() != null ? user.getDisplayName() : user.getEmail())
+                .email(user.getEmail())
+                .currentLevel(user.getCurrentLevel() != null ? user.getCurrentLevel() : 1)
+                .totalXp(user.getTotalXp() != null ? user.getTotalXp() : 0L)
+                .severity(severity)
+                .reasons(reasons)
+                .totalStudySeconds24h(totalStudySeconds24h)
+                .manualSessionsCount24h(manualSessionsCount24h)
+                .xpEarned24h(xpEarned24h)
+                .lastActiveAt(user.getLastActiveAt())
+                .build());
+    }
+
+    private int getSeverityWeight(SuspiciousUserAlertDto alert) {
+        if ("HIGH".equals(alert.getSeverity())) return 1;
+        if ("MEDIUM".equals(alert.getSeverity())) return 2;
+        return 3;
     }
 
     @Transactional(readOnly = true)

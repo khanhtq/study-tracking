@@ -6,27 +6,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserSessionStatsDto {
+public class SuspiciousUserAlertDto {
     private UUID userId;
     private String displayName;
     private String email;
-    private String role;
     private Integer currentLevel;
     private Long totalXp;
-    private boolean isOnline;
-    private boolean isStudying;
+    private String severity; // HIGH, MEDIUM, WARNING
+    private List<String> reasons;
+    private Long totalStudySeconds24h;
+    private Long manualSessionsCount24h;
+    private Long xpEarned24h;
     private Instant lastActiveAt;
-    private long totalSessionsCount;
-    private long totalStudySeconds;
-    private long periodStudySeconds;
-    private long periodSessionsCount;
-    private long periodXpEarned;
-    private boolean isSuspicious;
-    private java.util.List<String> suspiciousReasons;
 }
