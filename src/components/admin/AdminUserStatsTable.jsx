@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
-import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2 } from 'lucide-react';
+import { Search, Calendar, BarChart2, BookOpen, Clock, Zap, ExternalLink, ShieldCheck, Loader2, Lock, Unlock, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
+import BanUserModal from './BanUserModal';
 
 export default function AdminUserStatsTable({ onSelectUser }) {
   const { t } = useLanguage();
@@ -10,12 +11,13 @@ export default function AdminUserStatsTable({ onSelectUser }) {
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState('all');
   const [search, setSearch] = useState('');
+  const [userToBan, setUserToBan] = useState(null);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
       const data = await adminApi.getUserStatsList(range);
-      setUsersStats(data);
+      setUsersStats(data || []);
     } catch (err) {
       console.error('Lỗi tải thống kê người dùng admin:', err);
     } finally {
@@ -26,6 +28,19 @@ export default function AdminUserStatsTable({ onSelectUser }) {
   useEffect(() => {
     fetchStats();
   }, [range]);
+
+  const handleUnban = async (user) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn mở khóa cho tài khoản ${user.displayName} (${user.email})?`)) {
+      return;
+    }
+    try {
+      await adminApi.unbanUser(user.userId);
+      fetchStats();
+    } catch (err) {
+      console.error('Lỗi khi mở khóa tài khoản:', err);
+      alert(err.message || 'Lỗi mở khóa tài khoản');
+    }
+  };
 
   const formatDuration = (seconds) => {
     if (!seconds) return '0h 0m';
@@ -131,7 +146,7 @@ export default function AdminUserStatsTable({ onSelectUser }) {
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {filteredUsers.map((user) => (
-                <tr key={user.userId} className="hover:bg-slate-800/30 transition-all">
+                <tr key={user.userId} className={`hover:bg-slate-800/30 transition-all ${user.isBanned ? 'bg-rose-950/10' : ''}`}>
                   {/* User Name & Email */}
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
@@ -139,14 +154,21 @@ export default function AdminUserStatsTable({ onSelectUser }) {
                         {user.displayName?.substring(0, 2).toUpperCase() || 'U'}
                       </div>
                       <div>
-                        <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+                        <div className="font-semibold text-slate-100 flex items-center gap-1.5 flex-wrap">
                           {user.displayName}
                           {user.role === 'ROLE_ADMIN' && (
                             <span className="px-1.5 py-0.2 text-[9px] font-bold bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">
                               Admin
                             </span>
                           )}
-                          {user.isSuspicious && (
+                          {user.isBanned ? (
+                            <span
+                              className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
+                              title={`Đã bị cấm: ${user.banReason || 'Vi phạm quy định'}`}
+                            >
+                              ⛔ Đã bị cấm
+                            </span>
+                          ) : user.isSuspicious && (
                             <span
                               className="px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/40 flex items-center gap-1 shadow-sm cursor-help"
                               title={user.suspiciousReasons?.join(' | ')}
@@ -162,7 +184,12 @@ export default function AdminUserStatsTable({ onSelectUser }) {
 
                   {/* Online Status */}
                   <td className="py-3 px-3">
-                    {user.isStudying ? (
+                    {user.isBanned ? (
+                      <span className="px-2 py-1 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 font-semibold text-[11px] inline-flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-rose-400" />
+                        Locked
+                      </span>
+                    ) : user.isStudying ? (
                       <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold text-[11px] inline-flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                         Đang học
@@ -210,19 +237,53 @@ export default function AdminUserStatsTable({ onSelectUser }) {
 
                   {/* Action */}
                   <td className="py-3 px-3 text-right">
-                    <button
-                      onClick={() => onSelectUser(user)}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1.5"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      {t('admin_view_history')}
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => onSelectUser(user)}
+                        className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-800/80 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-slate-700/60 hover:border-indigo-500 transition-all inline-flex items-center gap-1"
+                        title="Xem lịch sử học tập"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Lịch sử
+                      </button>
+
+                      {user.role !== 'ROLE_ADMIN' && (
+                        user.isBanned ? (
+                          <button
+                            onClick={() => handleUnban(user)}
+                            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 transition-all inline-flex items-center gap-1"
+                            title="Mở khóa tài khoản"
+                          >
+                            <Unlock className="w-3.5 h-3.5 text-emerald-400" />
+                            Mở khóa
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setUserToBan(user)}
+                            className="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 transition-all inline-flex items-center gap-1"
+                            title="Cấm tài khoản"
+                          >
+                            <Lock className="w-3.5 h-3.5 text-rose-400" />
+                            Cấm
+                          </button>
+                        )
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Ban User Modal */}
+      {userToBan && (
+        <BanUserModal
+          user={userToBan}
+          onClose={() => setUserToBan(null)}
+          onSuccess={fetchStats}
+        />
       )}
     </div>
   );

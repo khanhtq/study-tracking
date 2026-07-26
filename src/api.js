@@ -455,6 +455,8 @@ export const adminApi = {
   getUserStatsList: (range = 'all') => apiCall(`/admin/users/stats?range=${range}`),
   getSuspiciousUsers: () => apiCall('/admin/users/suspicious'),
   getUserSessions: (userId) => apiCall(`/admin/users/${userId}/sessions`),
+  banUser: (userId, reason) => apiCall(`/admin/users/${userId}/ban`, { method: 'PUT', body: JSON.stringify({ reason }) }),
+  unbanUser: (userId) => apiCall(`/admin/users/${userId}/unban`, { method: 'PUT' }),
 };
 
 export const friendsApi = {
