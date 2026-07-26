@@ -1,76 +1,76 @@
 # Study XP Tracker — Backend Service
 
-Hệ thống API RESTful và Real-time Server dành cho ứng dụng **Study XP Tracker**, được phát triển dựa trên **Java 21** và **Spring Boot 3.3.1**. Backend chịu trách nhiệm xử lý toàn bộ logic tính toán kinh nghiệm (XP), quản lý cấp độ, cơ chế chống gian lận, bảng xếp hạng Redis, giao tiếp thời gian thực (WebSocket) và quản lý người dùng.
+RESTful API and Real-time Server for the **Study XP Tracker** application, developed with **Java 21** and **Spring Boot 3.3.1**. The backend handles all Experience Point (XP) calculation logic, level management, anti-cheat mechanisms, Redis leaderboards, real-time communication (WebSocket), and user management.
 
 ---
 
-## 1. Bài toán kỹ thuật & Giải pháp Backend
+## 1. Technical Challenges & Backend Solutions
 
-Backend của Study XP Tracker được thiết kế nhằm giải quyết các thách thức kỹ thuật quan trọng trong ứng dụng gamification & theo dõi học tập:
+The backend of Study XP Tracker is engineered to solve critical technical challenges in gamification and study tracking applications:
 
-### 1.1. Chống gian lận thời gian học (Server-side Anti-Cheat Engine)
-* **Vấn đề:** Người dùng có thể chỉnh sửa dữ liệu timer từ phía Client hoặc can thiệp JavaScript để cộng điểm XP ảo.
-* **Giải pháp:**
-  * Backend hoàn toàn không tin tưởng dữ liệu thời gian gửi từ Client.
-  * Khi bắt đầu học, server ghi lại `start_time`. Khi kết thúc, server tự lấy `end_time` hiện tại của hệ thống để tính số giây thực tế (`duration_seconds`).
-  * Tích hợp **Session Heartbeat Scheduler** định kỳ kiểm tra các session bất thường và tự động hủy hoặc giới hạn tối đa **12 tiếng** cho một phiên học liên tục.
-  * Áp dụng công thức thưởng **+10% XP** cho phiên học từ **25 phút** trở lên (Pomodoro standard).
+### 1.1. Server-side Anti-Cheat Engine
+* **Problem:** Users can manipulate client-side timer data or alter JavaScript execution to artificially increment XP points.
+* **Solution:**
+  * The backend never trusts client-provided duration values.
+  * When a session starts, the server records the `start_time`. Upon session completion, the server calculates actual duration (`duration_seconds`) using system timestamps.
+  * An integrated **Session Heartbeat Scheduler** periodically inspects active sessions, automatically terminating or capping sessions at a maximum continuous limit of **12 hours**.
+  * Applies a **+10% XP** bonus for sessions $\ge 25$ minutes (Pomodoro standard).
 
-### 1.2. Bảng xếp hạng Real-time hiệu năng cao (Redis ZSET + DB Fallback)
-* **Vấn đề:** Truy vấn bảng xếp hạng Top XP/Level từ cơ sở dữ liệu quan hệ (PostgreSQL) khi có hàng ngàn người dùng sẽ gây nghẽn I/O.
-* **Giải pháp:**
-  * Sử dụng **Redis Sorted Set (ZSET)** lưu trữ điểm XP của người dùng với độ phức tạp truy vấn $O(\log N + M)$.
-  * Sử dụng Spring Event Listener (`XpEventListener`) lắng nghe `XpEarnedEvent` để cập nhật điểm vào Redis asynchronous mà không làm chậm API response chính.
-  * Tích hợp cơ chế **Graceful Fallback**: Nếu dịch vụ Redis ngắt kết nối, hệ thống tự động chuyển sang truy vấn JPA PostgreSQL mà không gián đoạn dịch vụ.
+### 1.2. High-Performance Real-Time Leaderboard (Redis ZSET + DB Fallback)
+* **Problem:** Querying Top XP/Level leaderboards directly from a relational database (PostgreSQL) under high concurrency creates severe I/O bottlenecks.
+* **Solution:**
+  * Employs **Redis Sorted Sets (ZSET)** to store user XP with $O(\log N + M)$ query complexity.
+  * Uses a Spring Event Listener (`XpEventListener`) listening to `XpEarnedEvent` to update Redis asynchronously without blocking the main API response path.
+  * Features **Graceful Fallback**: If Redis loses connectivity, the system automatically falls back to PostgreSQL JPA queries without service interruption.
 
-### 1.3. Giao tiếp thời gian thực (WebSocket STOMP + SockJS)
-* **Vấn đề:** Hiển thị trạng thái online/offline của bạn bè và tin nhắn tức thì (Direct Messaging).
-* **Giải pháp:**
-  * Cấu hình WebSocket với đường truyền **STOMP / SockJS**.
-  * Quản lý trạng thái hiển thị hoạt động với 3 cấp độ quyền riêng tư (`ActivityStatusVisibility`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
-  * Phân quyền nhắn tin cá nhân (`MessagePermission`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
+### 1.3. Real-Time Communication (WebSocket STOMP + SockJS)
+* **Problem:** Displaying friends' online/offline presence and direct messaging.
+* **Solution:**
+  * Configures WebSocket with **STOMP / SockJS** transport protocol.
+  * Manages activity visibility with 3 privacy levels (`ActivityStatusVisibility`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
+  * Enforces direct messaging permissions (`MessagePermission`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
 
-### 1.4. Phát nhạc & Proxy âm thanh từ YouTube (YouTube Audio Proxy Service)
-* **Vấn đề:** Phát trực tiếp âm thanh từ YouTube bị vướng rào cản CORS và lọc các video không liên quan đến nhạc tập trung.
-* **Giải pháp:**
-  * `YoutubeAudioService` tự động lọc từ khóa tìm kiếm (bỏ các video vlog, tin tức), chuẩn hóa truy vấn về nhạc lofi/study/ambient.
-  * Stream trực tiếp qua đường dẫn proxy backend để vượt qua giới hạn trình duyệt.
+### 1.4. YouTube Music & Audio Proxy Service
+* **Problem:** Streaming audio directly from YouTube encounters CORS restrictions and includes non-study content.
+* **Solution:**
+  * `YoutubeAudioService` automatically filters search keywords (excluding vlogs, news) to sanitize queries for lofi/study/ambient music.
+  * Streams audio directly via a backend proxy endpoint to bypass browser CORS limitations.
 
-### 1.5. Cấu trúc lưu trữ linh hoạt (Pluggable File Storage)
-* **Vấn đề:** Cần hỗ trợ cả môi trường phát triển nội bộ (Local Disk) lẫn môi trường production trên Cloud.
-* **Giải pháp:**
-  * Thiết kế Interface `FileStorageProvider` với 2 triển khai:
-    * `LocalStorageProviderImpl`: Lưu ảnh avatar vào thư mục `/uploads` cục bộ.
-    * `CloudinaryStorageProviderImpl`: Lưu trữ ảnh tự động lên mây qua Cloudinary API.
+### 1.5. Pluggable File Storage Provider
+* **Problem:** Must support both local development storage (Disk) and cloud production storage.
+* **Solution:**
+  * Implements a `FileStorageProvider` interface with two implementations:
+    * `LocalStorageProviderImpl`: Saves avatar images to local `/uploads` directory.
+    * `CloudinaryStorageProviderImpl`: Automatically uploads images to Cloudinary CDN API.
 
 ---
 
-## 2. Công nghệ & Thư viện (Backend Tech Stack)
+## 2. Tech Stack & Dependencies
 
-| Thành phần | Công nghệ / Thư viện | Mô tả |
+| Component | Technology / Library | Description |
 | :--- | :--- | :--- |
-| **Ngôn ngữ** | Java 21 (LTS) | Sử dụng các tính năng mới của Java 21 |
+| **Language** | Java 21 (LTS) | Java 21 features & syntax |
 | **Framework** | Spring Boot 3.3.1 | Core Framework |
-| **Security** | Spring Security 6 + JJWT 0.11.5 | Xác thực JWT Token & Phân quyền |
-| **Database** | PostgreSQL 15 + Spring Data JPA | Cơ sở dữ liệu quan hệ |
-| **Migration** | Flyway DB Migration | Quản lý phiên bản Schema & Seed data |
-| **Caching** | Spring Data Redis | Redis ZSET cho Leaderboard real-time |
-| **Real-time** | Spring WebSocket (STOMP / SockJS) | Nhắn tin & Trạng thái Online |
-| **Mail Service** | Spring Boot Starter Mail | Gửi mã xác thực OTP qua Email |
-| **OAuth2** | Google API Client 2.4.0 | Xác thực tài khoản bằng Google |
-| **Media Cloud** | Cloudinary SDK 1.38.0 | Lưu trữ avatar người dùng trên Cloud |
-| **Testing** | JUnit 5 + Mockito | Unit test & Integration test |
+| **Security** | Spring Security 6 + JJWT 0.11.5 | JWT Authentication & Authorization |
+| **Database** | PostgreSQL 15 + Spring Data JPA | Relational Database |
+| **Migration** | Flyway DB Migration | Schema Versioning & Seed Data |
+| **Caching** | Spring Data Redis | Redis ZSET for Real-time Leaderboards |
+| **Real-time** | Spring WebSocket (STOMP / SockJS) | Real-time Messaging & Presence |
+| **Mail Service** | Spring Boot Starter Mail | Email OTP Verification |
+| **OAuth2** | Google API Client 2.4.0 | Google OAuth2 Authentication |
+| **Media Cloud** | Cloudinary SDK 1.38.0 | Cloud Avatar Storage |
+| **Testing** | JUnit 5 + Mockito | Unit & Integration Testing |
 
 ---
 
-## 3. Cấu trúc Thư mục Backend
+## 3. Backend Directory Structure
 
 ```
 backend/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/studytracker/
-│   │   │   ├── config/          # Cấu hình Security, JWT, Redis, Web, WebSocket, Seed Data
+│   │   │   ├── config/          # Security, JWT, Redis, Web, WebSocket, Seed Data configs
 │   │   │   ├── controller/      # Auth, User, Session, Leaderboard, Friend, Message, Music, Admin
 │   │   │   ├── dto/             # Request & Response Data Transfer Objects
 │   │   │   ├── event/           # System Events (XpEarnedEvent, ...)
@@ -82,32 +82,32 @@ backend/
 │   │   │   │   └── storage/     # Local Storage & Cloudinary Storage Providers
 │   │   │   └── StudyXpTrackerApplication.java
 │   │   └── resources/
-│   │       ├── db/migration/    # File V1, V2 Flyway Migration Scripts
-│   │       └── application.yml  # Cấu hình môi trường (DB, JWT, Mail, Redis)
+│   │       ├── db/migration/    # Flyway Migration Scripts (V1, V2)
+│   │       └── application.yml  # Environment Configuration (DB, JWT, Mail, Redis)
 │   └── test/                    # Unit Tests (XpService, LeaderboardService, UserService, ...)
-├── Dockerfile                   # Docker build cho Backend
-└── pom.xml                      # Dependencies Maven
+├── Dockerfile                   # Backend Docker Build
+└── pom.xml                      # Maven Dependencies
 ```
 
 ---
 
-## 4. Hướng dẫn Cài đặt & Khởi chạy Backend
+## 4. Setup & Running Backend
 
-### Yêu cầu hệ thống:
-* **JDK 21** trở lên.
+### Prerequisites:
+* **JDK 21** or higher.
 * **Maven 3.8+**.
-* **PostgreSQL 15+** (hoặc chạy qua Docker).
-* **Redis 7+** (tùy chọn, ứng dụng tự động fallback sang DB nếu không có Redis).
+* **PostgreSQL 15+** (or via Docker).
+* **Redis 7+** (optional, fallback to DB available).
 
-### Bước 1: Khởi tạo Cơ sở dữ liệu & Redis bằng Docker
-Tại thư mục gốc dự án:
+### Step 1: Start PostgreSQL & Redis via Docker
+From the project root directory:
 ```bash
 docker compose up -d
 ```
-*Lệnh này sẽ khởi chạy PostgreSQL tại cổng `5432` và Redis tại cổng `6379`.*
+*Runs PostgreSQL on port `5432` and Redis on port `6379`.*
 
-### Bước 2: Cấu hình Môi trường
-Kiểm tra cấu hình tại `application.yml` hoặc cập nhật các biến môi trường:
+### Step 2: Environment Configuration
+Check configuration in `application.yml` or update environment variables:
 ```yaml
 spring:
   datasource:
@@ -122,46 +122,46 @@ spring:
 app:
   jwt:
     secret: 9a4f2c8d7e1b5a3f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f
-    expiration-ms: 86400000 # 24 giờ
+    expiration-ms: 86400000 # 24 hours
 ```
 
-### Bước 3: Biên dịch & Chạy Backend
-Tại thư mục `backend`:
+### Step 3: Build & Run Backend
+Navigate to the `backend` directory:
 ```bash
-# Biên dịch dự án
+# Build project
 mvn clean package -DskipTests
 
-# Chạy Backend
+# Run application
 mvn spring-boot:run
 ```
-Backend sẽ khởi chạy tại: `http://localhost:8080`
+Backend runs at: `http://localhost:8080`
 
-### Bước 4: Chạy Unit Tests
+### Step 4: Run Unit Tests
 ```bash
 mvn test
 ```
 
 ---
 
-## 5. Tóm tắt danh sách API Endpoint chính
+## 5. Main API Endpoints Overview
 
-| Nhóm | Endpoint | Method | Mô tả |
+| Category | Endpoint | Method | Description |
 | :--- | :--- | :--- | :--- |
-| **Auth** | `/api/auth/register` | POST | Đăng ký tài khoản mới & gửi OTP |
-| **Auth** | `/api/auth/verify-otp` | POST | Xác thực email bằng mã OTP |
-| **Auth** | `/api/auth/login` | POST | Đăng nhập & lấy Access Token JWT |
-| **Auth** | `/api/auth/google` | POST | Đăng nhập/Đăng ký qua Google OAuth2 |
-| **Session**| `/api/sessions/start` | POST | Bắt đầu một phiên học mới |
-| **Session**| `/api/sessions/stop` | POST | Kết thúc phiên học & tính XP tự động |
-| **Session**| `/api/sessions/stats` | GET | Thống kê số giờ học & biểu đồ 7 ngày |
-| **Leaderboard**| `/api/leaderboard` | GET | Lấy bảng xếp hạng Top XP/Level (Redis/DB) |
-| **Friends**| `/api/friends/request` | POST | Gửi lời mời kết bạn |
-| **Friends**| `/api/friends/list` | GET | Danh sách bạn bè & trạng thái Online |
-| **Messages**| `/api/messages/{friendId}`| GET | Lấy lịch sử nhắn tin với bạn bè |
-| **Music** | `/api/music/search` | GET | Tìm kiếm danh sách nhạc lofi học tập |
-| **Admin** | `/api/admin/overview` | GET | Dashboard thống kê tổng quan (Dành cho Admin) |
+| **Auth** | `/api/auth/register` | POST | Register new account & send OTP |
+| **Auth** | `/api/auth/verify-otp` | POST | Verify email using OTP code |
+| **Auth** | `/api/auth/login` | POST | Authenticate & return JWT token |
+| **Auth** | `/api/auth/google` | POST | Authenticate/Register via Google OAuth2 |
+| **Session**| `/api/sessions/start` | POST | Start a new study session |
+| **Session**| `/api/sessions/stop` | POST | Stop session & auto-calculate XP |
+| **Session**| `/api/sessions/stats` | GET | Retrieve study statistics & 7-day chart data |
+| **Leaderboard**| `/api/leaderboard` | GET | Fetch Top XP/Level leaderboard (Redis/DB) |
+| **Friends**| `/api/friends/request` | POST | Send friend request |
+| **Friends**| `/api/friends/list` | GET | List friends & online presence |
+| **Messages**| `/api/messages/{friendId}`| GET | Fetch chat message history with a friend |
+| **Music** | `/api/music/search` | GET | Search lofi/study playlists |
+| **Admin** | `/api/admin/overview` | GET | Admin overview dashboard statistics |
 
 ---
 
 ## Author & License
-* **Tác giả:** Tran Quoc Khanh
+* **Author:** Tran Quoc Khanh
