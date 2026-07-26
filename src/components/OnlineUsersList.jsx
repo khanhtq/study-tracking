@@ -1,6 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import { userApi } from '../api';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { Users, BookOpen, Clock, Loader2, Search, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,9 +17,13 @@ const getFullAvatarUrl = (url) => {
 
 function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
   const { t } = useLanguage();
+  const { user: currentUser } = useAuth();
   const [elapsed, setElapsed] = useState('');
   const [liveLevel, setLiveLevel] = useState(user.currentLevel || user.baseLevel || 1);
   const [imgErr, setImgErr] = useState(false);
+
+  const currentUserId = currentUser?.id || currentUser?.userId;
+  const isSelf = Boolean(currentUserId && (user.userId === currentUserId || String(user.userId) === String(currentUserId)));
 
   useEffect(() => {
     if (!user.isStudying || !user.studyStartedAt) {
@@ -140,7 +145,7 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
       </div>
 
       <div className="shrink-0 flex items-center gap-2">
-        {onOpenChat && (
+        {onOpenChat && !isSelf && (
           <button
             type="button"
             onClick={(e) => {
