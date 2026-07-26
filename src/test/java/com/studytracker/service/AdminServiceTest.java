@@ -32,6 +32,9 @@ public class AdminServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private LeaderboardService leaderboardService;
+
     @InjectMocks
     private AdminService adminService;
 
@@ -145,5 +148,35 @@ public class AdminServiceTest {
         assertNull(normalUser.getBanReason());
         assertNull(normalUser.getBannedAt());
         verify(userRepository).save(normalUser);
+    }
+
+    @Test
+    void resetUserProgress_ShouldResetLevelAndXpAndDeleteSessions() {
+        UUID userId = suspiciousUser.getId();
+        when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(suspiciousUser));
+
+        adminService.resetUserProgress(userId);
+
+        assertEquals(1, suspiciousUser.getCurrentLevel());
+        assertEquals(0, suspiciousUser.getCurrentXp());
+        assertEquals(0L, suspiciousUser.getTotalXp());
+
+        verify(studySessionRepository).deleteByUser(suspiciousUser);
+        verify(userRepository).save(suspiciousUser);
+        verify(leaderboardService).updateUserXpInRedis(userId, 0L);
+    }
+
+    @Test
+    void resetUserProgress_ShouldThrow_WhenUserIsAdmin() {
+        User adminUser = User.builder()
+                .id(UUID.randomUUID())
+                .role(com.studytracker.model.Role.ROLE_ADMIN)
+                .build();
+
+        when(userRepository.findById(adminUser.getId())).thenReturn(java.util.Optional.of(adminUser));
+
+        assertThrows(IllegalArgumentException.class, () -> adminService.resetUserProgress(adminUser.getId()));
+        verify(studySessionRepository, never()).deleteByUser(adminUser);
+        verify(userRepository, never()).save(adminUser);
     }
 }

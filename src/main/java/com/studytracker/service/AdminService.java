@@ -31,6 +31,7 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final StudySessionRepository studySessionRepository;
+    private final LeaderboardService leaderboardService;
 
     @Transactional(readOnly = true)
     public AdminOverviewStatsResponse getOverviewStats() {
@@ -278,6 +279,28 @@ public class AdminService {
         user.setBanReason(null);
         user.setBannedAt(null);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void resetUserProgress(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+
+        if (user.getRole() == com.studytracker.model.Role.ROLE_ADMIN) {
+            throw new IllegalArgumentException("Cannot reset progress of an administrator account");
+        }
+
+        // Delete all study sessions belonging to the user
+        studySessionRepository.deleteByUser(user);
+
+        // Reset level, current XP and total XP to 0
+        user.setCurrentLevel(1);
+        user.setCurrentXp(0);
+        user.setTotalXp(0L);
+        userRepository.save(user);
+
+        // Update Redis Leaderboard ZSET
+        leaderboardService.updateUserXpInRedis(user.getId(), 0L);
     }
 
     private int getSeverityWeight(SuspiciousUserAlertDto alert) {

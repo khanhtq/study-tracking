@@ -60,4 +60,10 @@ public class AdminController {
         adminService.unbanUser(userId);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/users/{userId}/reset-progress")
+    public ResponseEntity<Void> resetUserProgress(@PathVariable UUID userId) {
+        adminService.resetUserProgress(userId);
+        return ResponseEntity.ok().build();
+    }
 }
