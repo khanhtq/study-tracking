@@ -12,6 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Users", description = "APIs Quản lý người dùng, Hồ sơ cá nhân, Avatar & Tìm kiếm")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor

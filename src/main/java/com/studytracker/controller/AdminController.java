@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Admin", description = "APIs Quản trị hệ thống & cảnh báo gian lận")
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
