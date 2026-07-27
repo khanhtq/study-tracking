@@ -2,6 +2,8 @@
 target/
 *.class
 
+set-env.ps1
+
 # Log files
 *.log
 
