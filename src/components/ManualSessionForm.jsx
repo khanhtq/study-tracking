@@ -14,7 +14,6 @@ function ManualSessionForm({ onSuccess }) {
   const [minutes, setMinutes] = useState('');
   const [seconds, setSeconds] = useState('');
   const [error, setError] = useState('');
-  const [completedGoal, setCompletedGoal] = useState(null);
   const [syncingGoalId, setSyncingGoalId] = useState(null);
 
   // Helper to format duration to string (e.g., 1h 30m 15s)
@@ -102,12 +101,6 @@ function ManualSessionForm({ onSuccess }) {
             g.id === goal.id ? { ...g, status: 'completed', remainingSeconds: 0, targetCompletionTime: null } : g
           );
           
-          setCompletedGoal({
-            subject: goal.subject,
-            durationSeconds: goal.durationSeconds,
-            xpEarned: session.xpEarned
-          });
-
           if (onSuccess) {
             onSuccess(session);
           }
@@ -150,12 +143,6 @@ function ManualSessionForm({ onSuccess }) {
           const startedAt = new Date(activeGoal.targetCompletionTime - activeGoal.durationSeconds * 1000).toISOString();
           const session = await sessionApi.createManual(activeGoal.subject, activeGoal.durationSeconds, startedAt);
           
-          setCompletedGoal({
-            subject: activeGoal.subject,
-            durationSeconds: activeGoal.durationSeconds,
-            xpEarned: session.xpEarned
-          });
-
           if (onSuccess) {
             onSuccess(session);
           }
@@ -484,55 +471,7 @@ function ManualSessionForm({ onSuccess }) {
         </div>
       </div>
 
-      {/* 3. Celebration Modal on Completion */}
-      <AnimatePresence>
-        {completedGoal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-md glass-panel glass-panel-glow border-emerald-500/30 rounded-3xl p-6 relative overflow-hidden text-center shadow-2xl"
-            >
-              {/* Decorative backgrounds */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <button
-                onClick={() => setCompletedGoal(null)}
-                className="absolute top-4 right-4 p-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-bounce">
-                <Award className="w-8 h-8" />
-              </div>
-
-              <h4 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-indigo-200 mb-2">
-                {t('goal_completed_title')}
-              </h4>
-              <p className="text-slate-300 text-sm mb-6 px-4">
-                {t('goal_completed_desc')}{' '}
-                <strong className="text-emerald-300">{completedGoal.subject}</strong>{' '}
-                {t('goal_completed_in')}{' '}
-                <strong>{formatDurationText(completedGoal.durationSeconds)}</strong>.
-              </p>
-
-              <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 px-4 py-2 rounded-2xl text-lg font-black tracking-wider mb-6">
-                <Plus className="w-4 h-4 text-emerald-400" />
-                {completedGoal.xpEarned} XP
-              </div>
-
-              <button
-                onClick={() => setCompletedGoal(null)}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-2xl transition-all border border-emerald-500/20 shadow-lg shadow-emerald-500/20 cursor-pointer"
-              >
-                {t('goal_btn_ok')}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
