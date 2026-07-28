@@ -13,7 +13,7 @@ import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, Music } from 'lucide-react';
+import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, Music, CheckCircle2, Sparkles, Plus, Clock } from 'lucide-react';
 import { useMusic } from '../context/MusicContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -335,33 +335,68 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
         onSelectProfile={(userId) => setSelectedUserId(userId)}
       />
 
-      {/* Session Result Toast */}
+      {/* Session Result Toast - Toast message on the right side of the screen */}
       <AnimatePresence>
         {sessionToast && (
           <motion.div
-            initial={{ opacity: 0, y: 50, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 20, x: '-50%' }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-full px-4"
+            initial={{ opacity: 0, x: 80, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 80, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="fixed top-20 right-6 z-50 max-w-sm w-full px-4 sm:px-0 pointer-events-none"
           >
-            <div className="glass-panel glass-panel-glow border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl">
-              <div>
-                <span className="text-xs text-indigo-400 font-extrabold uppercase tracking-wider block">{t('session_completed')}</span>
-                <span className="font-bold text-slate-200">{sessionToast.subject}</span>
-                <span className="text-xs text-slate-400 ml-2">({Math.round(sessionToast.durationSeconds / 60)} {t('minutes')})</span>
+            <div className="glass-panel glass-panel-glow border-indigo-500/40 bg-slate-900/95 backdrop-blur-xl rounded-2xl p-4 shadow-2xl shadow-indigo-500/20 relative overflow-hidden pointer-events-auto flex flex-col gap-3">
+              {/* Background ambient glow */}
+              <div className="absolute -top-10 -right-10 w-28 h-28 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full blur-xl pointer-events-none" />
+
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/30 shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-extrabold text-indigo-400 tracking-wider uppercase flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-400" />
+                      <span>{t('session_completed')}</span>
+                    </div>
+                    <span className="font-bold text-slate-100 text-sm block truncate max-w-[170px] sm:max-w-[200px]">
+                      {sessionToast.subject}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black text-xs flex items-center gap-1 shadow-sm">
+                    <Plus className="w-3 h-3 text-emerald-400" />
+                    {sessionToast.xpEarned} XP
+                  </span>
+                  <button
+                    onClick={() => setSessionToast(null)}
+                    className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-300 font-black text-sm border border-indigo-500/20">
-                  +{sessionToast.xpEarned} XP
+
+              {/* Details footer line */}
+              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5 text-slate-400">
+                  <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                  {t('timer_title')}
                 </span>
-                <button
-                  onClick={() => setSessionToast(null)}
-                  className="p-1 rounded-lg hover:bg-slate-900 text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <span className="font-semibold text-slate-200">
+                  {Math.round(sessionToast.durationSeconds / 60)} {t('minutes')} ({sessionToast.durationSeconds}s)
+                </span>
               </div>
+
+              {/* Auto-dismiss countdown bar */}
+              <motion.div
+                initial={{ scaleX: 1 }}
+                animate={{ scaleX: 0 }}
+                transition={{ duration: 5, ease: 'linear' }}
+                className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 origin-left"
+              />
             </div>
           </motion.div>
         )}
