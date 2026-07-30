@@ -25,16 +25,20 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
     const loadPackages = async () => {
       try {
         const data = await paymentApi.getActivePackages();
-        if (data && data.length > 0) {
-          const formatted = data.map(p => ({
-            id: p.id,
-            name: p.name,
-            price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.priceVnd),
-            tagName: p.tagName,
-          }));
-          setPackages(formatted);
-          if (!formatted.some(p => p.id === selectedPackage)) {
-            setSelectedPackage(formatted[0].id);
+        if (Array.isArray(data)) {
+          if (data.length > 0) {
+            const formatted = data.map(p => ({
+              id: p.id,
+              name: p.name,
+              price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.priceVnd),
+              tagName: p.tagName,
+            }));
+            setPackages(formatted);
+            if (!formatted.some(p => p.id === selectedPackage)) {
+              setSelectedPackage(formatted[0].id);
+            }
+          } else {
+            setPackages([]);
           }
         }
       } catch (err) {
@@ -117,36 +121,46 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
           </div>
 
           {/* Package Selection Cards */}
-          <div className="space-y-2.5 mb-6">
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              {t('premium_select_package')}
-            </label>
-            <div className="grid grid-cols-3 gap-2.5">
-              {packages.map((pkg) => {
-                const isSelected = selectedPackage === pkg.id;
-                return (
-                  <button
-                    key={pkg.id}
-                    type="button"
-                    onClick={() => setSelectedPackage(pkg.id)}
-                    className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-gradient-to-b from-amber-500/20 to-yellow-500/10 border-amber-400 ring-2 ring-amber-400/30 shadow-lg shadow-amber-500/10'
-                        : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'
-                    }`}
-                  >
-                    {(pkg.tagName || pkg.tagKey) && (
-                      <span className="absolute -top-2.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 font-black text-[9px] rounded-full shadow-sm">
-                        {pkg.tagName || t(pkg.tagKey)}
-                      </span>
-                    )}
-                    <span className="text-xs font-bold text-slate-200 mt-1">{pkg.name || t(pkg.nameKey)}</span>
-                    <span className="text-sm font-black text-amber-300 mt-0.5">{pkg.price}</span>
-                  </button>
-                );
-              })}
+          {packages.length === 0 ? (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 text-center mb-6 space-y-2">
+              <span className="text-2xl">🎉</span>
+              <h4 className="text-sm font-extrabold text-emerald-300">Tất Cả Đặc Quyền VIP Đang Miễn Phí!</h4>
+              <p className="text-xs text-slate-300">
+                Hệ thống đang mở khóa toàn bộ tính năng cao cấp (Biểu đồ 7 ngày, Nhạc Lofi, Đếm giờ...) cho 100% người dùng hoàn toàn miễn phí!
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2.5 mb-6">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                {t('premium_select_package')}
+              </label>
+              <div className="grid grid-cols-3 gap-2.5">
+                {packages.map((pkg) => {
+                  const isSelected = selectedPackage === pkg.id;
+                  return (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => setSelectedPackage(pkg.id)}
+                      className={`relative flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? 'bg-gradient-to-b from-amber-500/20 to-yellow-500/10 border-amber-400 ring-2 ring-amber-400/30 shadow-lg shadow-amber-500/10'
+                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'
+                      }`}
+                    >
+                      {(pkg.tagName || pkg.tagKey) && (
+                        <span className="absolute -top-2.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 font-black text-[9px] rounded-full shadow-sm">
+                          {pkg.tagName || t(pkg.tagKey)}
+                        </span>
+                      )}
+                      <span className="text-xs font-bold text-slate-200 mt-1">{pkg.name || t(pkg.nameKey)}</span>
+                      <span className="text-sm font-black text-amber-300 mt-0.5">{pkg.price}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Feature Perks Summary */}
           <div className="grid grid-cols-2 gap-2 mb-6 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80 text-xs">
@@ -170,36 +184,40 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
 
           {/* Action Buttons */}
           <div className="space-y-2.5">
-            <button
-              type="button"
-              onClick={handleVnPayPayment}
-              disabled={loadingPayment}
-              className="w-full py-4 px-6 rounded-2xl font-black text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 hover:from-amber-300 hover:to-yellow-200 shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer active:scale-95 disabled:opacity-50"
-            >
-              {loadingPayment ? (
-                <span>{t('btn_connecting_vnpay')}</span>
-              ) : (
-                <>
-                  <CreditCard className="w-5 h-5 fill-slate-950" />
-                  <span>{t('btn_vnpay_pay')}</span>
-                </>
-              )}
-            </button>
-
-            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+            {packages.length > 0 && (
               <button
                 type="button"
-                onClick={handleFreeTrial}
-                disabled={loadingTrial}
-                className="text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                onClick={handleVnPayPayment}
+                disabled={loadingPayment}
+                className="w-full py-4 px-6 rounded-2xl font-black text-slate-950 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 hover:from-amber-300 hover:to-yellow-200 shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 group cursor-pointer active:scale-95 disabled:opacity-50"
               >
-                {loadingTrial ? '...' : t('btn_free_trial_3d')}
+                {loadingPayment ? (
+                  <span>{t('btn_connecting_vnpay')}</span>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5 fill-slate-950" />
+                    <span>{t('btn_vnpay_pay')}</span>
+                  </>
+                )}
               </button>
+            )}
+
+            <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+              {packages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleFreeTrial}
+                  disabled={loadingTrial}
+                  className="text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                >
+                  {loadingTrial ? '...' : t('btn_free_trial_3d')}
+                </button>
+              )}
 
               <button
                 type="button"
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-200 font-medium cursor-pointer"
+                className="text-slate-400 hover:text-slate-200 font-medium cursor-pointer ml-auto"
               >
                 {t('btn_close')}
               </button>
