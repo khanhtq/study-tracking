@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import { userApi, leaderboardApi, getErrorMessage } from '../api';
+import { userApi, leaderboardApi, paymentApi, getErrorMessage } from '../api';
 import AvatarUploader from '../components/AvatarUploader';
 import SEO from '../components/SEO';
-import { Sun, Moon, ArrowLeft, User, Shield, Trophy, Settings, Lock, Check, Globe, LogOut } from 'lucide-react';
+import PremiumUpgradeModal from '../components/PremiumUpgradeModal';
+import { Sun, Moon, ArrowLeft, User, Shield, Trophy, Settings, Lock, Check, Globe, LogOut, Crown, Sparkles, Music, BarChart3, Clock, CreditCard } from 'lucide-react';
 
 export default function Profile({ onBackToDashboard }) {
-  const { user, progress, refreshUserProgress, logout } = useAuth();
+  const { user, progress, refreshUserProgress, logout, togglePremium } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'security' | 'titles' | 'preferences'
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   // Profile Form state
   const [displayName, setDisplayName] = useState('');
@@ -56,6 +58,7 @@ export default function Profile({ onBackToDashboard }) {
   }, [user, progress, language]);
 
   const [userRank, setUserRank] = useState(null);
+  const [paymentHistory, setPaymentHistory] = useState([]);
 
   useEffect(() => {
     userApi
@@ -68,6 +71,15 @@ export default function Profile({ onBackToDashboard }) {
       .then((rankData) => setUserRank(rankData))
       .catch((err) => console.warn('Could not load user rank:', err));
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'premium') {
+      paymentApi
+        .getHistory()
+        .then((history) => setPaymentHistory(history || []))
+        .catch((err) => console.warn('Could not load payment history:', err));
+    }
+  }, [activeTab]);
 
   const handleUpdateProfile = async (e) => {
     e?.preventDefault();
@@ -262,7 +274,15 @@ export default function Profile({ onBackToDashboard }) {
 
             <div className="text-center sm:text-left flex-1">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100">{user?.displayName || t('profile_user_default')}</h1>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 flex items-center gap-2">
+                  <span>{user?.displayName || t('profile_user_default')}</span>
+                  {user?.isPremium && (
+                    <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40 rounded-full text-xs font-black flex items-center gap-1 shadow-md shadow-amber-500/10">
+                      <Crown className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
+                      VIP
+                    </span>
+                  )}
+                </h1>
                 {user?.selectedTitle && (
                   <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
                     {t('title_' + user.selectedTitle) || user.selectedTitle}
@@ -307,6 +327,7 @@ export default function Profile({ onBackToDashboard }) {
         <div className="flex border-b border-slate-800 overflow-x-auto no-scrollbar gap-2 sm:gap-4 pb-2">
           {[
             { id: 'profile', label: t('profile_tab_info'), icon: User },
+            { id: 'premium', label: t('profile_tab_premium'), icon: Crown },
             { id: 'security', label: t('profile_tab_security'), icon: Lock },
             { id: 'titles', label: t('profile_tab_titles'), icon: Trophy },
             { id: 'preferences', label: t('profile_tab_preferences'), icon: Settings },
@@ -412,6 +433,160 @@ export default function Profile({ onBackToDashboard }) {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* TAB VIP PREMIUM */}
+        {activeTab === 'premium' && (
+          <div className="bg-slate-900/90 border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            {/* Header Banner */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent p-6 rounded-2xl border border-amber-500/30">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30 shrink-0">
+                  <Crown className="w-10 h-10 text-slate-950 fill-slate-950" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-white">{t('premium_badge_vip')}</h3>
+                    {user?.isPremium && (
+                      <span className="px-3 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-full text-xs font-extrabold animate-pulse">
+                        {t('profile_vip_active_badge')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {t('premium_modal_subtitle')}
+                  </p>
+                </div>
+              </div>
+
+              {user?.isPremium ? (
+                <div className="px-5 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs flex items-center gap-2 shrink-0 shadow-md">
+                  <Crown className="w-4.5 h-4.5 text-amber-400 fill-amber-400 animate-pulse" />
+                  <span>{t('profile_vip_active_badge')}</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsPremiumModalOpen(true)}
+                  className="px-6 py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-xl transition-all cursor-pointer flex items-center gap-2 shrink-0 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-300 hover:from-amber-300 hover:to-yellow-200 text-slate-950 shadow-amber-500/20 active:scale-95"
+                >
+                  <Crown className="w-4 h-4 fill-slate-950" />
+                  <span>{t('profile_btn_upgrade_vip')}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Premium Perks Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100">{t('perk_scientific_timer')}</h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Ultradian 90/20, Rule 52/17 & Active Recall Flow.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
+                  <Music className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100">{t('perk_unlimited_lofi')}</h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    YouTube Lofi, Piano, Ambient.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                  <BarChart3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100">{t('perk_weekly_chart')}</h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    7 Days detailed study analytics.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-100">{t('perk_xp_bonus')}</h4>
+                  <p className="text-xs text-slate-400 mt-1">
+                    +15% XP Bonus & 👑 VIP badge.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment History Section */}
+            <div className="pt-6 border-t border-slate-800/80 space-y-4">
+              <h4 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <CreditCard className="w-4.5 h-4.5 text-amber-400" />
+                <span>{t('payment_history_title')}</span>
+              </h4>
+
+              {paymentHistory.length === 0 ? (
+                <p className="text-xs text-slate-500 italic py-2">
+                  {t('payment_history_no_orders')}
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                        <th className="py-2.5 px-3">{t('payment_col_order_id')}</th>
+                        <th className="py-2.5 px-3">{t('payment_col_package')}</th>
+                        <th className="py-2.5 px-3">{t('payment_col_amount')}</th>
+                        <th className="py-2.5 px-3">{t('payment_col_status')}</th>
+                        <th className="py-2.5 px-3">{t('payment_col_date')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {paymentHistory.map((item) => (
+                        <tr key={item.orderId} className="hover:bg-slate-950/40">
+                          <td className="py-3 px-3 font-mono font-bold text-amber-400">{item.orderId}</td>
+                          <td className="py-3 px-3 font-semibold text-slate-200">{item.packageName}</td>
+                          <td className="py-3 px-3 font-bold text-emerald-400">{(item.amount || 0).toLocaleString()}đ</td>
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                              item.status === 'SUCCESS'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                : item.status === 'PENDING'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                : item.status === 'EXPIRED'
+                                ? 'bg-slate-800 text-slate-400 border border-slate-700'
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                            }`}>
+                              {item.status === 'SUCCESS'
+                                ? t('payment_status_success')
+                                : item.status === 'PENDING'
+                                ? t('payment_status_pending')
+                                : item.status === 'EXPIRED'
+                                ? t('payment_status_expired')
+                                : t('payment_status_failed')}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-slate-400">
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -758,6 +933,11 @@ export default function Profile({ onBackToDashboard }) {
           </div>
         )}
       </div>
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+      />
     </div>
   );
 }

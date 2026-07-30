@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { userApi, friendsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare, Lock, Unlock } from 'lucide-react';
+import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare, Lock, Unlock, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BanUserModal from './admin/BanUserModal';
 import UnbanUserModal from './admin/UnbanUserModal';
@@ -175,6 +175,12 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                 <div className="mb-4">
                   <h3 className="text-2xl font-black text-slate-100 flex items-center gap-2">
                     <span>{profile.displayName}</span>
+                    {profile.isPremium && (
+                      <span className="px-2.5 py-0.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40 rounded-full text-xs font-black flex items-center gap-1 shadow-md shadow-amber-500/10">
+                        <Crown className="w-4 h-4 text-amber-400 fill-amber-400" />
+                        VIP
+                      </span>
+                    )}
                   </h3>
                   <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                     <Award className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />

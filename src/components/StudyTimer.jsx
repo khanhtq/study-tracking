@@ -2,16 +2,17 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { sessionApi, getServerClientOffset } from '../api';
-import { Play, Square, BookOpen, Clock, Loader2, Coffee, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Play, Square, BookOpen, Clock, Loader2, Coffee, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PremiumUpgradeModal from './PremiumUpgradeModal';
 
 const STUDY_METHODS = [
   { id: 'FREE_MODE', icon: '⏱️', labelKey: 'method_free', descKey: 'method_free_desc', focusSeconds: 0, breakSeconds: 0 },
   { id: 'POMODORO_25_5', icon: '🍅', labelKey: 'method_pomodoro_25_5', descKey: 'method_pomodoro_25_5_desc', focusSeconds: 1500, breakSeconds: 300 },
   { id: 'POMODORO_50_10', icon: '🍅', labelKey: 'method_pomodoro_50_10', descKey: 'method_pomodoro_50_10_desc', focusSeconds: 3000, breakSeconds: 600 },
-  { id: 'RULE_52_17', icon: '⚡', labelKey: 'method_rule_52_17', descKey: 'method_rule_52_17_desc', focusSeconds: 3120, breakSeconds: 1020 },
-  { id: 'DEEP_WORK_90_20', icon: '🧠', labelKey: 'method_deep_work_90_20', descKey: 'method_deep_work_90_20_desc', focusSeconds: 5400, breakSeconds: 1200 },
-  { id: 'ACTIVE_RECALL_30_10', icon: '📝', labelKey: 'method_active_recall_30_10', descKey: 'method_active_recall_30_10_desc', focusSeconds: 1800, breakSeconds: 600 },
+  { id: 'RULE_52_17', icon: '⚡', labelKey: 'method_rule_52_17', descKey: 'method_rule_52_17_desc', focusSeconds: 3120, breakSeconds: 1020, isScientific: true },
+  { id: 'DEEP_WORK_90_20', icon: '🧠', labelKey: 'method_deep_work_90_20', descKey: 'method_deep_work_90_20_desc', focusSeconds: 5400, breakSeconds: 1200, isScientific: true },
+  { id: 'ACTIVE_RECALL_30_10', icon: '📝', labelKey: 'method_active_recall_30_10', descKey: 'method_active_recall_30_10_desc', focusSeconds: 1800, breakSeconds: 600, isScientific: true },
 ];
 
 const playBreakChime = () => {
@@ -39,13 +40,14 @@ const playBreakChime = () => {
 };
 
 function StudyTimer({ onStopResult }) {
-  const { activeSession, setActiveSession, refreshProgress } = useAuth();
+  const { user, activeSession, setActiveSession, refreshProgress } = useAuth();
   const { t } = useLanguage();
   const [subject, setSubject] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('FREE_MODE');
   const [seconds, setSeconds] = useState(0);
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   
   // Break state
   const [isBreakActive, setIsBreakActive] = useState(false);
@@ -398,28 +400,45 @@ function StudyTimer({ onStopResult }) {
                 <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                   {STUDY_METHODS.map((method) => {
                     const isSelected = selectedMethod === method.id;
+                    const isLocked = method.isScientific && !user?.isPremium;
                     return (
                       <button
                         key={method.id}
                         type="button"
-                        onClick={() => setSelectedMethod(method.id)}
+                        onClick={() => {
+                          if (isLocked) {
+                            setIsPremiumModalOpen(true);
+                          } else {
+                            setSelectedMethod(method.id);
+                          }
+                        }}
                         className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden flex flex-col justify-between ${
                           isSelected
                             ? 'bg-indigo-600/20 border-indigo-500 text-white shadow-lg shadow-indigo-500/10'
+                            : isLocked
+                            ? 'bg-slate-900/30 border-amber-500/20 text-slate-400 hover:border-amber-500/40'
                             : 'bg-slate-900/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-lg">{method.icon}</span>
-                          {method.focusSeconds > 0 && (
+                          {method.isScientific ? (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
+                              VIP
+                            </span>
+                          ) : method.focusSeconds > 0 ? (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
                               <Sparkles className="w-2.5 h-2.5" />
                               +15%
                             </span>
-                          )}
+                          ) : null}
                         </div>
                         <div>
-                          <div className="font-bold text-xs leading-tight text-slate-100">{t(method.labelKey)}</div>
+                          <div className="font-bold text-xs leading-tight text-slate-100 flex items-center gap-1">
+                            <span>{t(method.labelKey)}</span>
+                            {isLocked && <Lock className="w-3 h-3 text-amber-400 inline" />}
+                          </div>
                           <div className="text-[11px] text-slate-500 mt-0.5">{t(method.descKey)}</div>
                         </div>
                       </button>
@@ -501,6 +520,12 @@ function StudyTimer({ onStopResult }) {
           )}
         </AnimatePresence>
       </div>
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="Chế độ Đếm giờ Khoa học"
+      />
     </div>
   );
 }

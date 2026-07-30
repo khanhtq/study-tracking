@@ -1,9 +1,11 @@
 import React, { memo, useState, useMemo } from 'react';
-import { History, Calendar, Clock, Sparkles, TrendingUp, Lock, UserPlus, Filter } from 'lucide-react';
+import { History, Calendar, Clock, Sparkles, TrendingUp, Lock, UserPlus, Filter, Crown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import StudyCalendar from './StudyCalendar';
+import PremiumUpgradeModal from './PremiumUpgradeModal';
 
 const METHOD_CONFIG = {
   FREE_MODE: { icon: '⏱️', labelKey: 'method_free' },
@@ -17,6 +19,8 @@ const METHOD_CONFIG = {
 function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
   const { theme } = useTheme();
   const { language, t } = useLanguage();
+  const { user } = useAuth();
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
   const [filterType, setFilterType] = useState('ALL');
   const [customDate, setCustomDate] = useState('');
@@ -128,17 +132,26 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
     <div className="w-full space-y-6">
       {/* 7-Day Stats & Heatmap Container with Blur Overlay for Guests */}
       <div className="relative space-y-6">
-        <div className={`space-y-6 transition-all duration-300 ${isGuest ? 'filter blur-md opacity-40 select-none pointer-events-none' : ''}`}>
-          {/* Visual Chart Panel */}
-          {(sessions.length > 0 || isGuest) && chartData.length > 0 && (
-            <div className="w-full glass-panel rounded-3xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
-              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2 mb-4">
+        {/* 7-Day Visual Chart Panel with Premium / Guest Blur Overlay */}
+        {(sessions.length > 0 || isGuest || !user?.isPremium) && (
+          <div className="w-full glass-panel rounded-3xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-indigo-400" />
                 {t('chart_title')}
               </h3>
-              
-              <div className="w-full h-48 mt-2">
+              {!user?.isPremium && !isGuest && (
+                <span className="px-2.5 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-xs font-bold flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  {t('chart_vip_feature_tag')}
+                </span>
+              )}
+            </div>
+            
+            <div className="relative">
+              <div className={`w-full h-48 mt-2 transition-all duration-300 ${!user?.isPremium || isGuest ? 'filter blur-md opacity-30 select-none pointer-events-none' : ''}`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData}>
                     <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} />
@@ -162,10 +175,36 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-          )}
 
-          {/* GitHub-style Study Calendar */}
+              {/* Premium Lock Overlay for Non-Premium User */}
+              {!user?.isPremium && !isGuest && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md rounded-2xl border border-amber-500/30 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <Crown className="w-7 h-7 text-slate-950 fill-slate-950" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-extrabold text-white">
+                      {t('chart_lock_title')}
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5 max-w-sm">
+                      {t('chart_lock_desc')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsPremiumModalOpen(true)}
+                    className="px-5 py-2.5 rounded-xl font-bold text-xs text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <Crown className="w-4 h-4 fill-slate-950" />
+                    <span>{t('chart_lock_upgrade_btn')}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* GitHub-style Study Calendar */}
+        <div className={`transition-all duration-300 ${isGuest ? 'filter blur-md opacity-40 select-none pointer-events-none' : ''}`}>
           <StudyCalendar sessions={sessions} />
         </div>
 
@@ -358,6 +397,12 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
           </div>
         )}
       </div>
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="Biểu đồ Phân tích 7 Ngày"
+      />
     </div>
   );
 }
