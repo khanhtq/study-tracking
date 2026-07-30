@@ -6,12 +6,13 @@ import AdminOverviewCards from '../components/admin/AdminOverviewCards';
 import AdminOnlineTable from '../components/admin/AdminOnlineTable';
 import AdminUserStatsTable from '../components/admin/AdminUserStatsTable';
 import AdminSuspiciousAlerts from '../components/admin/AdminSuspiciousAlerts';
+import AdminPaymentPackages from '../components/admin/AdminPaymentPackages';
 import UserSessionDetailModal from '../components/admin/UserSessionDetailModal';
 import UserSearchModal from '../components/UserSearchModal';
 import PublicProfileModal from '../components/PublicProfileModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, LogOut, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, LogOut, ChevronDown, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
@@ -163,6 +164,17 @@ export default function AdminDashboard() {
             <BarChart3 className="w-4 h-4" />
             {t('admin_tab_users_stats')}
           </button>
+          <button
+            onClick={() => setActiveTab('packages')}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'packages'
+                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-950'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <CreditCard className="w-4 h-4 text-amber-400" />
+            Quản Lý Gói VIP
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -180,7 +192,7 @@ export default function AdminDashboard() {
                 setIsChatOpen(true);
               }}
             />
-          ) : (
+          ) : activeTab === 'stats' ? (
             <AdminUserStatsTable
               onSelectUser={(u) => setSelectedUserForModal(u)}
               onOpenChat={(targetUser) => {
@@ -188,6 +200,8 @@ export default function AdminDashboard() {
                 setIsChatOpen(true);
               }}
             />
+          ) : (
+            <AdminPaymentPackages />
           )}
         </motion.div>
       </div>

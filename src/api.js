@@ -487,6 +487,10 @@ export const adminApi = {
   banUser: (userId, reason) => apiCall(`/admin/users/${userId}/ban`, { method: 'PUT', body: JSON.stringify({ reason }) }),
   unbanUser: (userId) => apiCall(`/admin/users/${userId}/unban`, { method: 'PUT' }),
   resetUserProgress: (userId) => apiCall(`/admin/users/${userId}/reset-progress`, { method: 'PUT' }),
+  getPackages: () => apiCall('/admin/packages'),
+  createPackage: (data) => apiCall('/admin/packages', { method: 'POST', body: JSON.stringify(data) }),
+  updatePackage: (id, data) => apiCall(`/admin/packages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePackage: (id) => apiCall(`/admin/packages/${id}`, { method: 'DELETE' }),
 };
 
 export const friendsApi = {
@@ -606,6 +610,7 @@ export const leaderboardApi = {
  * Payment API Endpoints (VNPay Gateway)
  */
 export const paymentApi = {
+  getActivePackages: () => apiCall('/payment/packages'),
   createVnPayUrl: (packageId = '1_MONTH') => {
     return apiCall('/payment/vnpay/create', {
       method: 'POST',
