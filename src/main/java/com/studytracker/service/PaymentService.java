@@ -2,9 +2,13 @@ package com.studytracker.service;
 
 import com.studytracker.config.VnPayConfig;
 import com.studytracker.dto.PaymentOrderDto;
+import com.studytracker.dto.PaymentPackageDto;
+import com.studytracker.dto.SavePackageRequest;
 import com.studytracker.model.PaymentOrder;
+import com.studytracker.model.PaymentPackage;
 import com.studytracker.model.User;
 import com.studytracker.repository.PaymentOrderRepository;
+import com.studytracker.repository.PaymentPackageRepository;
 import com.studytracker.repository.UserRepository;
 import com.studytracker.util.VnPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,47 +33,86 @@ public class PaymentService {
 
     private final VnPayConfig vnPayConfig;
     private final PaymentOrderRepository paymentOrderRepository;
+    private final PaymentPackageRepository paymentPackageRepository;
     private final UserRepository userRepository;
 
-    public static class PackageInfo {
-        public final String packageId;
-        public final String name;
-        public final long priceVnd;
-        public final int durationDays;
+    public List<PaymentPackageDto> getActivePackages() {
+        return paymentPackageRepository.findByIsActiveTrueOrderByPriceVndAsc().stream()
+                .map(this::mapToPackageDto)
+                .collect(Collectors.toList());
+    }
 
-        public PackageInfo(String packageId, String name, long priceVnd, int durationDays) {
-            this.packageId = packageId;
-            this.name = name;
-            this.priceVnd = priceVnd;
-            this.durationDays = durationDays;
+    public List<PaymentPackageDto> getAllPackages() {
+        return paymentPackageRepository.findAllByOrderByPriceVndAsc().stream()
+                .map(this::mapToPackageDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public PaymentPackageDto savePackage(SavePackageRequest request) {
+        String packageId = (request.getId() != null && !request.getId().trim().isEmpty())
+                ? request.getId().trim().toUpperCase()
+                : "PKG_" + System.currentTimeMillis();
+
+        PaymentPackage pkg = paymentPackageRepository.findById(packageId)
+                .orElseGet(() -> PaymentPackage.builder().id(packageId).build());
+
+        pkg.setName(request.getName() != null ? request.getName().trim() : "Gói VIP");
+        pkg.setPriceVnd(request.getPriceVnd() != null && request.getPriceVnd() > 0 ? request.getPriceVnd() : 20000L);
+        pkg.setDurationDays(request.getDurationDays() != null && request.getDurationDays() > 0 ? request.getDurationDays() : 30);
+        pkg.setTagName(request.getTagName() != null ? request.getTagName().trim() : null);
+        if (request.getIsActive() != null) {
+            pkg.setIsActive(request.getIsActive());
+        }
+
+        PaymentPackage saved = paymentPackageRepository.save(pkg);
+        return mapToPackageDto(saved);
+    }
+
+    @Transactional
+    public void deletePackage(String id) {
+        if (paymentPackageRepository.existsById(id)) {
+            paymentPackageRepository.deleteById(id);
         }
     }
 
-    public static final Map<String, PackageInfo> PACKAGES = Map.of(
-            "1_MONTH", new PackageInfo("1_MONTH", "Gói VIP Premium 1 Tháng", 49000L, 30),
-            "3_MONTHS", new PackageInfo("3_MONTHS", "Gói VIP Premium 3 Tháng", 129000L, 90),
-            "1_YEAR", new PackageInfo("1_YEAR", "Gói VIP Premium 1 Năm", 399000L, 365)
-    );
+    private PaymentPackageDto mapToPackageDto(PaymentPackage pkg) {
+        return PaymentPackageDto.builder()
+                .id(pkg.getId())
+                .name(pkg.getName())
+                .priceVnd(pkg.getPriceVnd())
+                .durationDays(pkg.getDurationDays())
+                .tagName(pkg.getTagName())
+                .isActive(pkg.getIsActive())
+                .createdAt(pkg.getCreatedAt())
+                .updatedAt(pkg.getUpdatedAt())
+                .build();
+    }
 
     @Transactional
     public String createVnPayPaymentUrl(User user, String packageId, HttpServletRequest request) {
-        PackageInfo pkg = PACKAGES.get(packageId);
-        if (pkg == null) {
-            pkg = PACKAGES.get("1_MONTH");
-        }
+        PaymentPackage pkg = paymentPackageRepository.findById(packageId)
+                .orElseGet(() -> paymentPackageRepository.findByIsActiveTrueOrderByPriceVndAsc().stream()
+                        .findFirst()
+                        .orElse(PaymentPackage.builder()
+                                .id("1_MONTH")
+                                .name("Gói VIP Premium 1 Tháng")
+                                .priceVnd(20000L)
+                                .durationDays(30)
+                                .build()));
 
         String orderId = "ST" + VnPayUtil.getRandomNumber(6) + System.currentTimeMillis() % 100000;
-        long amountVnd = pkg.priceVnd;
+        long amountVnd = pkg.getPriceVnd();
 
         // Save PENDING order to database
         PaymentOrder paymentOrder = PaymentOrder.builder()
                 .user(user)
                 .orderId(orderId)
                 .amount(amountVnd)
-                .packageId(pkg.packageId)
-                .durationDays(pkg.durationDays)
-                .packageName(pkg.name)
-                .orderInfo("Thanh toan " + pkg.name + " - User: " + user.getDisplayName())
+                .packageId(pkg.getId())
+                .durationDays(pkg.getDurationDays())
+                .packageName(pkg.getName())
+                .orderInfo("Thanh toan " + pkg.getName() + " - User: " + user.getDisplayName())
                 .status("PENDING")
                 .build();
         paymentOrderRepository.save(paymentOrder);

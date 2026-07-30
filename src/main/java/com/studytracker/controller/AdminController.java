@@ -15,6 +15,10 @@ import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import com.studytracker.dto.PaymentPackageDto;
+import com.studytracker.dto.SavePackageRequest;
+import com.studytracker.service.PaymentService;
+
 @Tag(name = "Admin", description = "APIs Quản trị hệ thống & cảnh báo gian lận")
 @RestController
 @RequestMapping("/api/admin")
@@ -22,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class AdminController {
 
     private final AdminService adminService;
+    private final PaymentService paymentService;
 
     @GetMapping("/stats/overview")
     public ResponseEntity<AdminOverviewStatsResponse> getOverviewStats() {
@@ -67,6 +72,31 @@ public class AdminController {
     @PutMapping("/users/{userId}/reset-progress")
     public ResponseEntity<Void> resetUserProgress(@PathVariable UUID userId) {
         adminService.resetUserProgress(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Package Management APIs
+    @GetMapping("/packages")
+    public ResponseEntity<List<PaymentPackageDto>> getAllPackages() {
+        return ResponseEntity.ok(paymentService.getAllPackages());
+    }
+
+    @PostMapping("/packages")
+    public ResponseEntity<PaymentPackageDto> createPackage(@RequestBody SavePackageRequest request) {
+        return ResponseEntity.ok(paymentService.savePackage(request));
+    }
+
+    @PutMapping("/packages/{id}")
+    public ResponseEntity<PaymentPackageDto> updatePackage(
+            @PathVariable String id,
+            @RequestBody SavePackageRequest request) {
+        request.setId(id);
+        return ResponseEntity.ok(paymentService.savePackage(request));
+    }
+
+    @DeleteMapping("/packages/{id}")
+    public ResponseEntity<Void> deletePackage(@PathVariable String id) {
+        paymentService.deletePackage(id);
         return ResponseEntity.ok().build();
     }
 }

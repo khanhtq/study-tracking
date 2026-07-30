@@ -2,6 +2,7 @@ package com.studytracker.controller;
 
 import com.studytracker.dto.CreatePaymentRequest;
 import com.studytracker.dto.PaymentOrderDto;
+import com.studytracker.dto.PaymentPackageDto;
 import com.studytracker.model.PaymentOrder;
 import com.studytracker.model.User;
 import com.studytracker.service.PaymentService;
@@ -55,6 +56,11 @@ public class PaymentController {
             log.error("Error processing VNPay return callback", e);
             response.sendRedirect(frontendUrl + "/?paymentStatus=FAILED");
         }
+    }
+
+    @GetMapping("/packages")
+    public ResponseEntity<List<PaymentPackageDto>> getActivePackages() {
+        return ResponseEntity.ok(paymentService.getActivePackages());
     }
 
     @GetMapping("/history")
