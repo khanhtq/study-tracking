@@ -54,6 +54,7 @@ export const AuthProvider = ({ children }) => {
           activityStatusVisibility: data.activityStatusVisibility || 'EVERYONE',
           authProvider: data.authProvider,
           role: data.role || 'ROLE_USER',
+          isPremium: !!data.isPremium,
           currentLevel: data.currentLevel,
           currentXp: data.currentXp,
           totalXp: data.totalXp,
@@ -72,6 +73,7 @@ export const AuthProvider = ({ children }) => {
           soundEnabled: data.soundEnabled,
           preferredLanguage: data.preferredLanguage || 'en',
           activityStatusVisibility: data.activityStatusVisibility || 'EVERYONE',
+          isPremium: !!data.isPremium,
           currentLevel: data.currentLevel,
           currentXp: data.currentXp,
           totalXp: data.totalXp,
@@ -100,11 +102,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       const isGuest = localStorage.getItem('isGuest') === 'true';
-      if (token || isGuest) {
-        await refreshProgress();
-        await fetchActiveSession();
+      try {
+        if (token || isGuest) {
+          await refreshProgress();
+          await fetchActiveSession();
+        }
+      } catch (err) {
+        console.error('Lỗi khởi tạo AuthContext:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initializeAuth();
   }, [token]);
@@ -398,8 +405,15 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth-expired', handleAuthExpired);
   }, []);
 
-  const updateActiveSession = (session) => {
-    setActiveSessionState(session);
+  const togglePremium = async () => {
+    try {
+      const res = await userApi.togglePremium();
+      await refreshProgress();
+      return res;
+    } catch (err) {
+      console.error('Failed to toggle premium status:', err);
+      throw err;
+    }
   };
 
   return (
@@ -419,9 +433,10 @@ export const AuthProvider = ({ children }) => {
       verifyResetOtp,
       resetPassword,
       logout,
+      togglePremium,
       refreshProgress,
       refreshUserProgress: refreshProgress,
-      setActiveSession: updateActiveSession
+      setActiveSession: setActiveSessionState
     }}>
       {children}
     </AuthContext.Provider>

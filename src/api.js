@@ -349,6 +349,15 @@ export const userApi = {
     }
     return apiCall(`/users/${userId}/public-profile`);
   },
+  togglePremium: () => {
+    if (isGuestMode()) {
+      const current = getGuestProgress();
+      const updated = { ...current, isPremium: !current.isPremium };
+      localStorage.setItem('guest_progress', JSON.stringify(updated));
+      return Promise.resolve(updated);
+    }
+    return apiCall('/users/premium/toggle', { method: 'POST' });
+  },
 };
 
 export const sessionApi = {
@@ -590,5 +599,21 @@ export const leaderboardApi = {
       return Promise.resolve({ rank: 1, totalUsers: 1, totalXp: 0 });
     }
     return apiCall('/leaderboard/me');
+  },
+};
+
+/**
+ * Payment API Endpoints (VNPay Gateway)
+ */
+export const paymentApi = {
+  createVnPayUrl: (packageId = '1_MONTH') => {
+    return apiCall('/payment/vnpay/create', {
+      method: 'POST',
+      body: JSON.stringify({ packageId }),
+    });
+  },
+  getHistory: () => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall('/payment/history');
   },
 };

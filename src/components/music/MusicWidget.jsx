@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMusic } from '../../context/MusicContext';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Disc, ListMusic, Maximize2, Minimize2, Loader2, Radio } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Disc, ListMusic, Maximize2, Minimize2, Loader2, Radio, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import PremiumUpgradeModal from '../PremiumUpgradeModal';
 
 export default function MusicWidget() {
+  const { user } = useAuth();
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const {
     currentTrack,
     isPlaying,
@@ -26,6 +30,14 @@ export default function MusicWidget() {
     iframeRef,
   } = useMusic();
   const { t } = useLanguage();
+
+  const handleAction = (callback) => {
+    if (!user?.isPremium) {
+      setIsPremiumModalOpen(true);
+      return;
+    }
+    if (callback) callback();
+  };
 
   const formatTime = (secs) => {
     if (!secs || isNaN(secs)) return '0:00';
@@ -83,7 +95,7 @@ export default function MusicWidget() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                togglePlay();
+                handleAction(togglePlay);
               }}
               className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full transition-all shadow-md active:scale-95"
             >
@@ -100,7 +112,7 @@ export default function MusicWidget() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsMinimized(false);
+                handleAction(() => setIsMinimized(false));
               }}
               className="p-1.5 text-slate-400 hover:text-slate-200 transition-colors"
             >
@@ -114,18 +126,22 @@ export default function MusicWidget() {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="w-80 md:w-96 p-4 bg-slate-900/95 border border-slate-800/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col gap-3"
+            className="w-80 md:w-96 p-4 bg-slate-900/95 border border-slate-800/90 backdrop-blur-2xl rounded-2xl shadow-2xl flex flex-col gap-3 relative overflow-hidden"
           >
             {/* Header / Minimize */}
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-extrabold uppercase tracking-widest text-indigo-400 flex items-center gap-1.5">
                 <Disc className={`w-3.5 h-3.5 ${isPlaying ? 'animate-spin-slow' : ''}`} />
-                {t('music_title')} ({t('music_no_ads')})
+                {t('music_title')}
+                <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[9px] font-bold flex items-center gap-1">
+                  <Crown className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
+                  VIP
+                </span>
               </span>
 
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => handleAction(() => setIsModalOpen(true))}
                   className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded-lg transition-all"
                   title={t('music_tab_playlists')}
                 >
@@ -174,7 +190,7 @@ export default function MusicWidget() {
                 min="0"
                 max={duration || 100}
                 value={currentTime}
-                onChange={(e) => seekTo(Number(e.target.value))}
+                onChange={(e) => handleAction(() => seekTo(Number(e.target.value)))}
                 className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
@@ -188,7 +204,7 @@ export default function MusicWidget() {
               {/* Volume Slider */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={toggleMute}
+                  onClick={() => handleAction(toggleMute)}
                   className="text-slate-400 hover:text-slate-200 transition-colors"
                 >
                   {isMuted || volume === 0 ? (
@@ -211,14 +227,14 @@ export default function MusicWidget() {
               {/* Playback Controls */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={prevTrack}
+                  onClick={() => handleAction(prevTrack)}
                   className="p-2 text-slate-400 hover:text-slate-100 transition-colors"
                 >
                   <SkipBack className="w-4 h-4" />
                 </button>
 
                 <button
-                  onClick={togglePlay}
+                  onClick={() => handleAction(togglePlay)}
                   className="p-3 bg-gradient-to-tr from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-full shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
                 >
                   {isLoadingStream ? (
@@ -231,7 +247,7 @@ export default function MusicWidget() {
                 </button>
 
                 <button
-                  onClick={nextTrack}
+                  onClick={() => handleAction(nextTrack)}
                   className="p-2 text-slate-400 hover:text-slate-100 transition-colors"
                 >
                   <SkipForward className="w-4 h-4" />
@@ -242,7 +258,7 @@ export default function MusicWidget() {
         )}
       </AnimatePresence>
 
-      {/* Hidden YouTube Embed Iframe Fallback — renders when direct audio stream is unavailable */}
+      {/* Hidden YouTube Embed Iframe Fallback */}
       {useEmbedFallback && currentTrack && (
         <iframe
           ref={iframeRef}
@@ -261,6 +277,12 @@ export default function MusicWidget() {
           title="YouTube Music Player Fallback"
         />
       )}
+
+      <PremiumUpgradeModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+        featureName="Trình phát nhạc Lofi Không Giới Hạn"
+      />
     </div>
   );
 }

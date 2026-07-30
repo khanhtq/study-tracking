@@ -2,7 +2,7 @@ import React, { useState, useEffect, memo } from 'react';
 import { userApi } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
-import { Users, BookOpen, Clock, Loader2, Search, MessageSquare } from 'lucide-react';
+import { Users, BookOpen, Clock, Loader2, Search, MessageSquare, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getFullAvatarUrl = (url) => {
@@ -121,6 +121,9 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
         <div className="min-w-0">
           <span className="font-semibold text-sm text-slate-200 group-hover:text-indigo-300 transition-colors flex items-center gap-1.5 truncate">
             <span className="truncate">{user.displayName}</span>
+            {user.isPremium && (
+              <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" title="VIP Premium" />
+            )}
             {liveLevel && (
               <span className={`shrink-0 px-1.5 py-0.5 rounded-lg font-extrabold text-[10px] border transition-all ${
                 isLevelBoosted

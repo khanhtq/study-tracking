@@ -18,9 +18,10 @@ import MusicWidget from './components/music/MusicWidget';
 import MusicModal from './components/music/MusicModal';
 
 import BannedUserNoticeModal from './components/BannedUserNoticeModal';
+import PaymentResultModal from './components/PaymentResultModal';
 
 function MainApp() {
-  const { user, token, loading, logout } = useAuth();
+  const { user, token, loading, logout, refreshProgress } = useAuth();
   const [view, setView] = useState(() => {
     if (localStorage.getItem('ban_notice')) return 'login';
     return 'landing';
@@ -28,6 +29,16 @@ function MainApp() {
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const { t } = useLanguage();
   const canShowMusic = Boolean(token) && !user?.isGuest;
+
+  const [paymentResult, setPaymentResult] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('paymentStatus');
+    const orderId = params.get('orderId');
+    if (status) {
+      return { isOpen: true, status, orderId };
+    }
+    return { isOpen: false, status: null, orderId: null };
+  });
 
   const [banNotice, setBanNotice] = useState(() => {
     const saved = localStorage.getItem('ban_notice');
@@ -165,6 +176,20 @@ function MainApp() {
       {canShowMusic && <MusicWidget />}
       {canShowMusic && <MusicModal />}
       <BannedUserNoticeModal banNotice={banNotice} onLogout={handleLogoutFromBanScreen} />
+
+      <PaymentResultModal
+        isOpen={paymentResult.isOpen}
+        status={paymentResult.status}
+        orderId={paymentResult.orderId}
+        onClose={() => {
+          setPaymentResult({ isOpen: false, status: null, orderId: null });
+          window.history.replaceState({}, document.title, window.location.pathname);
+          if (refreshProgress) refreshProgress();
+        }}
+        onGoHome={() => {
+          setView('dashboard');
+        }}
+      />
     </>
   );
 }
