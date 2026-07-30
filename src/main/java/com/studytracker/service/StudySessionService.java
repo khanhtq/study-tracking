@@ -135,7 +135,7 @@ public class StudySessionService {
             durationSeconds = 1; // Minimum 1 second
         }
 
-        int baseXp = xpService.calculateXpEarned(durationSeconds);
+        int baseXp = xpService.calculateXpEarned(durationSeconds, user);
         boolean isCompleted = false;
         int finalXp = baseXp;
 
@@ -210,7 +210,7 @@ public class StudySessionService {
             throw new IllegalArgumentException("This study session interval overlaps with an existing session");
         }
 
-        int xpEarned = xpService.calculateXpEarned(durationSeconds);
+        int xpEarned = xpService.calculateXpEarned(durationSeconds, user);
 
         // Add XP and update user level
         xpService.addXp(user, xpEarned);

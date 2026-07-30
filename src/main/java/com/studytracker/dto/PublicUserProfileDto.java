@@ -17,6 +17,7 @@ public class PublicUserProfileDto {
     private String displayName;
     private String avatarUrl;
     private String selectedTitle;
+    private Boolean isPremium;
     private String studyGoal;
     private Integer currentLevel;
     private Integer currentXp;

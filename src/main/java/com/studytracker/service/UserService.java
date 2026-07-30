@@ -122,6 +122,7 @@ public class UserService {
                     .email(user.getEmail())
                     .displayName(user.getDisplayName())
                     .role(user.getRole() != null ? user.getRole().name() : "ROLE_USER")
+                    .isPremium(user.isPremiumActive())
                     .build();
         }
 
@@ -151,6 +152,7 @@ public class UserService {
                 .email(updatedUser.getEmail())
                 .displayName(updatedUser.getDisplayName())
                 .role(updatedUser.getRole() != null ? updatedUser.getRole().name() : "ROLE_USER")
+                .isPremium(updatedUser.isPremiumActive())
                 .message("Kích hoạt tài khoản thành công!")
                 .build();
     }
@@ -356,6 +358,7 @@ public class UserService {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .role(user.getRole() != null ? user.getRole().name() : "ROLE_USER")
+                .isPremium(user.isPremiumActive())
                 .build();
     }
 
@@ -381,6 +384,7 @@ public class UserService {
                 .messagePermission(u.getMessagePermission() != null ? u.getMessagePermission().name() : "EVERYONE")
                 .authProvider(u.getAuthProvider() != null ? u.getAuthProvider().name() : "LOCAL")
                 .role(u.getRole() != null ? u.getRole().name() : "ROLE_USER")
+                .isPremium(u.isPremiumActive())
                 .currentLevel(u.getCurrentLevel())
                 .currentXp(u.getCurrentXp())
                 .xpRequiredForNextLevel(xpRequired)
@@ -388,6 +392,22 @@ public class UserService {
                 .pendingFriendRequestsCount(pendingCount)
                 .unreadMessagesCount(unreadCount)
                 .build();
+    }
+
+    @Transactional
+    public UserProgressResponse togglePremium(User user) {
+        User u = userRepository.findById(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Tài khoản không tồn tại"));
+        
+        boolean newPremiumState = !u.isPremiumActive();
+        u.setIsPremium(newPremiumState);
+        if (newPremiumState) {
+            u.setPremiumUntil(Instant.now().plus(3, ChronoUnit.DAYS));
+        } else {
+            u.setPremiumUntil(null);
+        }
+        User saved = userRepository.save(u);
+        return getUserProgress(saved);
     }
 
     @Transactional
@@ -695,6 +715,7 @@ public class UserService {
                 .displayName(u.getDisplayName())
                 .avatarUrl(u.getAvatarUrl())
                 .selectedTitle(u.getSelectedTitle() != null ? u.getSelectedTitle() : "Tân Binh Tập Trung")
+                .isPremium(u.isPremiumActive())
                 .studyGoal(u.getBio())
                 .currentLevel(realtimeLevel)
                 .currentXp(realtimeXp)

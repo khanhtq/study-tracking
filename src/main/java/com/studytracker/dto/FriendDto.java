@@ -19,6 +19,7 @@ public class FriendDto {
     private String email;
     private String avatarUrl;
     private String selectedTitle;
+    private Boolean isPremium;
     private Integer currentLevel;
     private Long totalXp;
     private String friendshipStatus; // ACCEPTED, PENDING

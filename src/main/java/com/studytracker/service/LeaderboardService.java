@@ -88,6 +88,7 @@ public class LeaderboardService {
                         .displayName(user.getDisplayName() != null ? user.getDisplayName() : user.getEmail())
                         .avatarUrl(user.getAvatarUrl())
                         .selectedTitle(user.getSelectedTitle())
+                        .isPremium(user.isPremiumActive())
                         .currentLevel(user.getCurrentLevel())
                         .totalXp(userXpMap.getOrDefault(userId, user.getTotalXp()))
                         .build());
