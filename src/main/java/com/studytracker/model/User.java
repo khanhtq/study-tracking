@@ -114,6 +114,21 @@ public class User implements UserDetails {
     @Column(name = "banned_at")
     private Instant bannedAt;
 
+    @Builder.Default
+    @Column(name = "is_premium", columnDefinition = "boolean default false")
+    private Boolean isPremium = false;
+
+    @Column(name = "premium_until")
+    private Instant premiumUntil;
+
+    public boolean isPremiumActive() {
+        if (!Boolean.TRUE.equals(isPremium)) {
+            return false;
+        }
+        return premiumUntil == null || premiumUntil.isAfter(Instant.now());
+    }
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.singletonList(new SimpleGrantedAuthority(role != null ? role.name() : Role.ROLE_USER.name()));

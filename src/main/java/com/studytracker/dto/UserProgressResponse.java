@@ -27,6 +27,7 @@ public class UserProgressResponse {
     private String messagePermission;
     private String authProvider;
     private String role;
+    private Boolean isPremium;
     private Integer currentLevel;
     private Integer currentXp;
     private Integer xpRequiredForNextLevel;

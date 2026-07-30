@@ -22,22 +22,32 @@ public class XpService {
     @Value("${app.xp.pomodoro-bonus-percentage:10}")
     private int pomodoroBonusPercentage;
 
+    public int calculateXpEarned(int durationSeconds) {
+        return calculateXpEarned(durationSeconds, null);
+    }
+
     /**
      * Quy đổi thời gian học (giây) sang XP.
      * 1 phút = baseRate XP.
      * Nếu thời gian >= 25 phút (1500 giây) -> cộng thêm bonusPercentage%.
+     * Nếu user là Premium -> cộng thêm +15% Premium Bonus.
      */
-    public int calculateXpEarned(int durationSeconds) {
+    public int calculateXpEarned(int durationSeconds, User user) {
         double minutes = (double) durationSeconds / 60.0;
         double baseXp = minutes * baseRatePerMinute;
+        double totalXp = baseXp;
 
         // Nếu học >= 25 phút (Pomodoro session)
         if (durationSeconds >= 1500) {
-            double bonus = baseXp * ((double) pomodoroBonusPercentage / 100.0);
-            return (int) Math.round(baseXp + bonus);
+            totalXp += baseXp * ((double) pomodoroBonusPercentage / 100.0);
         }
 
-        return (int) Math.round(baseXp);
+        // Thưởng thêm +15% cho tài khoản Premium active
+        if (user != null && user.isPremiumActive()) {
+            totalXp += baseXp * 0.15;
+        }
+
+        return (int) Math.round(totalXp);
     }
 
     /**

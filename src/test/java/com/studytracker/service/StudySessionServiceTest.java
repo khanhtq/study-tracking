@@ -115,7 +115,7 @@ public class StudySessionServiceTest {
         when(studySessionRepository.existsOverlappingSession(eq(testUser), any(), any(), any()))
                 .thenReturn(false);
 
-        when(xpService.calculateXpEarned(duration)).thenReturn(660);
+        when(xpService.calculateXpEarned(eq(duration), any())).thenReturn(660);
         when(studySessionRepository.save(any(StudySession.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -147,7 +147,7 @@ public class StudySessionServiceTest {
                 .build();
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
-        when(xpService.calculateXpEarned(anyInt())).thenReturn(660);
+        when(xpService.calculateXpEarned(anyInt(), any())).thenReturn(660);
         when(xpService.addXp(any(), anyInt()))
                 .thenReturn(new XpService.XpCalculationResult(1, 1, 0, 660, 100, false));
 

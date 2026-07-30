@@ -17,6 +17,7 @@ public class LeaderboardEntryDto {
     private String displayName;
     private String avatarUrl;
     private String selectedTitle;
+    private Boolean isPremium;
     private Integer currentLevel;
     private Long totalXp;
 }

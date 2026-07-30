@@ -60,3 +60,12 @@ app:
   xp:
     base-rate-per-minute: 10
     pomodoro-bonus-percentage: 10 # +10% for sessions >= 25 mins
+
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE:DEMO0001}
+  hash-secret: ${VNPAY_HASH_SECRET:SECRETKEYDEMO1234567890ABCDEF}
+  pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payment/vnpay/return}
+  version: 2.1.0
+  command: pay
+

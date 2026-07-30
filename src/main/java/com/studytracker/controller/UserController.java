@@ -27,6 +27,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserProgress(user));
     }
 
+    @PostMapping("/premium/toggle")
+    public ResponseEntity<UserProgressResponse> togglePremium(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userService.togglePremium(user));
+    }
+
     @PutMapping("/profile")
     public ResponseEntity<UserProgressResponse> updateProfile(
             @AuthenticationPrincipal User user,
