@@ -36,6 +36,13 @@ public class PaymentService {
     private final PaymentPackageRepository paymentPackageRepository;
     private final UserRepository userRepository;
 
+    public boolean isUserPremium(User user) {
+        if (paymentPackageRepository.countByIsActiveTrue() == 0) {
+            return true; // Dynamic Free Mode: zero active packages -> unlock VIP for all users!
+        }
+        return user != null && user.isPremiumActive();
+    }
+
     public List<PaymentPackageDto> getActivePackages() {
         return paymentPackageRepository.findByIsActiveTrueOrderByPriceVndAsc().stream()
                 .map(this::mapToPackageDto)

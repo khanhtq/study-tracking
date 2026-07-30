@@ -15,6 +15,7 @@ public class XpService {
 
     private final XpLevelConfigRepository xpLevelConfigRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PaymentService paymentService;
 
     @Value("${app.xp.base-rate-per-minute:10}")
     private int baseRatePerMinute;
@@ -43,7 +44,7 @@ public class XpService {
         }
 
         // Thưởng thêm +15% cho tài khoản Premium active
-        if (user != null && user.isPremiumActive()) {
+        if (user != null && paymentService.isUserPremium(user)) {
             totalXp += baseXp * 0.15;
         }
 

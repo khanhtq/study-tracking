@@ -10,4 +10,5 @@ import java.util.List;
 public interface PaymentPackageRepository extends JpaRepository<PaymentPackage, String> {
     List<PaymentPackage> findByIsActiveTrueOrderByPriceVndAsc();
     List<PaymentPackage> findAllByOrderByPriceVndAsc();
+    long countByIsActiveTrue();
 }
