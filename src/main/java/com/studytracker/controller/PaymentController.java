@@ -26,7 +26,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @Value("${app.frontend-url:http://localhost:5173}")
+    @Value("${APP_FRONTEND_URL:${FRONTEND_URL:${app.frontend-url:http://localhost:5173}}}")
     private String frontendUrl;
 
     @PostMapping("/vnpay/create")
