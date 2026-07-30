@@ -1,31 +1,38 @@
-$env:BREVO_API_KEY="brevo_api_key_value"
-
-$env:SPRING_MAIL_USERNAME="spring_mail_username_value"
-$env:SPRING_MAIL_PASSWORD="spring_mail_password_value"
+# Variables for Spring Mail configuration
+$env:SPRING_MAIL_USERNAME="username"
+$env:SPRING_MAIL_PASSWORD="password"
 $env:SPRING_MAIL_HOST="smtp-relay.brevo.com"
 $env:SPRING_MAIL_PORT="465"
-$env:SPRING_MAIL_FROM="spring_mail_from_value"
+$env:SPRING_MAIL_FROM="from@example.com"
 $env:SPRING_MAIL_STARTTLS_ENABLE="false"
 $env:SPRING_MAIL_SSL_ENABLE="true"
+$env:BREVO_API_KEY="api-key"
 
-$env:GOOGLE_CLIENT_ID="google_client_id_value"
+# Variable for Google OAuth configuration
+$env:GOOGLE_CLIENT_ID="client-id"
 
+# variable for storage provider
 $env:STORAGE_PROVIDER="cloudinary"
-$env:CLOUDINARY_CLOUD_NAME="cloudinary_cloud_name_value"
-$env:CLOUDINARY_API_KEY="cloudinary_api_key_value"
-$env:CLOUDINARY_API_SECRET="cloudinary_api_secret_value"
 
-$env:SPRING_REDIS_HOST="spring_redis_host_value"
+#variables for Cloudinary configuration
+$env:CLOUDINARY_CLOUD_NAME="cloud-name"
+$env:CLOUDINARY_API_KEY="api-key"
+$env:CLOUDINARY_API_SECRET="api-secret"
+
+# Variables for Redis configuration
+$env:SPRING_REDIS_HOST="host"
 $env:SPRING_REDIS_PORT="6379"
-$env:SPRING_REDIS_PASSWORD="spring_redis_password_value"
+$env:SPRING_REDIS_PASSWORD="password"
 $env:SPRING_REDIS_SSL_ENABLED="true"
 
-SPRING_DATASOURCE_PASSWORD="spring_datasource_password_value"
-SPRING_DATASOURCE_URL="spring_datasource_url_value"
-SPRING_DATASOURCE_USERNAME="spring_datasource_username_value"
+#Variable for JWT secret key
+$env:JWT_SECRET="secret-key"
 
-
-$env:JWT_SECRET="jwt_secret_value"
-
+#VNPay ìnormation
+$env:VNPAY_TMN_CODE="tmn-code"
+$env:VNPAY_HASH_SECRET="vnpay-hash-secret"
+$env:VNPAY_PAY_URL="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+$env:VNPAY_RETURN_URL="https://example.com/payment-return"
+$env:FRONTEND_URL="https://example.com"
 
 Write-Host "Environment variables loaded."
