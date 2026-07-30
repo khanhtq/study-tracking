@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Sparkles, Check, X, CreditCard } from 'lucide-react';
@@ -6,20 +6,45 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { paymentApi } from '../api';
 
+const DEFAULT_PACKAGES = [
+  { id: '1_MONTH', name: '1 Tháng', price: '20.000đ', tagName: null },
+  { id: '3_MONTHS', name: '3 Tháng', price: '50.000đ', tagName: 'Phổ biến 🔥' },
+  { id: '1_YEAR', name: '1 Năm', price: '180.000đ', tagName: 'Tiết kiệm 25% ⚡' },
+];
+
 export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
   const { togglePremium } = useAuth();
   const { t } = useLanguage();
   const [selectedPackage, setSelectedPackage] = useState('3_MONTHS');
+  const [packages, setPackages] = useState(DEFAULT_PACKAGES);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingTrial, setLoadingTrial] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const loadPackages = async () => {
+      try {
+        const data = await paymentApi.getActivePackages();
+        if (data && data.length > 0) {
+          const formatted = data.map(p => ({
+            id: p.id,
+            name: p.name,
+            price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.priceVnd),
+            tagName: p.tagName,
+          }));
+          setPackages(formatted);
+          if (!formatted.some(p => p.id === selectedPackage)) {
+            setSelectedPackage(formatted[0].id);
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi tải gói thanh toán từ server, dùng gói mặc định:', err);
+      }
+    };
+    loadPackages();
+  }, [isOpen]);
 
-  const packages = [
-    { id: '1_MONTH', nameKey: 'premium_pkg_1m', price: '49.000đ', tagKey: null },
-    { id: '3_MONTHS', nameKey: 'premium_pkg_3m', price: '129.000đ', tagKey: 'premium_tag_popular' },
-    { id: '1_YEAR', nameKey: 'premium_pkg_1y', price: '399.000đ', tagKey: 'premium_tag_save' },
-  ];
+  if (!isOpen) return null;
 
   const handleVnPayPayment = async () => {
     setLoadingPayment(true);
@@ -110,12 +135,12 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
                         : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-300'
                     }`}
                   >
-                    {pkg.tagKey && (
+                    {(pkg.tagName || pkg.tagKey) && (
                       <span className="absolute -top-2.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-yellow-400 text-slate-950 font-black text-[9px] rounded-full shadow-sm">
-                        {t(pkg.tagKey)}
+                        {pkg.tagName || t(pkg.tagKey)}
                       </span>
                     )}
-                    <span className="text-xs font-bold text-slate-200 mt-1">{t(pkg.nameKey)}</span>
+                    <span className="text-xs font-bold text-slate-200 mt-1">{pkg.name || t(pkg.nameKey)}</span>
                     <span className="text-sm font-black text-amber-300 mt-0.5">{pkg.price}</span>
                   </button>
                 );
