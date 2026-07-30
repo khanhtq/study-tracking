@@ -21,6 +21,7 @@ public class LeaderboardService {
 
     private final StringRedisTemplate redisTemplate;
     private final UserRepository userRepository;
+    private final PaymentService paymentService;
 
     /**
      * Cập nhật điểm XP của người dùng vào Redis Sorted Set.
@@ -88,7 +89,7 @@ public class LeaderboardService {
                         .displayName(user.getDisplayName() != null ? user.getDisplayName() : user.getEmail())
                         .avatarUrl(user.getAvatarUrl())
                         .selectedTitle(user.getSelectedTitle())
-                        .isPremium(user.isPremiumActive())
+                        .isPremium(paymentService.isUserPremium(user))
                         .currentLevel(user.getCurrentLevel())
                         .totalXp(userXpMap.getOrDefault(userId, user.getTotalXp()))
                         .build());

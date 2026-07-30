@@ -25,6 +25,7 @@ public class FriendshipService {
     private final UserRepository userRepository;
     private final StudySessionRepository studySessionRepository;
     private final XpService xpService;
+    private final PaymentService paymentService;
 
     public boolean shouldShowActivityStatus(User targetUser, User viewer) {
         if (viewer != null && viewer.getId().equals(targetUser.getId())) {
@@ -195,7 +196,7 @@ public class FriendshipService {
                     .email(friend.getEmail())
                     .avatarUrl(friend.getAvatarUrl())
                     .selectedTitle(friend.getSelectedTitle() != null ? friend.getSelectedTitle() : "Tân Binh Tập Trung")
-                    .isPremium(friend.isPremiumActive())
+                    .isPremium(paymentService.isUserPremium(friend))
                     .currentLevel(realtimeLevel)
                     .totalXp(friend.getTotalXp() != null ? friend.getTotalXp() : 0L)
                     .friendshipStatus("ACCEPTED")
@@ -222,7 +223,7 @@ public class FriendshipService {
                     .email(requester.getEmail())
                     .avatarUrl(requester.getAvatarUrl())
                     .selectedTitle(requester.getSelectedTitle() != null ? requester.getSelectedTitle() : "Tân Binh Tập Trung")
-                    .isPremium(requester.isPremiumActive())
+                    .isPremium(paymentService.isUserPremium(requester))
                     .currentLevel(requester.getCurrentLevel() != null ? requester.getCurrentLevel() : 1)
                     .totalXp(requester.getTotalXp() != null ? requester.getTotalXp() : 0L)
                     .friendshipStatus("PENDING_RECEIVED")
@@ -244,7 +245,7 @@ public class FriendshipService {
                     .email(addressee.getEmail())
                     .avatarUrl(addressee.getAvatarUrl())
                     .selectedTitle(addressee.getSelectedTitle() != null ? addressee.getSelectedTitle() : "Tân Binh Tập Trung")
-                    .isPremium(addressee.isPremiumActive())
+                    .isPremium(paymentService.isUserPremium(addressee))
                     .currentLevel(addressee.getCurrentLevel() != null ? addressee.getCurrentLevel() : 1)
                     .totalXp(addressee.getTotalXp() != null ? addressee.getTotalXp() : 0L)
                     .friendshipStatus("PENDING_SENT")

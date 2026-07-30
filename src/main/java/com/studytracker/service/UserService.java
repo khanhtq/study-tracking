@@ -53,6 +53,7 @@ public class UserService {
     private final com.studytracker.repository.FriendshipRepository friendshipRepository;
     private final FriendshipService friendshipService;
     private final com.studytracker.repository.MessageRepository messageRepository;
+    private final PaymentService paymentService;
 
     private String generate4DigitOtp() {
         SecureRandom random = new SecureRandom();
@@ -122,7 +123,7 @@ public class UserService {
                     .email(user.getEmail())
                     .displayName(user.getDisplayName())
                     .role(user.getRole() != null ? user.getRole().name() : "ROLE_USER")
-                    .isPremium(user.isPremiumActive())
+                    .isPremium(paymentService.isUserPremium(user))
                     .build();
         }
 
@@ -152,7 +153,7 @@ public class UserService {
                 .email(updatedUser.getEmail())
                 .displayName(updatedUser.getDisplayName())
                 .role(updatedUser.getRole() != null ? updatedUser.getRole().name() : "ROLE_USER")
-                .isPremium(updatedUser.isPremiumActive())
+                .isPremium(paymentService.isUserPremium(updatedUser))
                 .message("Kích hoạt tài khoản thành công!")
                 .build();
     }
@@ -358,7 +359,7 @@ public class UserService {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .role(user.getRole() != null ? user.getRole().name() : "ROLE_USER")
-                .isPremium(user.isPremiumActive())
+                .isPremium(paymentService.isUserPremium(user))
                 .build();
     }
 
@@ -384,7 +385,7 @@ public class UserService {
                 .messagePermission(u.getMessagePermission() != null ? u.getMessagePermission().name() : "EVERYONE")
                 .authProvider(u.getAuthProvider() != null ? u.getAuthProvider().name() : "LOCAL")
                 .role(u.getRole() != null ? u.getRole().name() : "ROLE_USER")
-                .isPremium(u.isPremiumActive())
+                .isPremium(paymentService.isUserPremium(u))
                 .currentLevel(u.getCurrentLevel())
                 .currentXp(u.getCurrentXp())
                 .xpRequiredForNextLevel(xpRequired)
@@ -715,7 +716,7 @@ public class UserService {
                 .displayName(u.getDisplayName())
                 .avatarUrl(u.getAvatarUrl())
                 .selectedTitle(u.getSelectedTitle() != null ? u.getSelectedTitle() : "Tân Binh Tập Trung")
-                .isPremium(u.isPremiumActive())
+                .isPremium(paymentService.isUserPremium(u))
                 .studyGoal(u.getBio())
                 .currentLevel(realtimeLevel)
                 .currentXp(realtimeXp)
