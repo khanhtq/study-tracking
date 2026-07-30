@@ -33,6 +33,9 @@ class LeaderboardServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private PaymentService paymentService;
+
     @InjectMocks
     private LeaderboardService leaderboardService;
 
@@ -74,6 +77,7 @@ class LeaderboardServiceTest {
                 .thenReturn(mockTuples);
 
         when(userRepository.findAllById(anyList())).thenReturn(Collections.singletonList(testUser));
+        when(paymentService.isUserPremium(any())).thenReturn(false);
 
         List<LeaderboardEntryDto> leaderboard = leaderboardService.getTopLeaderboard(10);
 

@@ -27,6 +27,9 @@ public class XpServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private PaymentService paymentService;
+
     @InjectMocks
     private XpService xpService;
 

@@ -39,6 +39,9 @@ class UserServiceTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private PaymentService paymentService;
+
     @InjectMocks
     private UserService userService;
 
