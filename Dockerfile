@@ -17,5 +17,5 @@ RUN apk add --no-cache python3 nodejs ffmpeg curl && \
 
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# Giới hạn JVM Heap tối đa 192MB để tránh bùng nổ RAM trên gói 512MB của Render gây I/O timeout
-ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx192m", "-Xms96m", "-XX:MaxMetaspaceSize=100m", "-XX:ReservedCodeCacheSize=64m", "-jar", "app.jar"]
+# Giới hạn JVM Heap 224MB, Metaspace 180MB để chạy mượt mà Spring Boot 3.3 + Spring Security trên Render 512MB
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx224m", "-Xms128m", "-XX:MetaspaceSize=128m", "-XX:MaxMetaspaceSize=180m", "-XX:ReservedCodeCacheSize=48m", "-Xss256k", "-jar", "app.jar"]
