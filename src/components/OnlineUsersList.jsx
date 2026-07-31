@@ -135,10 +135,17 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
             )}
           </span>
           {user.isStudying ? (
-            <span className="text-[11px] text-indigo-300 font-medium flex items-center gap-1 mt-0.5 truncate">
-              <BookOpen className="w-3 h-3 text-indigo-400 shrink-0" />
-              <span className="truncate">{t('studying_subject')}: {user.currentSubject || t('timer_placeholder')}</span>
-            </span>
+            <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
+              <span className="text-[11px] text-indigo-300 font-medium flex items-center gap-1 truncate">
+                <BookOpen className="w-3 h-3 text-indigo-400 shrink-0" />
+                <span className="truncate">{t('studying_subject')}: {user.currentSubject || t('timer_placeholder')}</span>
+              </span>
+              {user.actionDetail && (
+                <span className="text-[10px] text-slate-400 font-normal italic truncate">
+                  {user.actionDetail}
+                </span>
+              )}
+            </div>
           ) : (
             <span className="text-[11px] text-slate-500 font-medium block mt-0.5 truncate">
               {t('status_active_idle')}
