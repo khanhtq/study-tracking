@@ -124,6 +124,7 @@ public class VirtualUserService {
             User bot = userRepository.findByEmail(botEmail).orElseGet(() -> {
                 User newBot = User.builder()
                         .email(botEmail)
+                        .passwordHash("N/A_VIRTUAL_BOT_NO_LOGIN")
                         .displayName(displayName)
                         .avatarUrl(avatarUrl)
                         .selectedTitle(title)
