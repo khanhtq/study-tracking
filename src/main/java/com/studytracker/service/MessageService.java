@@ -35,6 +35,7 @@ public class MessageService {
     private final FriendshipRepository friendshipRepository;
     private final FriendshipService friendshipService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final VirtualUserService virtualUserService;
 
     @Data
     @AllArgsConstructor
@@ -49,6 +50,11 @@ public class MessageService {
         }
         if (sender.getId().equals(recipient.getId())) {
             return new CanSendResult(false, "Không thể gửi tin nhắn cho chính mình.");
+        }
+
+        // Virtual users can always receive messages
+        if (Boolean.TRUE.equals(recipient.getIsVirtual())) {
+            return new CanSendResult(true, null);
         }
 
         // Admin role can message ANY user in the system without restrictions
@@ -109,6 +115,11 @@ public class MessageService {
             );
         } catch (Exception e) {
             log.warn("Không thể gửi sự kiện Real-time qua WebSocket: {}", e.getMessage());
+        }
+
+        // If recipient is a virtual bot, schedule auto-reply
+        if (Boolean.TRUE.equals(recipient.getIsVirtual())) {
+            virtualUserService.scheduleAutoReply(sender, recipient, request.getContent());
         }
 
         return dto;

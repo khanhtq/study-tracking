@@ -54,6 +54,7 @@ public class UserService {
     private final FriendshipService friendshipService;
     private final com.studytracker.repository.MessageRepository messageRepository;
     private final PaymentService paymentService;
+    private final VirtualUserService virtualUserService;
 
     private String generate4DigitOtp() {
         SecureRandom random = new SecureRandom();
@@ -537,10 +538,11 @@ public class UserService {
         Instant threshold = Instant.now().minus(Duration.ofMinutes(2));
         List<User> activeUsers = userRepository.findByLastActiveAtAfter(threshold).stream()
                 .filter(u -> u.getRole() != com.studytracker.model.Role.ROLE_ADMIN)
+                .filter(u -> u.getIsVirtual() == null || !u.getIsVirtual())
                 .filter(u -> friendshipService.shouldShowActivityStatus(u, currentUser))
                 .collect(Collectors.toList());
 
-        return activeUsers.stream().map(u -> {
+        List<OnlineUserResponse> realResponses = activeUsers.stream().map(u -> {
             Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
             boolean isStudying = activeSessionOpt.isPresent();
             String currentSubject = isStudying ? activeSessionOpt.get().getSubject() : null;
@@ -580,8 +582,13 @@ public class UserService {
                     .baseLevel(baseLevel)
                     .currentLevel(realtimeLevel)
                     .currentXp(currentXp)
+                    .isVirtual(false)
                     .build();
         }).collect(Collectors.toList());
+
+        List<OnlineUserResponse> result = new ArrayList<>(realResponses);
+        result.addAll(virtualUserService.getVirtualOnlineResponses());
+        return result;
     }
 
     public List<UserSearchResponseDto> searchUsers(String query, User currentUser) {

@@ -121,6 +121,10 @@ public class User implements UserDetails {
     @Column(name = "premium_until")
     private Instant premiumUntil;
 
+    @Builder.Default
+    @Column(name = "is_virtual", columnDefinition = "boolean default false")
+    private Boolean isVirtual = false;
+
     public boolean isPremiumActive() {
         if (!Boolean.TRUE.equals(isPremium)) {
             return false;
