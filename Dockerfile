@@ -17,5 +17,5 @@ RUN apk add --no-cache python3 nodejs ffmpeg curl && \
 
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# Giới hạn JVM Heap tối đa 256MB để dành bộ nhớ cho OS và yt-dlp trên gói 512MB RAM miễn phí của Render
-ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx256m", "-Xms128m", "-XX:MaxMetaspaceSize=128m", "-jar", "app.jar"]
+# Giới hạn JVM Heap tối đa 192MB để tránh bùng nổ RAM trên gói 512MB của Render gây I/O timeout
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx192m", "-Xms96m", "-XX:MaxMetaspaceSize=100m", "-XX:ReservedCodeCacheSize=64m", "-jar", "app.jar"]
