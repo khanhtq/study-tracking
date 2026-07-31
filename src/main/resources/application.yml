@@ -1,5 +1,10 @@
 server:
   port: ${PORT:8080}
+  tomcat:
+    threads:
+      max: 50
+      min-spare: 10
+    connection-timeout: 5000ms
 
 spring:
   application:
@@ -9,6 +14,11 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      idle-timeout: 30000
+      connection-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: validate
