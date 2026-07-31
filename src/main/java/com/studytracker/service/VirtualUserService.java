@@ -92,13 +92,13 @@ public class VirtualUserService {
     }
 
     /**
-     * Tự động cập nhật / làm mới danh sách người dùng ảo theo chu kỳ 2 giờ.
+     * Tự động cập nhật / làm mới danh sách người dùng ảo theo chu kỳ xoay chuyển (mỗi giờ kiểm tra và xoay theo rotationHours).
      */
-    @Scheduled(cron = "0 0 */2 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void scheduledRefresh() {
         if (!enabled) return;
-        log.info("Thực hiện làm mới danh sách người dùng ảo (đổi tên & hành động sau mỗi 2 giờ)...");
+        log.info("Thực hiện làm mới danh sách người dùng ảo theo chu kỳ {} giờ...", rotationHours);
         refreshVirtualUsersInDb();
     }
 
