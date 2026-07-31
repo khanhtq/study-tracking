@@ -24,6 +24,11 @@ public interface StudySessionRepository extends JpaRepository<StudySession, UUID
     List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtIsNullAndStartedAtBefore(Instant cutoff);
     long countByEndedAtIsNotNull();
 
+    @Query("SELECT COALESCE(SUM(s.durationSeconds), 0) FROM StudySession s WHERE s.endedAt IS NOT NULL AND s.durationSeconds IS NOT NULL")
+    long sumCompletedStudySeconds();
+
+    List<StudySession> findByUserInAndEndedAtIsNull(java.util.Collection<User> users);
+
     @Query("SELECT COUNT(s) > 0 FROM StudySession s WHERE s.user = :user AND " +
            "(:excludeId IS NULL OR s.id <> :excludeId) AND " +
            "((s.endedAt IS NOT NULL AND s.startedAt < :endedAt AND s.endedAt > :startedAt) OR " +

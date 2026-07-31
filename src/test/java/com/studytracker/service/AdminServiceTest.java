@@ -35,6 +35,9 @@ public class AdminServiceTest {
     @Mock
     private LeaderboardService leaderboardService;
 
+    @Mock
+    private VirtualUserService virtualUserService;
+
     @InjectMocks
     private AdminService adminService;
 
@@ -62,7 +65,7 @@ public class AdminServiceTest {
 
     @Test
     void getSuspiciousUsers_ShouldReturnEmptyList_WhenUsersHaveNormalActivity() {
-        when(userRepository.findAll()).thenReturn(List.of(normalUser));
+        when(userRepository.findAllRealUsers()).thenReturn(List.of(normalUser));
 
         StudySession normalSession = StudySession.builder()
                 .user(normalUser)
@@ -73,7 +76,7 @@ public class AdminServiceTest {
                 .source(SessionSource.TIMER)
                 .build();
 
-        when(studySessionRepository.findAll()).thenReturn(List.of(normalSession));
+        when(studySessionRepository.findByStartedAtAfter(any(Instant.class))).thenReturn(List.of(normalSession));
 
         List<SuspiciousUserAlertDto> alerts = adminService.getSuspiciousUsers();
 
@@ -83,7 +86,7 @@ public class AdminServiceTest {
 
     @Test
     void getSuspiciousUsers_ShouldReturnHighSeverityAlert_WhenUserExceeds16HoursIn24h() {
-        when(userRepository.findAll()).thenReturn(List.of(suspiciousUser));
+        when(userRepository.findAllRealUsers()).thenReturn(List.of(suspiciousUser));
 
         // 18 hours = 64800 seconds
         StudySession hugeSession = StudySession.builder()
@@ -95,7 +98,7 @@ public class AdminServiceTest {
                 .source(SessionSource.TIMER)
                 .build();
 
-        when(studySessionRepository.findAll()).thenReturn(List.of(hugeSession));
+        when(studySessionRepository.findByStartedAtAfter(any(Instant.class))).thenReturn(List.of(hugeSession));
 
         List<SuspiciousUserAlertDto> alerts = adminService.getSuspiciousUsers();
 
@@ -176,5 +179,22 @@ public class AdminServiceTest {
         assertThrows(IllegalArgumentException.class, () -> adminService.resetUserProgress(adminUser.getId()));
         verify(studySessionRepository, never()).deleteByUser(adminUser);
         verify(userRepository, never()).save(adminUser);
+    }
+
+    @Test
+    void getOverviewStats_ShouldReturnAggregatedCounts() {
+        when(userRepository.countRealUsers()).thenReturn(10L);
+        when(userRepository.sumTotalXpRealUsers()).thenReturn(5000L);
+        when(studySessionRepository.countByEndedAtIsNotNull()).thenReturn(25L);
+        when(studySessionRepository.sumCompletedStudySeconds()).thenReturn(36000L);
+        when(virtualUserService.getVirtualOnlineResponses()).thenReturn(java.util.Collections.emptyList());
+
+        var stats = adminService.getOverviewStats();
+
+        assertNotNull(stats);
+        assertEquals(10L, stats.getTotalUsers());
+        assertEquals(5000L, stats.getTotalXpDistributed());
+        assertEquals(25L, stats.getTotalSessions());
+        assertEquals(36000L, stats.getTotalStudySeconds());
     }
 }
