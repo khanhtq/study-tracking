@@ -100,14 +100,7 @@ public class AdminService {
 
         List<User> allUsers = userRepository.findAllRealUsers();
 
-        Instant fetchCutoff = periodCutoff;
-        if (fetchCutoff != null && fetchCutoff.isAfter(cutoff24h)) {
-            fetchCutoff = cutoff24h;
-        }
-
-        List<StudySession> sessions = (fetchCutoff != null)
-                ? studySessionRepository.findByStartedAtAfter(fetchCutoff)
-                : studySessionRepository.findAll();
+        List<StudySession> sessions = studySessionRepository.findAll();
 
         Map<UUID, List<StudySession>> sessionsByUserMap = sessions.stream()
                 .filter(s -> s.getUser() != null)
@@ -115,7 +108,7 @@ public class AdminService {
 
         return allUsers.stream().map(user -> {
             boolean isOnline = user.getLastActiveAt() != null && user.getLastActiveAt().isAfter(onlineThreshold);
-            List<StudySession> userSessions = sessionsByUserMap.getOrDefault(user.getId(), Collections.emptyList());
+            List<StudySession> userSessions = new ArrayList<>(sessionsByUserMap.getOrDefault(user.getId(), Collections.emptyList()));
             userSessions.sort(Comparator.comparing(StudySession::getStartedAt, Comparator.nullsLast(Comparator.reverseOrder())));
 
             boolean isStudying = isOnline && userSessions.stream().anyMatch(s -> s.getEndedAt() == null);
