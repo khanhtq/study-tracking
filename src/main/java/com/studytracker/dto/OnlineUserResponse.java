@@ -20,8 +20,10 @@ public class OnlineUserResponse {
     private Instant lastActiveAt;
     private Boolean isStudying;
     private String currentSubject;
+    private String actionDetail;
     private Instant studyStartedAt;
     private Integer baseLevel;
     private Integer currentLevel;
     private Integer currentXp;
+    private Boolean isVirtual;
 }

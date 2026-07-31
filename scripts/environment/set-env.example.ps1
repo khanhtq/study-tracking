@@ -35,4 +35,10 @@ $env:VNPAY_PAY_URL="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
 $env:VNPAY_RETURN_URL="https://example.com/payment-return"
 $env:FRONTEND_URL="https://example.com"
 
+# Variables for Virtual Users configuration
+$env:VIRTUAL_USERS_ENABLED="true"
+$env:VIRTUAL_USERS_COUNT="8"
+$env:VIRTUAL_USERS_ROTATION_HOURS="2"
+$env:VIRTUAL_USERS_AUTO_REPLY_ENABLED="true"
+
 Write-Host "Environment variables loaded."

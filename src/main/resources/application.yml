@@ -70,6 +70,11 @@ app:
   xp:
     base-rate-per-minute: 10
     pomodoro-bonus-percentage: 10 # +10% for sessions >= 25 mins
+  virtual-users:
+    enabled: ${VIRTUAL_USERS_ENABLED:true}
+    count: ${VIRTUAL_USERS_COUNT:8}
+    rotation-hours: ${VIRTUAL_USERS_ROTATION_HOURS:2}
+    auto-reply-enabled: ${VIRTUAL_USERS_AUTO_REPLY_ENABLED:true}
 
 vnpay:
   tmn-code: ${VNPAY_TMN_CODE:DEMO0001}
