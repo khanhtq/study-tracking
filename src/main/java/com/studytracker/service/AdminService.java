@@ -4,6 +4,7 @@ import com.studytracker.dto.AdminOverviewStatsResponse;
 import com.studytracker.dto.OnlineUserResponse;
 import com.studytracker.dto.SuspiciousUserAlertDto;
 import com.studytracker.dto.UserSessionStatsDto;
+import com.studytracker.model.Role;
 import com.studytracker.model.SessionSource;
 import com.studytracker.model.StudySession;
 import com.studytracker.model.User;
@@ -18,11 +19,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,17 +29,22 @@ public class AdminService {
     private final UserRepository userRepository;
     private final StudySessionRepository studySessionRepository;
     private final LeaderboardService leaderboardService;
+    private final VirtualUserService virtualUserService;
 
     @Transactional(readOnly = true)
     public AdminOverviewStatsResponse getOverviewStats() {
-        long totalUsers = userRepository.count();
+        List<User> allUsers = userRepository.findAll();
+        List<User> realUsers = allUsers.stream()
+                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
+                .collect(Collectors.toList());
+
+        long totalUsers = realUsers.size();
         Instant activeThreshold = Instant.now().minus(Duration.ofMinutes(2));
         List<User> activeUsers = userRepository.findByLastActiveAtAfter(activeThreshold);
 
-        long onlineCount = activeUsers.size();
-        long studyingCount = activeUsers.stream()
-                .filter(u -> studySessionRepository.findByUserAndEndedAtIsNull(u).isPresent())
-                .count();
+        List<OnlineUserResponse> onlineList = getOnlineUsersDetailed();
+        long onlineCount = onlineList.size();
+        long studyingCount = onlineList.stream().filter(u -> Boolean.TRUE.equals(u.getIsStudying())).count();
 
         List<StudySession> allSessions = studySessionRepository.findAll();
         long completedSessionsCount = allSessions.stream()
@@ -54,7 +56,7 @@ public class AdminService {
                 .mapToLong(StudySession::getDurationSeconds)
                 .sum();
 
-        long totalXp = userRepository.findAll().stream()
+        long totalXp = realUsers.stream()
                 .mapToLong(u -> u.getTotalXp() != null ? u.getTotalXp() : 0L)
                 .sum();
 
@@ -70,11 +72,12 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<OnlineUserResponse> getOnlineUsersDetailed() {
-        // Retrieve online users active within last 2 minutes
         Instant activeThreshold = Instant.now().minus(Duration.ofMinutes(2));
-        List<User> activeUsers = userRepository.findByLastActiveAtAfter(activeThreshold);
+        List<User> activeUsers = userRepository.findByLastActiveAtAfter(activeThreshold).stream()
+                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
+                .collect(Collectors.toList());
 
-        return activeUsers.stream().map(u -> {
+        List<OnlineUserResponse> realResponses = activeUsers.stream().map(u -> {
             Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
             boolean isStudying = activeSessionOpt.isPresent();
             String currentSubject = isStudying ? activeSessionOpt.get().getSubject() : null;
@@ -89,8 +92,13 @@ public class AdminService {
                     .studyStartedAt(studyStartedAt)
                     .currentLevel(u.getCurrentLevel())
                     .currentXp(u.getCurrentXp())
+                    .isVirtual(false)
                     .build();
         }).collect(Collectors.toList());
+
+        List<OnlineUserResponse> result = new ArrayList<>(realResponses);
+        result.addAll(virtualUserService.getVirtualOnlineResponses());
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -98,13 +106,22 @@ public class AdminService {
         Instant periodCutoff = calculatePeriodCutoff(range);
         Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
         Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
-        List<User> allUsers = userRepository.findAll();
+
+        List<User> allUsers = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
+                .collect(Collectors.toList());
+
+        List<StudySession> allSessions = studySessionRepository.findAll();
+        Map<UUID, List<StudySession>> sessionsByUserMap = allSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.groupingBy(s -> s.getUser().getId()));
 
         return allUsers.stream().map(user -> {
             boolean isOnline = user.getLastActiveAt() != null && user.getLastActiveAt().isAfter(onlineThreshold);
-            boolean isStudying = isOnline && studySessionRepository.findByUserAndEndedAtIsNull(user).isPresent();
+            List<StudySession> userSessions = sessionsByUserMap.getOrDefault(user.getId(), Collections.emptyList());
+            userSessions.sort(Comparator.comparing(StudySession::getStartedAt, Comparator.nullsLast(Comparator.reverseOrder())));
 
-            List<StudySession> userSessions = studySessionRepository.findByUserOrderByStartedAtDesc(user);
+            boolean isStudying = isOnline && userSessions.stream().anyMatch(s -> s.getEndedAt() == null);
 
             long totalSessionsCount = userSessions.stream().filter(s -> s.getEndedAt() != null).count();
             long totalStudySeconds = userSessions.stream()
@@ -126,7 +143,7 @@ public class AdminService {
                     .mapToLong(StudySession::getXpEarned)
                     .sum();
 
-            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, cutoff24h);
+            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, userSessions, cutoff24h);
             boolean isSuspicious = alertOpt.isPresent();
             List<String> suspiciousReasons = alertOpt.map(SuspiciousUserAlertDto::getReasons).orElse(null);
 
@@ -156,13 +173,21 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<SuspiciousUserAlertDto> getSuspiciousUsers() {
-        List<User> allUsers = userRepository.findAll();
+        List<User> allUsers = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
+                .collect(Collectors.toList());
         Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
+
+        List<StudySession> allSessions = studySessionRepository.findAll();
+        Map<UUID, List<StudySession>> sessionsByUserMap = allSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.groupingBy(s -> s.getUser().getId()));
 
         List<SuspiciousUserAlertDto> suspiciousAlerts = new ArrayList<>();
 
         for (User user : allUsers) {
-            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, cutoff24h);
+            List<StudySession> userSessions = sessionsByUserMap.getOrDefault(user.getId(), Collections.emptyList());
+            Optional<SuspiciousUserAlertDto> alertOpt = evaluateUserSuspiciousActivity(user, userSessions, cutoff24h);
             alertOpt.ifPresent(suspiciousAlerts::add);
         }
 
@@ -170,8 +195,7 @@ public class AdminService {
         return suspiciousAlerts;
     }
 
-    private Optional<SuspiciousUserAlertDto> evaluateUserSuspiciousActivity(User user, Instant cutoff24h) {
-        List<StudySession> userSessions = studySessionRepository.findByUserOrderByStartedAtDesc(user);
+    private Optional<SuspiciousUserAlertDto> evaluateUserSuspiciousActivity(User user, List<StudySession> userSessions, Instant cutoff24h) {
         List<StudySession> recentSessions = userSessions.stream()
                 .filter(s -> s.getStartedAt() != null && s.getStartedAt().isAfter(cutoff24h))
                 .collect(Collectors.toList());

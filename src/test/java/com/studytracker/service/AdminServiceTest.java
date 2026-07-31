@@ -73,8 +73,7 @@ public class AdminServiceTest {
                 .source(SessionSource.TIMER)
                 .build();
 
-        when(studySessionRepository.findByUserOrderByStartedAtDesc(normalUser))
-                .thenReturn(List.of(normalSession));
+        when(studySessionRepository.findAll()).thenReturn(List.of(normalSession));
 
         List<SuspiciousUserAlertDto> alerts = adminService.getSuspiciousUsers();
 
@@ -96,8 +95,7 @@ public class AdminServiceTest {
                 .source(SessionSource.TIMER)
                 .build();
 
-        when(studySessionRepository.findByUserOrderByStartedAtDesc(suspiciousUser))
-                .thenReturn(List.of(hugeSession));
+        when(studySessionRepository.findAll()).thenReturn(List.of(hugeSession));
 
         List<SuspiciousUserAlertDto> alerts = adminService.getSuspiciousUsers();
 
