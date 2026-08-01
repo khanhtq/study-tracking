@@ -18,8 +18,19 @@ public class JwtTokenProvider {
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
-    @Value("${app.jwt.expiration-ms}")
+    @Value("${app.jwt.expiration-ms:900000}")
     private long jwtExpirationMs;
+
+    @Value("${app.jwt.refresh-expiration-ms:604800000}")
+    private long jwtRefreshExpirationMs;
+
+    public long getJwtExpirationMs() {
+        return jwtExpirationMs;
+    }
+
+    public long getJwtRefreshExpirationMs() {
+        return jwtRefreshExpirationMs;
+    }
 
     private Key getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes();
@@ -47,27 +58,55 @@ public class JwtTokenProvider {
                 .getBody();
     }
 
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+    public Boolean isTokenExpired(String token) {
+        try {
+            return extractExpiration(token).before(new Date());
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     public String generateToken(String username) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        return generateAccessToken(username);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    public String generateAccessToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "access");
+        return createToken(claims, username, jwtExpirationMs);
+    }
+
+    public String generateRefreshToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+        return createToken(claims, username, jwtRefreshExpirationMs);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, long expirationMs) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        try {
+            final String username = extractUsername(token);
+            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public Boolean validateToken(String token) {
+        try {
+            extractAllClaims(token);
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

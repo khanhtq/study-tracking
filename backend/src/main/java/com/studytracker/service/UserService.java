@@ -34,7 +34,7 @@ import com.studytracker.dto.ChangePasswordRequest;
 import com.studytracker.dto.TitleOptionDto;
 import com.studytracker.dto.PublicUserProfileDto;
 import com.studytracker.dto.UserSearchResponseDto;
-import com.studytracker.service.storage.FileStorageProvider;
+import com.studytracker.service.storage.DocumentStorageProvider;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 
@@ -49,11 +49,12 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final XpService xpService;
     private final EmailService emailService;
-    private final FileStorageProvider fileStorageProvider;
+    private final DocumentStorageProvider documentStorageProvider;
     private final com.studytracker.repository.FriendshipRepository friendshipRepository;
     private final FriendshipService friendshipService;
     private final com.studytracker.repository.MessageRepository messageRepository;
     private final PaymentService paymentService;
+    private final VirtualUserService virtualUserService;
 
     private String generate4DigitOtp() {
         SecureRandom random = new SecureRandom();
@@ -422,7 +423,7 @@ public class UserService {
         if (request.getAvatarUrl() != null) {
             String newAvatarUrl = request.getAvatarUrl().trim();
             if (u.getAvatarUrl() != null && !u.getAvatarUrl().equalsIgnoreCase(newAvatarUrl)) {
-                fileStorageProvider.delete(u.getAvatarUrl());
+                deleteOldAvatar(u.getAvatarUrl());
             }
             u.setAvatarUrl(newAvatarUrl);
         }
@@ -472,14 +473,55 @@ public class UserService {
         User u = userRepository.findById(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Tài khoản không tồn tại"));
 
-        if (u.getAvatarUrl() != null && !u.getAvatarUrl().isEmpty()) {
-            fileStorageProvider.delete(u.getAvatarUrl());
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File ảnh không được để trống.");
         }
 
-        String avatarUrl = fileStorageProvider.store(file, "avatars");
+        deleteOldAvatar(u.getAvatarUrl());
+
+        String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "avatar.png";
+        String ext = "png";
+        int idx = originalFilename.lastIndexOf('.');
+        if (idx > 0) {
+            ext = originalFilename.substring(idx + 1).toLowerCase();
+        }
+
+        String filename = UUID.randomUUID().toString() + "." + ext;
+        String targetPath = "avatars/" + filename;
+
+        documentStorageProvider.upload(file, targetPath);
+
+        String avatarUrl;
+        if ("AZURE".equalsIgnoreCase(documentStorageProvider.getProviderName())) {
+            String permanentUrl = documentStorageProvider.generateDownloadUrl(targetPath, filename, 0); // Permanent URL without SAS expiration
+            avatarUrl = (permanentUrl != null) ? permanentUrl : targetPath;
+        } else {
+            avatarUrl = "/uploads/" + targetPath;
+        }
+
         u.setAvatarUrl(avatarUrl);
         User updatedUser = userRepository.save(u);
         return getUserProgress(updatedUser);
+    }
+
+    private void deleteOldAvatar(String oldAvatarUrl) {
+        try {
+            if (oldAvatarUrl == null || oldAvatarUrl.trim().isEmpty()) return;
+            if (oldAvatarUrl.startsWith("/uploads/")) {
+                String relativePath = oldAvatarUrl.substring("/uploads/".length());
+                documentStorageProvider.delete(relativePath);
+            } else if (oldAvatarUrl.contains("avatars/")) {
+                int idx = oldAvatarUrl.indexOf("avatars/");
+                String targetPath = oldAvatarUrl.substring(idx);
+                int queryIdx = targetPath.indexOf('?');
+                if (queryIdx > 0) {
+                    targetPath = targetPath.substring(0, queryIdx);
+                }
+                documentStorageProvider.delete(targetPath);
+            }
+        } catch (Exception e) {
+            // log warning if old avatar deletion fails
+        }
     }
 
     @Transactional
@@ -537,14 +579,23 @@ public class UserService {
         Instant threshold = Instant.now().minus(Duration.ofMinutes(2));
         List<User> activeUsers = userRepository.findByLastActiveAtAfter(threshold).stream()
                 .filter(u -> u.getRole() != com.studytracker.model.Role.ROLE_ADMIN)
+                .filter(u -> u.getIsVirtual() == null || !u.getIsVirtual())
                 .filter(u -> friendshipService.shouldShowActivityStatus(u, currentUser))
                 .collect(Collectors.toList());
 
-        return activeUsers.stream().map(u -> {
-            Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
-            boolean isStudying = activeSessionOpt.isPresent();
-            String currentSubject = isStudying ? activeSessionOpt.get().getSubject() : null;
-            Instant studyStartedAt = isStudying ? activeSessionOpt.get().getStartedAt() : null;
+        List<StudySession> activeSessions = activeUsers.isEmpty()
+                ? java.util.Collections.emptyList()
+                : studySessionRepository.findByUserInAndEndedAtIsNull(activeUsers);
+
+        java.util.Map<UUID, StudySession> activeSessionMap = activeSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (s1, s2) -> s1));
+
+        List<OnlineUserResponse> realResponses = activeUsers.stream().map(u -> {
+            StudySession activeSession = activeSessionMap.get(u.getId());
+            boolean isStudying = (activeSession != null);
+            String currentSubject = isStudying ? activeSession.getSubject() : null;
+            Instant studyStartedAt = isStudying ? activeSession.getStartedAt() : null;
 
             int realtimeLevel = u.getCurrentLevel() != null ? u.getCurrentLevel() : 1;
             int baseLevel = realtimeLevel;
@@ -580,8 +631,13 @@ public class UserService {
                     .baseLevel(baseLevel)
                     .currentLevel(realtimeLevel)
                     .currentXp(currentXp)
+                    .isVirtual(false)
                     .build();
         }).collect(Collectors.toList());
+
+        List<OnlineUserResponse> result = new ArrayList<>(realResponses);
+        result.addAll(virtualUserService.getVirtualOnlineResponses());
+        return result;
     }
 
     public List<UserSearchResponseDto> searchUsers(String query, User currentUser) {
@@ -592,23 +648,34 @@ public class UserService {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         List<User> foundUsers = userRepository.findByDisplayNameContainingIgnoreCaseOrEmailContainingIgnoreCase(cleanQuery, cleanQuery, pageable);
 
-        Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
-
-        return foundUsers.stream()
+        List<User> candidateUsers = foundUsers.stream()
                 .filter(u -> u.getEnabled() == null || Boolean.TRUE.equals(u.getEnabled()))
                 .filter(u -> u.getRole() != com.studytracker.model.Role.ROLE_ADMIN)
+                .collect(Collectors.toList());
+
+        List<StudySession> activeSessions = candidateUsers.isEmpty()
+                ? java.util.Collections.emptyList()
+                : studySessionRepository.findByUserInAndEndedAtIsNull(candidateUsers);
+
+        java.util.Map<UUID, StudySession> activeSessionMap = activeSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (s1, s2) -> s1));
+
+        Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
+
+        return candidateUsers.stream()
                 .map(u -> {
                     boolean canSeeStatus = friendshipService.shouldShowActivityStatus(u, currentUser);
                     boolean isOnline = canSeeStatus && u.getLastActiveAt() != null && u.getLastActiveAt().isAfter(onlineThreshold);
-                    Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
-                    boolean isStudying = canSeeStatus && activeSessionOpt.isPresent();
+                    StudySession activeSession = activeSessionMap.get(u.getId());
+                    boolean isStudying = canSeeStatus && (activeSession != null);
 
                     int baseLevel = u.getCurrentLevel() != null ? u.getCurrentLevel() : 1;
                     int currentXp = u.getCurrentXp() != null ? u.getCurrentXp() : 0;
                     int realtimeLevel = baseLevel;
 
-                    if (isStudying && activeSessionOpt.get().getStartedAt() != null) {
-                        long elapsedSeconds = Math.max(0, Duration.between(activeSessionOpt.get().getStartedAt(), Instant.now()).getSeconds());
+                    if (isStudying && activeSession != null && activeSession.getStartedAt() != null) {
+                        long elapsedSeconds = Math.max(0, Duration.between(activeSession.getStartedAt(), Instant.now()).getSeconds());
                         int xpEarned = xpService.calculateXpEarned((int) elapsedSeconds);
                         int tempXp = currentXp + xpEarned;
                         int tempLevel = baseLevel;

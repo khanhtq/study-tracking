@@ -18,11 +18,12 @@ import java.util.UUID;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    @Query("SELECT m FROM Message m WHERE (m.sender.id = :user1 AND m.recipient.id = :user2) " +
-           "OR (m.sender.id = :user2 AND m.recipient.id = :user1) ORDER BY m.createdAt DESC")
+    @Query(value = "SELECT m FROM Message m JOIN FETCH m.sender JOIN FETCH m.recipient WHERE (m.sender.id = :user1 AND m.recipient.id = :user2) " +
+           "OR (m.sender.id = :user2 AND m.recipient.id = :user1) ORDER BY m.createdAt DESC",
+           countQuery = "SELECT COUNT(m) FROM Message m WHERE (m.sender.id = :user1 AND m.recipient.id = :user2) OR (m.sender.id = :user2 AND m.recipient.id = :user1)")
     Page<Message> findConversationBetweenUsers(@Param("user1") UUID user1, @Param("user2") UUID user2, Pageable pageable);
 
-    @Query("SELECT m FROM Message m WHERE (m.sender.id = :user1 AND m.recipient.id = :user2) " +
+    @Query("SELECT m FROM Message m JOIN FETCH m.sender JOIN FETCH m.recipient WHERE (m.sender.id = :user1 AND m.recipient.id = :user2) " +
            "OR (m.sender.id = :user2 AND m.recipient.id = :user1) ORDER BY m.createdAt DESC LIMIT 1")
     Optional<Message> findLatestMessageBetween(@Param("user1") UUID user1, @Param("user2") UUID user2);
 
@@ -33,6 +34,9 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     long countByRecipientIdAndIsReadFalse(UUID recipientId);
 
     long countByRecipientIdAndSenderIdAndIsReadFalse(UUID recipientId, UUID senderId);
+
+    @Query("SELECT m.sender.id, COUNT(m) FROM Message m WHERE m.recipient.id = :recipientId AND m.isRead = false GROUP BY m.sender.id")
+    List<Object[]> countUnreadGroupedBySender(@Param("recipientId") UUID recipientId);
 
     @Modifying
     @Query("UPDATE Message m SET m.isRead = true, m.readAt = :readAt " +

@@ -32,6 +32,7 @@ public class User implements UserDetails {
 
     private String displayName;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     private String bio;
@@ -120,6 +121,10 @@ public class User implements UserDetails {
 
     @Column(name = "premium_until")
     private Instant premiumUntil;
+
+    @Builder.Default
+    @Column(name = "is_virtual", columnDefinition = "boolean default false")
+    private Boolean isVirtual = false;
 
     public boolean isPremiumActive() {
         if (!Boolean.TRUE.equals(isPremium)) {

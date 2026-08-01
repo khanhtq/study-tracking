@@ -21,5 +21,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying
     void deleteByEnabledFalseAndCreatedAtBefore(Instant threshold);
 
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(u) FROM User u WHERE (u.role IS NULL OR u.role <> com.studytracker.model.Role.ROLE_ADMIN) AND (u.isVirtual IS NULL OR u.isVirtual = false)")
+    long countRealUsers();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(u.totalXp), 0) FROM User u WHERE (u.role IS NULL OR u.role <> com.studytracker.model.Role.ROLE_ADMIN) AND (u.isVirtual IS NULL OR u.isVirtual = false)")
+    long sumTotalXpRealUsers();
+
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE (u.role IS NULL OR u.role <> com.studytracker.model.Role.ROLE_ADMIN) AND (u.isVirtual IS NULL OR u.isVirtual = false)")
+    List<User> findAllRealUsers();
+
     List<User> findByDisplayNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String displayNameKeyword, String emailKeyword, org.springframework.data.domain.Pageable pageable);
 }

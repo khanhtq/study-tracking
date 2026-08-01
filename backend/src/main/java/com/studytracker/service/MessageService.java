@@ -19,11 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,6 +32,7 @@ public class MessageService {
     private final FriendshipRepository friendshipRepository;
     private final FriendshipService friendshipService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final VirtualUserService virtualUserService;
 
     @Data
     @AllArgsConstructor
@@ -49,6 +47,11 @@ public class MessageService {
         }
         if (sender.getId().equals(recipient.getId())) {
             return new CanSendResult(false, "Không thể gửi tin nhắn cho chính mình.");
+        }
+
+        // Virtual users can always receive messages
+        if (Boolean.TRUE.equals(recipient.getIsVirtual())) {
+            return new CanSendResult(true, null);
         }
 
         // Admin role can message ANY user in the system without restrictions
@@ -111,6 +114,11 @@ public class MessageService {
             log.warn("Không thể gửi sự kiện Real-time qua WebSocket: {}", e.getMessage());
         }
 
+        // If recipient is a virtual bot, schedule auto-reply
+        if (Boolean.TRUE.equals(recipient.getIsVirtual())) {
+            virtualUserService.scheduleAutoReply(sender, recipient, request.getContent());
+        }
+
         return dto;
     }
 
@@ -127,22 +135,44 @@ public class MessageService {
     @Transactional(readOnly = true)
     public List<ConversationSummaryDto> getConversationsList(User currentUser) {
         List<UUID> partnerIds = messageRepository.findConversationPartnerIds(currentUser.getId());
+        if (partnerIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> partners = userRepository.findAllById(partnerIds);
+        Map<UUID, User> partnerMap = partners.stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<Object[]> unreadCounts = messageRepository.countUnreadGroupedBySender(currentUser.getId());
+        Map<UUID, Long> unreadMap = new java.util.HashMap<>();
+        for (Object[] row : unreadCounts) {
+            if (row[0] != null && row[1] != null) {
+                unreadMap.put((UUID) row[0], (Long) row[1]);
+            }
+        }
+
+        List<Friendship> friendships = friendshipRepository.findAllByUserIdAndStatus(currentUser.getId(), FriendshipStatus.ACCEPTED);
+        java.util.Set<UUID> friendIds = friendships.stream()
+                .map(f -> f.getRequester().getId().equals(currentUser.getId()) ? f.getAddressee().getId() : f.getRequester().getId())
+                .collect(Collectors.toSet());
+
         List<ConversationSummaryDto> result = new ArrayList<>();
         Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
 
         for (UUID partnerId : partnerIds) {
-            Optional<User> partnerOpt = userRepository.findById(partnerId);
-            if (partnerOpt.isEmpty()) continue;
+            User partner = partnerMap.get(partnerId);
+            if (partner == null) continue;
 
-            User partner = partnerOpt.get();
             Optional<Message> latestMsgOpt = messageRepository.findLatestMessageBetween(currentUser.getId(), partnerId);
             if (latestMsgOpt.isEmpty()) continue;
 
             Message latestMsg = latestMsgOpt.get();
-            long unreadCount = messageRepository.countByRecipientIdAndSenderIdAndIsReadFalse(currentUser.getId(), partnerId);
-            CanSendResult canSendCheck = canSendMessage(currentUser, partner);
+            long unreadCount = unreadMap.getOrDefault(partnerId, 0L);
 
-            boolean canSeeStatus = friendshipService.shouldShowActivityStatus(partner, currentUser);
+            boolean isFriend = friendIds.contains(partner.getId());
+            CanSendResult canSendCheck = canSendMessageFast(currentUser, partner, isFriend);
+
+            boolean canSeeStatus = shouldShowActivityStatusFast(partner, currentUser, isFriend);
             boolean isOnline = canSeeStatus && partner.getLastActiveAt() != null && partner.getLastActiveAt().isAfter(onlineThreshold);
 
             result.add(ConversationSummaryDto.builder()
@@ -164,6 +194,50 @@ public class MessageService {
 
         result.sort(Comparator.comparing(ConversationSummaryDto::getLastMessageCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
         return result;
+    }
+
+    private CanSendResult canSendMessageFast(User sender, User recipient, boolean isFriend) {
+        if (sender == null || recipient == null) {
+            return new CanSendResult(false, "Thông tin người dùng không hợp lệ.");
+        }
+        if (sender.getId().equals(recipient.getId())) {
+            return new CanSendResult(false, "Không thể gửi tin nhắn cho chính mình.");
+        }
+        if (Boolean.TRUE.equals(recipient.getIsVirtual())) {
+            return new CanSendResult(true, null);
+        }
+        if (sender.getRole() == Role.ROLE_ADMIN) {
+            return new CanSendResult(true, null);
+        }
+
+        MessagePermission permission = recipient.getMessagePermission() != null ? recipient.getMessagePermission() : MessagePermission.EVERYONE;
+        switch (permission) {
+            case EVERYONE:
+                return new CanSendResult(true, null);
+            case NOBODY:
+                return new CanSendResult(false, "Người dùng này đã tắt nhận tin nhắn từ người khác.");
+            case FRIENDS_ONLY:
+                return isFriend ? new CanSendResult(true, null) : new CanSendResult(false, "Người dùng này chỉ nhận tin nhắn từ bạn bè.");
+            default:
+                return new CanSendResult(true, null);
+        }
+    }
+
+    private boolean shouldShowActivityStatusFast(User targetUser, User viewer, boolean isFriend) {
+        if (viewer != null && viewer.getId().equals(targetUser.getId())) {
+            return true;
+        }
+        ActivityStatusVisibility visibility = targetUser.getActivityStatusVisibility();
+        if (visibility == null || visibility == ActivityStatusVisibility.EVERYONE) {
+            return true;
+        }
+        if (visibility == ActivityStatusVisibility.NOBODY) {
+            return false;
+        }
+        if (visibility == ActivityStatusVisibility.FRIENDS_ONLY) {
+            return isFriend;
+        }
+        return false;
     }
 
     @Transactional

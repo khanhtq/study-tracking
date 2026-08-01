@@ -10,6 +10,10 @@ server:
 spring:
   application:
     name: study-xp-tracker
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/study_xp_tracker}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -58,8 +62,14 @@ spring:
 
 app:
   storage:
-    provider: ${STORAGE_PROVIDER:local} # Đổi thành 'cloudinary' khi muốn dùng Cloudinary
+    provider: ${STORAGE_PROVIDER:azure} # azure | local | cloudinary
     upload-dir: ${UPLOAD_DIR:uploads}
+    max-user-quota-mb: ${MAX_USER_QUOTA_MB:1000} # 1 GB
+    max-file-size-mb: ${MAX_FILE_SIZE_MB:200} # 200 MB
+    azure:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING:DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;}
+      container-name: ${AZURE_STORAGE_CONTAINER_NAME:study-documents}
+      sas-expiry-minutes: ${AZURE_STORAGE_SAS_EXPIRY_MINUTES:60}
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME:}
       api-key: ${CLOUDINARY_API_KEY:}
@@ -68,10 +78,16 @@ app:
     client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
   jwt:
     secret: ${JWT_SECRET:9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9}
-    expiration-ms: 86400000 # 24 hours
+    expiration-ms: 900000 # 15 minutes (Access Token)
+    refresh-expiration-ms: 604800000 # 7 days (Refresh Token)
   xp:
     base-rate-per-minute: 10
     pomodoro-bonus-percentage: 10 # +10% for sessions >= 25 mins
+  virtual-users:
+    enabled: ${VIRTUAL_USERS_ENABLED:true}
+    count: ${VIRTUAL_USERS_COUNT:8}
+    rotation-hours: ${VIRTUAL_USERS_ROTATION_HOURS:2}
+    auto-reply-enabled: ${VIRTUAL_USERS_AUTO_REPLY_ENABLED:true}
 
 vnpay:
   tmn-code: ${VNPAY_TMN_CODE:DEMO0001}

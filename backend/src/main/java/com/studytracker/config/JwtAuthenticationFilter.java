@@ -1,5 +1,6 @@
 package com.studytracker.config;
 
+import com.studytracker.util.CookieUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
+    private final CookieUtil cookieUtil;
 
     @Override
     protected void doFilterInternal(
@@ -30,18 +32,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+        String jwt = cookieUtil.extractCookieValue(request, CookieUtil.ACCESS_TOKEN_COOKIE_NAME);
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Fallback to Authorization header if cookie is missing
+        if (jwt == null || jwt.isBlank()) {
+            final String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwt = authHeader.substring(7);
+            }
+        }
+
+        if (jwt == null || jwt.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        jwt = authHeader.substring(7);
         try {
-            userEmail = jwtTokenProvider.extractUsername(jwt);
+            String userEmail = jwtTokenProvider.extractUsername(jwt);
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
                 if (jwtTokenProvider.validateToken(jwt, userDetails)) {
@@ -79,4 +86,3 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-
