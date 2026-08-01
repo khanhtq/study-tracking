@@ -542,11 +542,19 @@ public class UserService {
                 .filter(u -> friendshipService.shouldShowActivityStatus(u, currentUser))
                 .collect(Collectors.toList());
 
+        List<StudySession> activeSessions = activeUsers.isEmpty()
+                ? java.util.Collections.emptyList()
+                : studySessionRepository.findByUserInAndEndedAtIsNull(activeUsers);
+
+        java.util.Map<UUID, StudySession> activeSessionMap = activeSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (s1, s2) -> s1));
+
         List<OnlineUserResponse> realResponses = activeUsers.stream().map(u -> {
-            Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
-            boolean isStudying = activeSessionOpt.isPresent();
-            String currentSubject = isStudying ? activeSessionOpt.get().getSubject() : null;
-            Instant studyStartedAt = isStudying ? activeSessionOpt.get().getStartedAt() : null;
+            StudySession activeSession = activeSessionMap.get(u.getId());
+            boolean isStudying = (activeSession != null);
+            String currentSubject = isStudying ? activeSession.getSubject() : null;
+            Instant studyStartedAt = isStudying ? activeSession.getStartedAt() : null;
 
             int realtimeLevel = u.getCurrentLevel() != null ? u.getCurrentLevel() : 1;
             int baseLevel = realtimeLevel;
@@ -599,23 +607,34 @@ public class UserService {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 20);
         List<User> foundUsers = userRepository.findByDisplayNameContainingIgnoreCaseOrEmailContainingIgnoreCase(cleanQuery, cleanQuery, pageable);
 
-        Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
-
-        return foundUsers.stream()
+        List<User> candidateUsers = foundUsers.stream()
                 .filter(u -> u.getEnabled() == null || Boolean.TRUE.equals(u.getEnabled()))
                 .filter(u -> u.getRole() != com.studytracker.model.Role.ROLE_ADMIN)
+                .collect(Collectors.toList());
+
+        List<StudySession> activeSessions = candidateUsers.isEmpty()
+                ? java.util.Collections.emptyList()
+                : studySessionRepository.findByUserInAndEndedAtIsNull(candidateUsers);
+
+        java.util.Map<UUID, StudySession> activeSessionMap = activeSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (s1, s2) -> s1));
+
+        Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
+
+        return candidateUsers.stream()
                 .map(u -> {
                     boolean canSeeStatus = friendshipService.shouldShowActivityStatus(u, currentUser);
                     boolean isOnline = canSeeStatus && u.getLastActiveAt() != null && u.getLastActiveAt().isAfter(onlineThreshold);
-                    Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(u);
-                    boolean isStudying = canSeeStatus && activeSessionOpt.isPresent();
+                    StudySession activeSession = activeSessionMap.get(u.getId());
+                    boolean isStudying = canSeeStatus && (activeSession != null);
 
                     int baseLevel = u.getCurrentLevel() != null ? u.getCurrentLevel() : 1;
                     int currentXp = u.getCurrentXp() != null ? u.getCurrentXp() : 0;
                     int realtimeLevel = baseLevel;
 
-                    if (isStudying && activeSessionOpt.get().getStartedAt() != null) {
-                        long elapsedSeconds = Math.max(0, Duration.between(activeSessionOpt.get().getStartedAt(), Instant.now()).getSeconds());
+                    if (isStudying && activeSession != null && activeSession.getStartedAt() != null) {
+                        long elapsedSeconds = Math.max(0, Duration.between(activeSession.getStartedAt(), Instant.now()).getSeconds());
                         int xpEarned = xpService.calculateXpEarned((int) elapsedSeconds);
                         int tempXp = currentXp + xpEarned;
                         int tempLevel = baseLevel;

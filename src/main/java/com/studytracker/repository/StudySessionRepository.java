@@ -20,8 +20,12 @@ public interface StudySessionRepository extends JpaRepository<StudySession, UUID
     List<StudySession> findByUserAndEndedAtIsNotNullOrderByStartedAtDesc(User user);
     List<StudySession> findByUserAndStartedAtAfter(User user, Instant from);
     List<StudySession> findByStartedAtAfter(Instant from);
-    List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtBefore(Instant cutoff);
-    List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtIsNullAndStartedAtBefore(Instant cutoff);
+    @Query("SELECT s FROM StudySession s JOIN FETCH s.user WHERE s.endedAt IS NULL AND s.lastHeartbeatAt < :cutoff")
+    List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtBefore(@Param("cutoff") Instant cutoff);
+
+    @Query("SELECT s FROM StudySession s JOIN FETCH s.user WHERE s.endedAt IS NULL AND s.lastHeartbeatAt IS NULL AND s.startedAt < :cutoff")
+    List<StudySession> findByEndedAtIsNullAndLastHeartbeatAtIsNullAndStartedAtBefore(@Param("cutoff") Instant cutoff);
+
     long countByEndedAtIsNotNull();
 
     @Query("SELECT COALESCE(SUM(s.durationSeconds), 0) FROM StudySession s WHERE s.endedAt IS NOT NULL AND s.durationSeconds IS NOT NULL")
