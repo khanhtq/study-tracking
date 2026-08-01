@@ -1,0 +1,28 @@
+# Maven build
+backend/target/
+*.class
+
+# Node build
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Terraform & Infra
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+
+# Uploads & local storage
+uploads/
+backend/uploads/
+*.log
+
+# Environment & IDE
+.env
+*.env
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
