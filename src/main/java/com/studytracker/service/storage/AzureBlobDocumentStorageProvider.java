@@ -90,6 +90,11 @@ public class AzureBlobDocumentStorageProvider implements DocumentStorageProvider
                 throw new IllegalArgumentException("File không tồn tại trên Azure Storage.");
             }
 
+            // Return direct permanent Blob URL without SAS token for public assets like avatars (expiryMinutes <= 0)
+            if (expiryMinutes <= 0) {
+                return blobClient.getBlobUrl();
+            }
+
             BlobSasPermission permission = new BlobSasPermission().setReadPermission(true);
             OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(expiryMinutes > 0 ? expiryMinutes : 60);
 

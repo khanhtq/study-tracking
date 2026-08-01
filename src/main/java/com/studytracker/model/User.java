@@ -32,6 +32,7 @@ public class User implements UserDetails {
 
     private String displayName;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     private String bio;
