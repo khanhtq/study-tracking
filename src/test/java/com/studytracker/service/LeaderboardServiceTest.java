@@ -102,4 +102,15 @@ class LeaderboardServiceTest {
         assertThat(userRank.getTotalUsers()).isEqualTo(50L);
         assertThat(userRank.getUserId()).isEqualTo(userId);
     }
+
+    @Test
+    @DisplayName("Should sync all real users to Redis ZSET in single batch")
+    void shouldSyncAllUsersToRedisInBatch() {
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(userRepository.findAllRealUsers()).thenReturn(List.of(testUser));
+
+        leaderboardService.syncAllUsersToRedis();
+
+        verify(zSetOperations, times(1)).add(eq(LeaderboardService.KEY_ALL_TIME), anySet());
+    }
 }

@@ -132,10 +132,19 @@ public class LeaderboardService {
      */
     public void syncAllUsersToRedis() {
         log.info("Starting synchronization of all users totalXP to Redis ZSET...");
-        List<User> users = userRepository.findAll();
-        for (User user : users) {
-            redisTemplate.opsForZSet().add(KEY_ALL_TIME, user.getId().toString(), (double) user.getTotalXp());
+        List<User> users = userRepository.findAllRealUsers();
+        if (users.isEmpty()) {
+            log.info("No users to sync to Redis Leaderboard.");
+            return;
         }
-        log.info("Successfully synced {} users to Redis Leaderboard ZSET.", users.size());
+
+        Set<ZSetOperations.TypedTuple<String>> tuples = new HashSet<>();
+        for (User user : users) {
+            long totalXp = user.getTotalXp() != null ? user.getTotalXp() : 0L;
+            tuples.add(ZSetOperations.TypedTuple.of(user.getId().toString(), (double) totalXp));
+        }
+
+        redisTemplate.opsForZSet().add(KEY_ALL_TIME, tuples);
+        log.info("Successfully synced {} users to Redis Leaderboard ZSET in single batch command.", users.size());
     }
 }
