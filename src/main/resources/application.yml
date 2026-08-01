@@ -66,7 +66,8 @@ app:
     client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
   jwt:
     secret: ${JWT_SECRET:9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9}
-    expiration-ms: 86400000 # 24 hours
+    expiration-ms: 900000 # 15 minutes (Access Token)
+    refresh-expiration-ms: 604800000 # 7 days (Refresh Token)
   xp:
     base-rate-per-minute: 10
     pomodoro-bonus-percentage: 10 # +10% for sessions >= 25 mins
