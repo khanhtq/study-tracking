@@ -78,21 +78,27 @@ export const getErrorKey = (status, endpoint = '') => {
 };
 
 const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  const headers = {
+  return {
     'Content-Type': 'application/json',
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
 };
 
 let serverClientOffset = 0;
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const subscribeTokenRefresh = (cb) => {
+  refreshSubscribers.push(cb);
+};
+
+const onRefreshed = (success) => {
+  refreshSubscribers.forEach((cb) => cb(success));
+  refreshSubscribers = [];
+};
 
 export const getServerClientOffset = () => serverClientOffset;
 
-export const apiCall = async (endpoint, options = {}) => {
+export const apiCall = async (endpoint, options = {}, isRetry = false) => {
   const cleanBaseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${cleanBaseUrl}${cleanEndpoint}`;
@@ -101,9 +107,10 @@ export const apiCall = async (endpoint, options = {}) => {
     delete headers['Content-Type'];
   }
   
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   // Extract server date header for clock synchronization to resolve timezone/clock drift
@@ -117,6 +124,37 @@ export const apiCall = async (endpoint, options = {}) => {
       }
     } catch (e) {
       console.warn('Failed to parse server Date header:', e);
+    }
+  }
+
+  // Handle 401 Unauthorized with silent refresh
+  if (response.status === 401 && !isRetry && !cleanEndpoint.startsWith('/auth/')) {
+    if (!isRefreshing) {
+      isRefreshing = true;
+      try {
+        const refreshRes = await fetch(`${cleanBaseUrl}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (refreshRes.ok) {
+          isRefreshing = false;
+          onRefreshed(true);
+          return apiCall(endpoint, options, true);
+        } else {
+          isRefreshing = false;
+          onRefreshed(false);
+        }
+      } catch (err) {
+        isRefreshing = false;
+        onRefreshed(false);
+      }
+    } else {
+      const refreshSuccess = await new Promise((resolve) => {
+        subscribeTokenRefresh((success) => resolve(success));
+      });
+      if (refreshSuccess) {
+        return apiCall(endpoint, options, true);
+      }
     }
   }
 
@@ -138,7 +176,6 @@ export const apiCall = async (endpoint, options = {}) => {
     }
 
     if ((response.status === 403 || response.status === 401) && !isGuestMode() && !cleanEndpoint.startsWith('/auth/')) {
-      localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.dispatchEvent(new CustomEvent('auth-expired', {
         detail: isBanError ? {
@@ -266,6 +303,10 @@ export const authApi = {
     apiCall('/auth/google', {
       method: 'POST',
       body: JSON.stringify({ idToken }),
+    }),
+  logout: () =>
+    apiCall('/auth/logout', {
+      method: 'POST',
     }),
 };
 
