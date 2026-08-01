@@ -33,29 +33,15 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public AdminOverviewStatsResponse getOverviewStats() {
-        List<User> allUsers = userRepository.findAll();
-        List<User> realUsers = allUsers.stream()
-                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
-                .collect(Collectors.toList());
-
-        long totalUsers = realUsers.size();
-        long totalXp = realUsers.stream()
-                .mapToLong(u -> u.getTotalXp() != null ? u.getTotalXp() : 0L)
-                .sum();
+        long totalUsers = userRepository.countRealUsers();
+        long totalXp = userRepository.sumTotalXpRealUsers();
 
         List<OnlineUserResponse> onlineList = getOnlineUsersDetailed();
         long onlineCount = onlineList.size();
         long studyingCount = onlineList.stream().filter(u -> Boolean.TRUE.equals(u.getIsStudying())).count();
 
-        List<StudySession> allSessions = studySessionRepository.findAll();
-        long completedSessionsCount = allSessions.stream()
-                .filter(s -> s.getEndedAt() != null)
-                .count();
-
-        long totalSeconds = allSessions.stream()
-                .filter(s -> s.getEndedAt() != null && s.getDurationSeconds() != null)
-                .mapToLong(StudySession::getDurationSeconds)
-                .sum();
+        long completedSessionsCount = studySessionRepository.countByEndedAtIsNotNull();
+        long totalSeconds = studySessionRepository.sumCompletedStudySeconds();
 
         return AdminOverviewStatsResponse.builder()
                 .totalUsers(totalUsers)
@@ -112,13 +98,18 @@ public class AdminService {
         Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
         Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        List<User> allUsers = userRepository.findAll().stream()
-                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
-                .collect(Collectors.toList());
+        List<User> allUsers = userRepository.findAllRealUsers();
 
-        List<StudySession> allSessions = studySessionRepository.findAll();
+        Instant fetchCutoff = periodCutoff;
+        if (fetchCutoff != null && fetchCutoff.isAfter(cutoff24h)) {
+            fetchCutoff = cutoff24h;
+        }
 
-        Map<UUID, List<StudySession>> sessionsByUserMap = allSessions.stream()
+        List<StudySession> sessions = (fetchCutoff != null)
+                ? studySessionRepository.findByStartedAtAfter(fetchCutoff)
+                : studySessionRepository.findAll();
+
+        Map<UUID, List<StudySession>> sessionsByUserMap = sessions.stream()
                 .filter(s -> s.getUser() != null)
                 .collect(Collectors.groupingBy(s -> s.getUser().getId()));
 
@@ -179,13 +170,11 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<SuspiciousUserAlertDto> getSuspiciousUsers() {
-        List<User> allUsers = userRepository.findAll().stream()
-                .filter(u -> u.getRole() != Role.ROLE_ADMIN && (u.getIsVirtual() == null || !u.getIsVirtual()))
-                .collect(Collectors.toList());
+        List<User> allUsers = userRepository.findAllRealUsers();
         Instant cutoff24h = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        List<StudySession> allSessions = studySessionRepository.findAll();
-        Map<UUID, List<StudySession>> sessionsByUserMap = allSessions.stream()
+        List<StudySession> recent24hSessions = studySessionRepository.findByStartedAtAfter(cutoff24h);
+        Map<UUID, List<StudySession>> sessionsByUserMap = recent24hSessions.stream()
                 .filter(s -> s.getUser() != null)
                 .collect(Collectors.groupingBy(s -> s.getUser().getId()));
 
