@@ -30,13 +30,7 @@ The backend of Study XP Tracker is engineered to solve critical technical challe
   * Manages activity visibility with 3 privacy levels (`ActivityStatusVisibility`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
   * Enforces direct messaging permissions (`MessagePermission`: `EVERYONE`, `FRIENDS_ONLY`, `NOBODY`).
 
-### 1.4. YouTube Music & Audio Proxy Service
-* **Problem:** Streaming audio directly from YouTube encounters CORS restrictions and includes non-study content.
-* **Solution:**
-  * `YoutubeAudioService` automatically filters search keywords (excluding vlogs, news) to sanitize queries for lofi/study/ambient music.
-  * Streams audio directly via a backend proxy endpoint to bypass browser CORS limitations.
-
-### 1.5. Pluggable File Storage Provider
+### 1.4. Pluggable File Storage Provider
 * **Problem:** Must support both local development storage (Disk) and cloud production storage.
 * **Solution:**
   * Implements a `FileStorageProvider` interface with two implementations:
@@ -71,7 +65,7 @@ backend/
 │   ├── main/
 │   │   ├── java/com/studytracker/
 │   │   │   ├── config/          # Security, JWT, Redis, Web, WebSocket, Seed Data configs
-│   │   │   ├── controller/      # Auth, User, Session, Leaderboard, Friend, Message, Music, Admin
+│   │   │   ├── controller/      # Auth, User, Session, Leaderboard, Friend, Message, Admin
 │   │   │   ├── dto/             # Request & Response Data Transfer Objects
 │   │   │   ├── event/           # System Events (XpEarnedEvent, ...)
 │   │   │   ├── listener/        # Event Listeners (XpEventListener)
@@ -158,7 +152,6 @@ mvn test
 | **Friends**| `/api/friends/request` | POST | Send friend request |
 | **Friends**| `/api/friends/list` | GET | List friends & online presence |
 | **Messages**| `/api/messages/{friendId}`| GET | Fetch chat message history with a friend |
-| **Music** | `/api/music/search` | GET | Search lofi/study playlists |
 | **Admin** | `/api/admin/overview` | GET | Admin overview dashboard statistics |
 
 ---
