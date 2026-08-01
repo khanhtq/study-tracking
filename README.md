@@ -157,21 +157,44 @@ docker compose -f backend/docker-compose.yml up -d
 
 ## Environment Variables
 
-### Backend (`backend/src/main/resources/application.yml` or ENV)
-```yaml
-SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/study_xp_tracker
-SPRING_DATASOURCE_USERNAME: postgres
-SPRING_DATASOURCE_PASSWORD: password
-SPRING_DATA_REDIS_HOST: localhost
-SPRING_DATA_REDIS_PORT: 6379
-APP_JWT_SECRET: <your-256-bit-secret-key>
-```
+### Backend Configuration (`backend/scripts/environment/set-env.example.ps1` or ENV)
 
-### Frontend (`frontend/.env`)
-```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
-```
+| Category | Variable Name | Example / Default Value | Description |
+| :--- | :--- | :--- | :--- |
+| **Server** | `PORT` | `8080` | Backend HTTP listening port |
+| **Database** | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/study_xp_tracker` | PostgreSQL JDBC connection URL |
+| **Database** | `SPRING_DATASOURCE_USERNAME` | `postgres` | Database username |
+| **Database** | `SPRING_DATASOURCE_PASSWORD` | `password` | Database password |
+| **Redis** | `SPRING_REDIS_HOST` | `localhost` | Redis host |
+| **Redis** | `SPRING_REDIS_PORT` | `6379` | Redis port |
+| **Redis** | `SPRING_REDIS_PASSWORD` | `""` | Redis authentication password |
+| **Redis** | `SPRING_REDIS_SSL_ENABLED` | `false` | Enable SSL for Redis connection |
+| **Mail** | `SPRING_MAIL_HOST` | `smtp-relay.brevo.com` | SMTP server host |
+| **Mail** | `SPRING_MAIL_PORT` | `587` / `465` | SMTP server port |
+| **Mail** | `SPRING_MAIL_USERNAME` | `username` | SMTP username |
+| **Mail** | `SPRING_MAIL_PASSWORD` | `password` | SMTP password |
+| **Mail** | `SPRING_MAIL_FROM` | `from@example.com` | Sender email address |
+| **Mail** | `SPRING_MAIL_STARTTLS_ENABLE`| `true` / `false` | Enable STARTTLS |
+| **Mail** | `SPRING_MAIL_SSL_ENABLE` | `false` / `true` | Enable SSL |
+| **Mail** | `BREVO_API_KEY` | `api-key` | Brevo (Sendinblue) API Key |
+| **Auth** | `JWT_SECRET` | `<256-bit-secret-key>` | Secret key for JWT signing |
+| **Auth** | `GOOGLE_CLIENT_ID` | `client-id` | Google OAuth2 Client ID |
+| **Storage** | `STORAGE_PROVIDER` | `local` / `cloudinary` | Storage type (`local` or `cloudinary`) |
+| **Storage** | `CLOUDINARY_CLOUD_NAME` | `cloud-name` | Cloudinary account name |
+| **Storage** | `CLOUDINARY_API_KEY` | `api-key` | Cloudinary API Key |
+| **Storage** | `CLOUDINARY_API_SECRET` | `api-secret` | Cloudinary API Secret |
+| **Payment** | `VNPAY_TMN_CODE` | `tmn-code` | VNPay Terminal Code |
+| **Payment** | `VNPAY_HASH_SECRET` | `vnpay-hash-secret` | VNPay Hash Secret |
+| **Payment** | `VNPAY_PAY_URL` | `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html` | VNPay Gateway URL |
+| **Payment** | `VNPAY_RETURN_URL` | `https://example.com/payment-return` | VNPay Callback Return URL |
+| **App** | `FRONTEND_URL` | `http://localhost:5173` | Frontend application URL |
+
+### Frontend Configuration (`frontend/.env`)
+
+| Variable Name | Example / Default Value | Description |
+| :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | Backend REST API base endpoint |
+| `VITE_GOOGLE_CLIENT_ID` | `<your-google-client-id>` | Google OAuth2 Client ID |
 
 ---
 
