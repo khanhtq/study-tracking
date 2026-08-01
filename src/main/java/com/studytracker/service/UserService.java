@@ -34,7 +34,7 @@ import com.studytracker.dto.ChangePasswordRequest;
 import com.studytracker.dto.TitleOptionDto;
 import com.studytracker.dto.PublicUserProfileDto;
 import com.studytracker.dto.UserSearchResponseDto;
-import com.studytracker.service.storage.FileStorageProvider;
+import com.studytracker.service.storage.DocumentStorageProvider;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 
@@ -49,7 +49,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final XpService xpService;
     private final EmailService emailService;
-    private final FileStorageProvider fileStorageProvider;
+    private final DocumentStorageProvider documentStorageProvider;
     private final com.studytracker.repository.FriendshipRepository friendshipRepository;
     private final FriendshipService friendshipService;
     private final com.studytracker.repository.MessageRepository messageRepository;
@@ -423,7 +423,7 @@ public class UserService {
         if (request.getAvatarUrl() != null) {
             String newAvatarUrl = request.getAvatarUrl().trim();
             if (u.getAvatarUrl() != null && !u.getAvatarUrl().equalsIgnoreCase(newAvatarUrl)) {
-                fileStorageProvider.delete(u.getAvatarUrl());
+                deleteOldAvatar(u.getAvatarUrl());
             }
             u.setAvatarUrl(newAvatarUrl);
         }
@@ -473,14 +473,55 @@ public class UserService {
         User u = userRepository.findById(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Tài khoản không tồn tại"));
 
-        if (u.getAvatarUrl() != null && !u.getAvatarUrl().isEmpty()) {
-            fileStorageProvider.delete(u.getAvatarUrl());
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("File ảnh không được để trống.");
         }
 
-        String avatarUrl = fileStorageProvider.store(file, "avatars");
+        deleteOldAvatar(u.getAvatarUrl());
+
+        String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "avatar.png";
+        String ext = "png";
+        int idx = originalFilename.lastIndexOf('.');
+        if (idx > 0) {
+            ext = originalFilename.substring(idx + 1).toLowerCase();
+        }
+
+        String filename = UUID.randomUUID().toString() + "." + ext;
+        String targetPath = "avatars/" + filename;
+
+        documentStorageProvider.upload(file, targetPath);
+
+        String avatarUrl;
+        if ("AZURE".equalsIgnoreCase(documentStorageProvider.getProviderName())) {
+            String sasUrl = documentStorageProvider.generateDownloadUrl(targetPath, filename, 525600); // 1 năm SAS URL
+            avatarUrl = (sasUrl != null) ? sasUrl : targetPath;
+        } else {
+            avatarUrl = "/uploads/" + targetPath;
+        }
+
         u.setAvatarUrl(avatarUrl);
         User updatedUser = userRepository.save(u);
         return getUserProgress(updatedUser);
+    }
+
+    private void deleteOldAvatar(String oldAvatarUrl) {
+        try {
+            if (oldAvatarUrl == null || oldAvatarUrl.trim().isEmpty()) return;
+            if (oldAvatarUrl.startsWith("/uploads/")) {
+                String relativePath = oldAvatarUrl.substring("/uploads/".length());
+                documentStorageProvider.delete(relativePath);
+            } else if (oldAvatarUrl.contains("avatars/")) {
+                int idx = oldAvatarUrl.indexOf("avatars/");
+                String targetPath = oldAvatarUrl.substring(idx);
+                int queryIdx = targetPath.indexOf('?');
+                if (queryIdx > 0) {
+                    targetPath = targetPath.substring(0, queryIdx);
+                }
+                documentStorageProvider.delete(targetPath);
+            }
+        } catch (Exception e) {
+            // log warning if old avatar deletion fails
+        }
     }
 
     @Transactional
