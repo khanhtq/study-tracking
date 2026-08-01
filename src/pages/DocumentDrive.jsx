@@ -234,13 +234,27 @@ export default function DocumentDrive({ onBackToDashboard }) {
   // Download & Preview
   const handleDownload = async (doc) => {
     try {
-      const res = await documentApi.getDownloadUrl(doc.id);
-      const targetUrl = (res && res.downloadUrl) ? res.downloadUrl : documentApi.getStreamUrl(doc.id);
+      let targetUrl = null;
+      try {
+        const res = await documentApi.getDownloadUrl(doc.id);
+        if (res && res.downloadUrl) {
+          targetUrl = res.downloadUrl;
+        }
+      } catch (e) {
+        // Fallback to authenticated stream
+      }
 
-      // Fetch file as blob byte stream to create same-origin blob URL (forces browser to download instead of opening image/PDF in tab)
-      const response = await fetch(targetUrl);
-      const blob = await response.blob();
-      const localBlobUrl = window.URL.createObjectURL(blob);
+      let localBlobUrl;
+      if (targetUrl) {
+        // SAS URL (Azure)
+        const response = await fetch(targetUrl);
+        const blob = await response.blob();
+        localBlobUrl = window.URL.createObjectURL(blob);
+      } else {
+        // Direct stream from Spring Boot backend using authenticated fetch
+        const blob = await documentApi.downloadDocumentBlob(doc.id);
+        localBlobUrl = window.URL.createObjectURL(blob);
+      }
 
       const a = document.createElement('a');
       a.href = localBlobUrl;
@@ -250,9 +264,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(localBlobUrl);
     } catch (err) {
-      // Fallback: direct stream download via backend
-      const streamUrl = documentApi.getStreamUrl(doc.id);
-      window.location.href = streamUrl;
+      showError(getErrorMessage(err, 'error_download', t));
     }
   };
 
@@ -267,10 +279,16 @@ export default function DocumentDrive({ onBackToDashboard }) {
       if (res && res.downloadUrl) {
         setPreviewUrl(res.downloadUrl);
       } else {
-        setPreviewUrl(documentApi.getStreamUrl(doc.id));
+        const blob = await documentApi.downloadDocumentBlob(doc.id);
+        setPreviewUrl(window.URL.createObjectURL(blob));
       }
     } catch (err) {
-      setPreviewUrl(documentApi.getStreamUrl(doc.id));
+      try {
+        const blob = await documentApi.downloadDocumentBlob(doc.id);
+        setPreviewUrl(window.URL.createObjectURL(blob));
+      } catch (e) {
+        showError('Không thể xem trước tài liệu này.');
+      }
     }
   };
 
