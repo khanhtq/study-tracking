@@ -165,20 +165,17 @@ function StudyTimer({ onStopResult }) {
       const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
       const heartbeatUrl = `${cleanBaseUrl}/study-sessions/${activeSession.id}/heartbeat`;
 
-      const token = localStorage.getItem('token');
-      if (token) {
-        if ('keepalive' in Request.prototype) {
-          fetch(heartbeatUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            keepalive: true
-          }).catch(() => {});
-        } else if (navigator.sendBeacon) {
-          navigator.sendBeacon(heartbeatUrl);
-        }
+      if ('keepalive' in Request.prototype) {
+        fetch(heartbeatUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          keepalive: true
+        }).catch(() => {});
+      } else if (navigator.sendBeacon) {
+        navigator.sendBeacon(heartbeatUrl);
       }
     };
 
