@@ -10,57 +10,57 @@
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg?style=flat-square&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-**Study XP Tracker** là nền tảng quản lý & theo dõi thời gian học tập ứng dụng **Gamification (Trò chơi hóa)** hiện đại. Dự án kết hợp giữa giao diện người dùng trực quan, hiệu ứng mượt mà (Glassmorphic UI, Framer Motion) và kiến trúc Backend mạnh mẽ (Spring Boot, Redis ZSET, Real-time WebSocket), giúp người học duy trì động lực, tích lũy điểm kinh nghiệm (XP), thăng cấp và cạnh tranh lành mạnh trên bảng xếp hạng.
+**Study XP Tracker** is a modern gamified study time management and productivity platform. The project combines a sleek Glassmorphic user interface (React 19, Framer Motion) with a robust backend architecture (Spring Boot 3.3, Redis ZSET, Real-time WebSocket STOMP), empowering learners to maintain focus, earn Experience Points (XP), level up, and compete on dynamic leaderboards.
 
 ---
 
-## Tổng Quan Dự Án & Tính Năng Nổi Bật
+## Project Overview & Key Features
 
-### 1. Đồng Hồ Học Tập & Động Cơ Chống Gian Lận Server-Side
-* **Đa dạng chế độ:** Hỗ trợ Đếm ngược Pomodoro (25 phút standard) và Đếm xuôi (Stopwatch).
-* **Cơ chế chống gian lận (Anti-Cheat):** Server tự ghi nhận `start_time` và tự tính toán thời lượng thực tế dựa trên timestamp hệ thống thay vì tin tưởng dữ liệu đếm ở phía Client.
-* **Heartbeat Scheduler:** Tự động giám sát và giới hạn phiên học tối đa 12 tiếng liên tục. Tự động thưởng **+10% XP** cho các phiên Pomodoro chuẩn $\ge 25$ phút.
+### 1. Focus Timer & Server-Side Anti-Cheat Engine
+* **Multiple Timer Modes:** Supports Pomodoro Countdown (25-minute standard) and Stopwatch modes.
+* **Server-Side Validation:** The backend records session start timestamps and calculates duration server-side to prevent client-side timer manipulation.
+* **Heartbeat Scheduler:** Automatically monitors active sessions, enforcing a 12-hour session limit and awarding a **+10% XP** bonus for completed Pomodoro sessions $\ge 25$ minutes.
 
-### 2. Quản Lý Tài Liệu Học Tập (Study Document Drive)
-* **Kho lưu trữ tài liệu tích hợp:** Tải lên, phân loại và quản lý tài liệu học tập cá nhân.
-* **Hỗ trợ Cloud Storage & SAS Token:** Tích hợp linh hoạt với Azure Blob Storage / Cloudinary CDN với đường dẫn tải an toàn, hỗ trợ fallback stream trực tiếp từ backend khi gặp CORS.
+### 2. Study Document Drive & Storage Integration
+* **Document Management:** Upload, organize, and access personal study documents.
+* **Cloud Storage & Fallback Stream:** Interfaces with Azure Blob Storage and Cloudinary CDN using secure access tokens, featuring an authenticated backend stream fallback for CORS resilience.
 
-### 3. Bảng Xếp Hạng Thời Gian Thực Hiệu Năng Cao (Redis ZSET + DB Fallback)
-* **Cơ chế Redis ZSET:** Lưu trữ điểm XP của toàn bộ người dùng trên Redis Sorted Set cho tốc độ truy vấn $O(\log N + M)$.
-* **Bất đồng bộ với Event Listener:** Cập nhật điểm XP qua `XpEarnedEvent` mà không làm nghẽn luồng xử lý chính.
-* **Graceful Fallback:** Tự động chuyển sang truy vấn PostgreSQL nếu kết nối Redis gặp sự cố.
+### 3. High-Performance Real-Time Leaderboard (Redis ZSET)
+* **Redis Sorted Sets:** Stores user XP ranks with $O(\log N + M)$ query complexity.
+* **Asynchronous Updates:** Listens to `XpEarnedEvent` to update leaderboard state asynchronously without blocking primary response paths.
+* **Graceful Fallback:** Automatically falls back to PostgreSQL queries if Redis connectivity is interrupted.
 
-### 4. Mạng Xã Hội & Nhắn Tin Thời Gian Thực (WebSocket STOMP)
-* **Danh sách bạn bè & Trạng thái Online:** Hiển thị trực tiếp bạn bè đang học hay rảnh rỗi.
-* **Quyền riêng tư linh hoạt:** Cấu hình mức độ hiển thị trạng thái (`ActivityStatusVisibility`) và cho phép nhắn tin (`MessagePermission`).
-* **Nhắn tin trực tiếp (Direct Messaging):** Nhắn tin bảo mật và tức thì qua giao thức WebSocket STOMP / SockJS.
+### 4. Social Hub & Real-Time Messaging (WebSocket STOMP)
+* **Friend Presence:** Displays real-time online/offline status and current activity.
+* **Granular Privacy Controls:** Configurable status visibility (`ActivityStatusVisibility`) and message permissions (`MessagePermission`).
+* **Direct Messaging:** Instant, encrypted-in-transit messaging powered by WebSocket STOMP / SockJS.
 
-### 5. Phân Tích & Biểu Đồ Trực Quan
-* **Contribution Heatmap:** Biểu đồ ô vuông nhiệt phong cách GitHub ghi nhận mật độ học tập mỗi ngày và chuỗi streak học tập liên tục.
-* **Biểu đồ 7 ngày (Recharts):** Thống kê tổng quan thời gian học và xu hướng tập trung trong tuần.
+### 5. Interactive Analytics & Heatmap
+* **Contribution Heatmap:** GitHub-style activity grid tracking daily study volume and active streaks.
+* **7-Day Focus Chart:** Visualizes weekly study duration and productivity trends via Recharts.
 
-### 6. Đa Ngôn Ngữ (i18n) & PWA
-* Chuyển đổi ngôn ngữ tức thì không cần tải lại trang: **Tiếng Việt**, **English**, **中文 (Chinese)**.
-* **PWA (Progressive Web App):** Hỗ trợ cài đặt trực tiếp trên Desktop / Android / iOS với giao diện mượt như app bản địa.
+### 6. Internationalization (i18n) & PWA Support
+* **Multi-Language Support:** Instant switching between English, Vietnamese, and Chinese (中文).
+* **Progressive Web App (PWA):** Installable directly on Desktop, Android, and iOS devices with offline shell detection.
 
-### 7. Trang Quản Trị Hệ Thống (Admin Dashboard)
-* Giám sát người dùng đang hoạt động thời gian thực, quản lý phân quyền, xử lý vi phạm (Ban/Unban account), cảnh báo hoạt động bất thường và theo dõi các chỉ số tổng quan của hệ thống.
+### 7. Administration Portal (Admin Dashboard)
+* Real-time active user monitoring, account status management (ban/unban), suspicious activity alert logging, and system-wide metric tracking.
 
 ---
 
-## Công Nghệ Sử Dụng (Tech Stack)
+## Tech Stack & Architecture
 
 ### **Frontend**
 * **Core:** React 19, Vite 8, JavaScript (ES6+).
-* **Styling & UI:** Tailwind CSS v4, Lucide Icons, Glassmorphism Design System.
+* **Styling & UI:** Tailwind CSS v4, Lucide Icons, Glassmorphism System.
 * **Animation & Charts:** Framer Motion, Recharts, Canvas Confetti.
-* **Real-time & Network:** SockJS-client, StompJS, Axios.
+* **Real-time & Networking:** SockJS-client, StompJS, Axios.
 
 ### **Backend**
 * **Core Framework:** Java 21 (LTS), Spring Boot 3.3.1.
 * **Security & Auth:** Spring Security 6, JJWT (Dual Cookie Token Auth: HTTP-Only Refresh Cookie + Access Token), Google OAuth2.
 * **Database & ORM:** PostgreSQL 15, Spring Data JPA, Flyway Database Migration.
-* **Caching & Real-time:** Spring Data Redis (ZSET Leaderboard), Spring WebSocket (STOMP / SockJS).
+* **Caching & Real-Time:** Spring Data Redis (ZSET Leaderboard), Spring WebSocket (STOMP / SockJS).
 * **Storage Provider:** Pluggable Architecture (Azure Blob Storage / Cloudinary / Local Disk).
 
 ### **Infrastructure & CI/CD**
@@ -70,42 +70,42 @@
 
 ---
 
-## Cấu Trúc Thư Mục Monorepo
+## Monorepo Directory Structure
 
 ```text
 study-tracking/
 ├── .github/
 │   └── workflows/
-│       ├── backend-ci-cd.yml      # GitHub Actions CI/CD cho Backend
-│       └── frontend-ci-cd.yml     # GitHub Actions CI/CD cho Frontend
+│       ├── backend-ci-cd.yml      # GitHub Actions CI/CD for Backend
+│       └── frontend-ci-cd.yml     # GitHub Actions CI/CD for Frontend
 ├── backend/                       # Java Spring Boot Backend Service
-│   ├── src/                       # Controller, Service, Repository, DTO, Config
+│   ├── src/                       # Controllers, Services, Repositories, DTOs, Configs
 │   ├── Dockerfile                 # Backend Containerization
 │   └── pom.xml                    # Maven Configuration
 ├── frontend/                      # React SPA Frontend Web Application
-│   ├── src/                       # Components, Pages, Context, Hooks
+│   ├── src/                       # Components, Pages, Contexts, Hooks
 │   ├── public/                    # Static Assets & PWA Manifest
 │   ├── package.json               # NPM Dependencies & Scripts
 │   └── vite.config.js             # Vite Configuration
-├── infra/                         # Terraform Scripts & Deploy Shells
+├── infra/                         # Terraform Scripts & Deployment Shells
 ├── .gitignore
 ├── LICENSE                        # MIT License
-└── README.md                      # Documentation
+└── README.md                      # Monorepo Documentation
 ```
 
 ---
 
-## Hướng Dẫn Cài Đặt & Chạy Dự Án (Local Development)
+## Setup & Local Development Guide
 
-### Yêu Cầu Tiền Đề (Prerequisites)
-* **Java 21** hoặc cao hơn.
-* **Node.js** 18.x trở lên & **npm** 9.x trở lên.
-* **Maven** 3.8+ (hoặc dùng Maven wrapper trong dự án).
-* **Docker & Docker Compose** (để khởi chạy PostgreSQL & Redis nhanh chóng).
+### Prerequisites
+* **Java 21** or higher.
+* **Node.js** 18.x+ & **npm** 9.x+.
+* **Maven** 3.8+ (or Maven wrapper included).
+* **Docker & Docker Compose** (for running PostgreSQL & Redis).
 
 ---
 
-### Bước 1: Clone Repository
+### Step 1: Clone Repository
 ```bash
 git clone https://github.com/khanhtq/study-tracking.git
 cd study-tracking
@@ -113,53 +113,51 @@ cd study-tracking
 
 ---
 
-### Bước 2: Khởi Chạy Database (PostgreSQL & Redis)
-Chạy lệnh Docker Compose từ thư mục gốc để khởi tạo PostgreSQL (Port `5432`) và Redis (Port `6379`):
+### Step 2: Start Databases (PostgreSQL & Redis)
+Run Docker Compose from the root directory to spin up PostgreSQL (Port `5432`) and Redis (Port `6379`):
 ```bash
 docker compose -f backend/docker-compose.yml up -d
-# Hoặc nếu chạy từ folder backend:
-# cd backend && docker compose up -d
 ```
 
 ---
 
-### Bước 3: Cấu Hình & Chạy Backend Service
-1. Mở cửa sổ Terminal thứ nhất và di chuyển vào thư mục `backend`:
+### Step 3: Configure & Run Backend Service
+1. Open terminal and navigate to `backend`:
    ```bash
    cd backend
    ```
-2. Build và cài đặt các phụ thuộc Maven:
+2. Build Maven package:
    ```bash
    mvn clean package -DskipTests
    ```
-3. Khởi chạy ứng dụng Spring Boot:
+3. Run Spring Boot application:
    ```bash
    mvn spring-boot:run
    ```
-   Backend sẽ lắng nghe tại: **`http://localhost:8080`**
+   Backend listens at: **`http://localhost:8080`**
 
 ---
 
-### Bước 4: Khởi Chạy Frontend Web Application
-1. Mở cửa sổ Terminal thứ hai và di chuyển vào thư mục `frontend`:
+### Step 4: Run Frontend Application
+1. Open a second terminal and navigate to `frontend`:
    ```bash
    cd frontend
    ```
-2. Cài đặt các gói NPM:
+2. Install NPM dependencies:
    ```bash
    npm install
    ```
-3. Khởi chạy Vite Dev Server:
+3. Start Vite dev server:
    ```bash
    npm run dev
    ```
-   Frontend sẽ lắng nghe tại: **`http://localhost:5173`**
+   Frontend listens at: **`http://localhost:5173`**
 
 ---
 
-## Biến Môi Trường (Environment Variables)
+## Environment Variables
 
-### Backend (`backend/src/main/resources/application.yml` hoặc ENV)
+### Backend (`backend/src/main/resources/application.yml` or ENV)
 ```yaml
 SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/study_xp_tracker
 SPRING_DATASOURCE_USERNAME: postgres
@@ -177,13 +175,13 @@ VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 
 ---
 
-## Giấy Phép (License)
+## License
 
-Dự án này được phân phối dưới giấy phép **MIT License**. Xem thông tin chi tiết tại file [LICENSE](LICENSE).
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Tác Giả (Author)
+## Author & Repository
 
-* **Tác giả:** Trần Quốc Khánh ([@khanhtq](https://github.com/khanhtq))
+* **Author:** Tran Quoc Khanh ([@khanhtq](https://github.com/khanhtq))
 * **Repository:** [https://github.com/khanhtq/study-tracking](https://github.com/khanhtq/study-tracking)
