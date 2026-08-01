@@ -21,7 +21,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
   
   // Notification & Errors
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [toast, setToast] = useState(null); // { message, type, title }
 
   // Modals
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
