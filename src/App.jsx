@@ -13,10 +13,6 @@ import Profile from './pages/Profile';
 import VerifyOtp from './pages/VerifyOtp';
 import ForgotPassword from './pages/ForgotPassword';
 
-import { MusicProvider } from './context/MusicContext';
-import MusicWidget from './components/music/MusicWidget';
-import MusicModal from './components/music/MusicModal';
-
 import BannedUserNoticeModal from './components/BannedUserNoticeModal';
 import PaymentResultModal from './components/PaymentResultModal';
 
@@ -28,7 +24,6 @@ function MainApp() {
   });
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
   const { t } = useLanguage();
-  const canShowMusic = Boolean(token) && !user?.isGuest;
 
   const [paymentResult, setPaymentResult] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -173,8 +168,6 @@ function MainApp() {
           <Landing onNavigate={setView} />
         )
       )}
-      {canShowMusic && <MusicWidget />}
-      {canShowMusic && <MusicModal />}
       <BannedUserNoticeModal banNotice={banNotice} onLogout={handleLogoutFromBanScreen} />
 
       <PaymentResultModal
@@ -199,9 +192,7 @@ export default function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AuthProvider>
-          <MusicProvider>
-            <MainApp />
-          </MusicProvider>
+          <MainApp />
         </AuthProvider>
       </ThemeProvider>
     </LanguageProvider>

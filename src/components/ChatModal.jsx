@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { messageApi, friendsApi, getErrorMessage } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { useMusic } from '../context/MusicContext';
 import { subscribeToMessages } from '../websocket';
 import {
   MessageSquare, X, Send, Search, Smile, ShieldAlert, UserPlus, CheckCheck,
@@ -13,7 +12,6 @@ const PRESET_EMOJIS = ['😊', '👍', '🔥', '📚', '💪', '✨', '❤️', 
 
 export default function ChatModal({ isOpen, onClose, activeTargetUser = null, onSelectProfile = null }) {
   const { user, refreshProgress } = useAuth();
-  const { isMinimized: isMusicMinimized } = useMusic() || { isMinimized: true };
   const [conversations, setConversations] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -223,9 +221,7 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
   return (
     <AnimatePresence>
       <div 
-        className={`fixed right-6 z-50 font-sans transition-all duration-300 ${
-          isMusicMinimized ? 'bottom-20' : 'bottom-[310px]'
-        }`}
+        className="fixed right-6 bottom-6 z-50 font-sans transition-all duration-300"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}

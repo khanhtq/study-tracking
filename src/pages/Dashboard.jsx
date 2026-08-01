@@ -13,8 +13,7 @@ import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, Music, CheckCircle2, Sparkles, Plus, Clock } from 'lucide-react';
-import { useMusic } from '../context/MusicContext';
+import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const calculateXpEarned = (durationSeconds) => {
@@ -48,8 +47,6 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
-  const { setIsModalOpen: setIsMusicModalOpen } = useMusic();
-  const canUseMusic = Boolean(token) && !user?.isGuest;
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -188,16 +185,6 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               )}
             </button>
 
-            {canUseMusic && (
-              <button
-                onClick={() => setIsMusicModalOpen(true)}
-                className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/50 rounded-2xl px-3 py-1.5 text-slate-100 hover:text-emerald-400 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md"
-                title={t('music_subtitle')}
-              >
-                <Music className="w-4 h-4 text-emerald-400" />
-                <span className="hidden sm:inline">{t('music_btn')}</span>
-              </button>
-            )}
 
             {user?.role === 'ROLE_ADMIN' && (
               <button

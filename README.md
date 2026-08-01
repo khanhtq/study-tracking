@@ -29,9 +29,7 @@ Designed with a sleek **Glassmorphism** aesthetic, fluid micro-animations, optim
   * **English**
   * **Chinese (中文)**
 
-### 1.5. Integrated Lofi/Study Music Player
-* Compact audio widget supporting YouTube-filtered lofi, piano, and ambient playlists.
-* Streams via backend proxy endpoints to eliminate CORS and playback issues.
+
 
 ### 1.6. Social Hub & Real-time Messaging
 * Friend list displaying live **Online / Offline** presence and levels.
@@ -80,8 +78,6 @@ frontend/
 │   │   ├── Leaderboard.jsx            # Top XP & Level leaderboard
 │   │   ├── LevelProgress.jsx          # XP progress bar & level badge
 │   │   ├── ManualSessionModal.jsx     # Manual session entry modal
-│   │   ├── MusicModal.jsx             # Music playlist & search modal
-│   │   ├── MusicWidget.jsx            # Floating music player widget
 │   │   ├── Navbar.jsx                 # Main navigation header
 │   │   ├── OfflineBanner.jsx          # Network disconnection banner
 │   │   ├── PwaInstallPrompt.jsx       # PWA installation banner
@@ -90,7 +86,6 @@ frontend/
 │   ├── context/             # React Context State Providers
 │   │   ├── AuthContext.jsx            # Auth state, user profile, JWT handling
 │   │   ├── LanguageContext.jsx        # i18n translation state
-│   │   ├── MusicContext.jsx           # Lofi music player state
 │   │   └── ThemeContext.jsx           # Dark/Light theme state
 │   ├── pages/               # Top-level Page Views
 │   │   ├── AdminDashboard.jsx         # Admin management portal
