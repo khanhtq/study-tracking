@@ -126,7 +126,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
               <span className="text-2xl">🎉</span>
               <h4 className="text-sm font-extrabold text-emerald-300">Tất Cả Đặc Quyền VIP Đang Miễn Phí!</h4>
               <p className="text-xs text-slate-300">
-                Hệ thống đang mở khóa toàn bộ tính năng cao cấp (Biểu đồ 7 ngày, Nhạc Lofi, Đếm giờ...) cho 100% người dùng hoàn toàn miễn phí!
+                Hệ thống đang mở khóa toàn bộ tính năng cao cấp (Biểu đồ 7 ngày, Đồng hồ khoa học, Thống kê XP...) cho 100% người dùng hoàn toàn miễn phí!
               </p>
             </div>
           ) : (
@@ -168,10 +168,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
               <Check className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{t('perk_scientific_timer')}</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>{t('perk_unlimited_lofi')}</span>
-            </div>
+
             <div className="flex items-center gap-2 text-slate-300">
               <Check className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{t('perk_weekly_chart')}</span>

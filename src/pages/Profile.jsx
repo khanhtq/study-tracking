@@ -6,7 +6,7 @@ import { userApi, leaderboardApi, paymentApi, getErrorMessage } from '../api';
 import AvatarUploader from '../components/AvatarUploader';
 import SEO from '../components/SEO';
 import PremiumUpgradeModal from '../components/PremiumUpgradeModal';
-import { Sun, Moon, ArrowLeft, User, Shield, Trophy, Settings, Lock, Check, Globe, LogOut, Crown, Sparkles, Music, BarChart3, Clock, CreditCard } from 'lucide-react';
+import { Sun, Moon, ArrowLeft, User, Shield, Trophy, Settings, Lock, Check, Globe, LogOut, Crown, Sparkles, BarChart3, Clock, CreditCard } from 'lucide-react';
 
 export default function Profile({ onBackToDashboard }) {
   const { user, progress, refreshUserProgress, logout, togglePremium } = useAuth();
@@ -492,17 +492,6 @@ export default function Profile({ onBackToDashboard }) {
                 </div>
               </div>
 
-              <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
-                  <Music className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-100">{t('perk_unlimited_lofi')}</h4>
-                  <p className="text-xs text-slate-400 mt-1">
-                    YouTube Lofi, Piano, Ambient.
-                  </p>
-                </div>
-              </div>
 
               <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-start gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">

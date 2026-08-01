@@ -558,37 +558,7 @@ export const messageApi = {
   },
 };
 
-/**
- * Music API Endpoints (YouTube Ad-Free Player)
- */
-export const getSuggestedPlaylists = async () => {
-  try {
-    return await apiCall('/music/playlists');
-  } catch (err) {
-    console.warn('Backend music playlists API unavailable, using fallback:', err);
-    return [];
-  }
-};
 
-export const searchMusicTracks = async (query, options = {}) => {
-  if (!query || !query.trim()) return [];
-  try {
-    return await apiCall(`/music/search?query=${encodeURIComponent(query)}`, options);
-  } catch (err) {
-    console.warn('Backend music search API failed:', err);
-    return [];
-  }
-};
-
-export const getMusicStreamUrl = async (youtubeId, options = {}) => {
-  if (!youtubeId) return null;
-  try {
-    return await apiCall(`/music/stream/${youtubeId}`, options);
-  } catch (err) {
-    console.warn('Backend music stream URL API failed:', err);
-    return { streamUrl: null };
-  }
-};
 
 /**
  * Leaderboard API Endpoints (Redis ZSET)
