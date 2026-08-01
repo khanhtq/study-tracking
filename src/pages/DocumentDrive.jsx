@@ -246,10 +246,17 @@ export default function DocumentDrive({ onBackToDashboard }) {
 
       let localBlobUrl;
       if (targetUrl) {
-        // SAS URL (Azure)
-        const response = await fetch(targetUrl);
-        const blob = await response.blob();
-        localBlobUrl = window.URL.createObjectURL(blob);
+        try {
+          // Attempt direct fetch from Azure SAS URL
+          const response = await fetch(targetUrl);
+          if (!response.ok) throw new Error('SAS fetch failed');
+          const blob = await response.blob();
+          localBlobUrl = window.URL.createObjectURL(blob);
+        } catch (corsOrNetworkErr) {
+          // Fallback to backend stream if Azure CORS or direct fetch fails
+          const blob = await documentApi.downloadDocumentBlob(doc.id);
+          localBlobUrl = window.URL.createObjectURL(blob);
+        }
       } else {
         // Direct stream from Spring Boot backend using authenticated fetch
         const blob = await documentApi.downloadDocumentBlob(doc.id);
