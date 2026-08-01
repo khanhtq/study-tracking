@@ -21,7 +21,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
   
   // Notification & Errors
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [toast, setToast] = useState(null); // { message, type, title }
 
   // Modals
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
@@ -73,9 +73,11 @@ export default function DocumentDrive({ onBackToDashboard }) {
     loadDocuments();
   }, [currentFolder.id, activeTab, searchQuery]);
 
-  const showSuccess = (msg) => {
-    setSuccess(msg);
-    setTimeout(() => setSuccess(''), 4000);
+  const showSuccess = (msg, title = 'Thao tác thành công 🎉') => {
+    setToast({ message: msg, type: 'success', title });
+    setTimeout(() => {
+      setToast((prev) => (prev?.message === msg ? null : prev));
+    }, 4500);
   };
 
   const showError = (msg) => {
@@ -122,7 +124,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
 
     setUploading(false);
     if (successCount > 0) {
-      showSuccess(`Uploaded ${successCount} file(s) successfully!`);
+      showSuccess(`Đã tải lên ${successCount} tập tin thành công!`, 'Tải File Thành Công 🚀');
       loadDocuments();
       loadQuota();
     }
@@ -546,13 +548,6 @@ export default function DocumentDrive({ onBackToDashboard }) {
             <div className="mb-4 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-sm flex items-center justify-between animate-fade-in">
               <span>{error}</span>
               <button onClick={() => setError('')} className="text-rose-400 hover:text-rose-200">✕</button>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-4 p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-sm flex items-center justify-between animate-fade-in">
-              <span>{success}</span>
-              <button onClick={() => setSuccess('')} className="text-emerald-400 hover:text-emerald-200">✕</button>
             </div>
           )}
 
@@ -982,6 +977,27 @@ export default function DocumentDrive({ onBackToDashboard }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-2xl shadow-slate-950/80 animate-fade-in max-w-md border-l-4 border-l-emerald-500">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0 pr-2">
+            <h4 className="text-sm font-bold text-slate-100">{toast.title || 'Thông báo'}</h4>
+            <p className="text-xs text-slate-300 font-medium mt-0.5">{toast.message}</p>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition text-sm"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
