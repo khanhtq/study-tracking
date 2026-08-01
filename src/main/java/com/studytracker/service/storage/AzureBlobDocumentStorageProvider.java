@@ -90,13 +90,12 @@ public class AzureBlobDocumentStorageProvider implements DocumentStorageProvider
                 throw new IllegalArgumentException("File không tồn tại trên Azure Storage.");
             }
 
-            // Return direct permanent Blob URL without SAS token for public assets like avatars (expiryMinutes <= 0)
-            if (expiryMinutes <= 0) {
-                return blobClient.getBlobUrl();
-            }
+            // For avatars / public assets (expiryMinutes <= 0), generate a 10-year SAS read URL (5,256,000 minutes = 10 years)
+            // This ensures avatars load 100% reliably on Production even if Azure Storage Account has "Allow Blob public access" disabled!
+            int effectiveExpiry = expiryMinutes > 0 ? expiryMinutes : 5256000;
 
             BlobSasPermission permission = new BlobSasPermission().setReadPermission(true);
-            OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(expiryMinutes > 0 ? expiryMinutes : 60);
+            OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(effectiveExpiry);
 
             BlobServiceSasSignatureValues values = new BlobServiceSasSignatureValues(expiryTime, permission)
                     .setStartTime(OffsetDateTime.now().minusMinutes(5));
