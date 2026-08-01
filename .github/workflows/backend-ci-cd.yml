@@ -5,13 +5,23 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci-cd.yml'
   pull_request:
     branches:
       - main
       - master
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci-cd.yml'
 
 env:
   REGISTRY: ghcr.io
+
+defaults:
+  run:
+    working-directory: ./backend
 
 jobs:
   build-and-test:
@@ -28,6 +38,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          cache-dependency-path: ./backend/pom.xml
 
       - name: Build and run tests
         run: mvn clean package
@@ -36,7 +47,6 @@ jobs:
     name: Build & Push Docker Image (CD)
     needs: build-and-test
     runs-on: ubuntu-latest
-    # Chỉ push Docker image khi code được push/merge trực tiếp vào main/master
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     permissions:
       contents: read
@@ -48,7 +58,7 @@ jobs:
 
       - name: Lowercase repository name
         run: |
-          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$(echo ${{ github.repository }}-backend | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -69,8 +79,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -81,4 +91,3 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           curl -f "$RENDER_DEPLOY_HOOK_URL"
-
