@@ -4,6 +4,7 @@ server:
     threads:
       max: 50
       min-spare: 10
+    accept-count: 100
     connection-timeout: 5000ms
 
 spring:
@@ -23,6 +24,7 @@ spring:
       minimum-idle: 3
       idle-timeout: 30000
       connection-timeout: 5000
+      leak-detection-threshold: 20000
   jpa:
     hibernate:
       ddl-auto: validate
