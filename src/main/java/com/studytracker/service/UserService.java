@@ -493,8 +493,8 @@ public class UserService {
 
         String avatarUrl;
         if ("AZURE".equalsIgnoreCase(documentStorageProvider.getProviderName())) {
-            String sasUrl = documentStorageProvider.generateDownloadUrl(targetPath, filename, 525600); // 1 năm SAS URL
-            avatarUrl = (sasUrl != null) ? sasUrl : targetPath;
+            String permanentUrl = documentStorageProvider.generateDownloadUrl(targetPath, filename, 0); // Permanent URL without SAS expiration
+            avatarUrl = (permanentUrl != null) ? permanentUrl : targetPath;
         } else {
             avatarUrl = "/uploads/" + targetPath;
         }
