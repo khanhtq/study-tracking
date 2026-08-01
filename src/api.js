@@ -78,9 +78,14 @@ export const getErrorKey = (status, endpoint = '') => {
 };
 
 const getHeaders = () => {
-  return {
+  const token = localStorage.getItem('token');
+  const headers = {
     'Content-Type': 'application/json',
   };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 let serverClientOffset = 0;
@@ -137,14 +142,20 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
           credentials: 'include',
         });
         if (refreshRes.ok) {
+          const refreshData = await refreshRes.json().catch(() => ({}));
+          if (refreshData?.token) {
+            localStorage.setItem('token', refreshData.token);
+          }
           isRefreshing = false;
           onRefreshed(true);
           return apiCall(endpoint, options, true);
         } else {
+          localStorage.removeItem('token');
           isRefreshing = false;
           onRefreshed(false);
         }
       } catch (err) {
+        localStorage.removeItem('token');
         isRefreshing = false;
         onRefreshed(false);
       }

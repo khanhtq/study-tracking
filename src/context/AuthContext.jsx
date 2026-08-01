@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [progress, setProgress] = useState(null);
   const [activeSession, setActiveSessionState] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,7 @@ export const AuthProvider = ({ children }) => {
       const isGuest = localStorage.getItem('isGuest') === 'true';
       if (isGuest) return;
       setUser(null);
+      setToken(null);
       setProgress(null);
       setActiveSessionState(null);
     };
@@ -24,6 +26,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const refreshProgress = async () => {
+    const isGuest = localStorage.getItem('isGuest') === 'true';
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken && !isGuest) return;
     try {
       const data = await userApi.getMe();
       setProgress(data);
@@ -34,7 +39,6 @@ export const AuthProvider = ({ children }) => {
           window.dispatchEvent(new CustomEvent('language-change', { detail: data.preferredLanguage }));
         }
       }
-      const isGuest = localStorage.getItem('isGuest') === 'true';
       if (!isGuest) {
         setUser({
           id: data.userId,
@@ -77,13 +81,14 @@ export const AuthProvider = ({ children }) => {
         });
       }
     } catch (err) {
-      // User is not logged in or token is invalid
-      setUser(null);
-      setProgress(null);
+      console.error('Error fetching progress:', err);
     }
   };
 
   const fetchActiveSession = async () => {
+    const isGuest = localStorage.getItem('isGuest') === 'true';
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken && !isGuest) return;
     try {
       const session = await sessionApi.getActive();
       if (session) {
@@ -92,15 +97,19 @@ export const AuthProvider = ({ children }) => {
         setActiveSessionState(null);
       }
     } catch (err) {
-      setActiveSessionState(null);
+      console.error('Error fetching active session:', err);
     }
   };
 
   useEffect(() => {
     const initializeAuth = async () => {
+      const isGuest = localStorage.getItem('isGuest') === 'true';
+      const storedToken = localStorage.getItem('token');
       try {
-        await refreshProgress();
-        await fetchActiveSession();
+        if (storedToken || isGuest) {
+          await refreshProgress();
+          await fetchActiveSession();
+        }
       } catch (err) {
         console.error('Lỗi khởi tạo AuthContext:', err);
       } finally {
@@ -108,12 +117,12 @@ export const AuthProvider = ({ children }) => {
       }
     };
     initializeAuth();
-  }, []);
+  }, [token]);
 
   // Real-time WebSocket + Background Polling + Focus event for 100% reliable message notifications
   useEffect(() => {
     const isGuest = localStorage.getItem('isGuest') === 'true';
-    if (isGuest || !user?.id) return;
+    if (!token || isGuest || !user?.id) return;
 
     // 1. Initialize WebSocket
     initWebSocket(user.id);
@@ -148,7 +157,7 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener('focus', handleFocus);
       clearInterval(interval);
     };
-  }, [user?.id]);
+  }, [token, user?.id]);
 
   const login = async (email, password) => {
     // Clear any guest flags
@@ -159,6 +168,11 @@ export const AuthProvider = ({ children }) => {
 
     if (res.requiresVerification) {
       return res;
+    }
+
+    if (res.token) {
+      localStorage.setItem('token', res.token);
+      setToken(res.token);
     }
 
     localStorage.setItem('user', JSON.stringify({
@@ -178,6 +192,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('guest_user');
     
     const res = await authApi.loginWithGoogle(idToken);
+
+    if (res.token) {
+      localStorage.setItem('token', res.token);
+      setToken(res.token);
+    }
 
     localStorage.setItem('user', JSON.stringify({
       id: res.userId,
@@ -250,7 +269,10 @@ export const AuthProvider = ({ children }) => {
       return res;
     }
 
-    if (res.token || res.email) {
+    if (res.token) {
+      localStorage.setItem('token', res.token);
+      setToken(res.token);
+
       localStorage.setItem('user', JSON.stringify({
         id: res.userId,
         email: res.email,
@@ -276,7 +298,10 @@ export const AuthProvider = ({ children }) => {
   const verifyOtp = async (email, otp) => {
     const res = await authApi.verifyOtp(email, otp);
     
-    if (res.token || res.email) {
+    if (res.token) {
+      localStorage.setItem('token', res.token);
+      setToken(res.token);
+
       localStorage.setItem('user', JSON.stringify({
         id: res.userId,
         email: res.email,
@@ -354,6 +379,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.warn('Logout API failed:', err);
     }
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('isGuest');
     localStorage.removeItem('guest_user');
@@ -361,6 +387,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('guest_active_session');
     localStorage.removeItem('guest_progress');
     localStorage.removeItem('pending_guest_sessions');
+    setToken(null);
     setUser(null);
     setProgress(null);
     setActiveSessionState(null);
@@ -380,7 +407,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user,
-      token: user ? 'authenticated' : null,
+      token,
       progress,
       activeSession,
       loading,
