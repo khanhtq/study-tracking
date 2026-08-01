@@ -644,3 +644,90 @@ export const paymentApi = {
     return apiCall('/payment/history');
   },
 };
+
+/**
+ * Document Drive API Endpoints (Azure Blob / Multi-Provider Storage)
+ */
+export const documentApi = {
+  getDocuments: (parentId = null) => {
+    if (isGuestMode()) return Promise.resolve([]);
+    const query = parentId ? `?parentId=${parentId}` : '';
+    return apiCall(`/documents${query}`);
+  },
+  uploadFile: (file, parentId = null) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để sử dụng bộ nhớ tài liệu.'));
+    const formData = new FormData();
+    formData.append('file', file);
+    if (parentId) formData.append('parentId', parentId);
+
+    const token = localStorage.getItem('token');
+    return fetch(`${BASE_URL}/documents/upload`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Lỗi khi tải file lên');
+      }
+      return res.json();
+    });
+  },
+  createFolder: (name, parentId = null) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để sử dụng bộ nhớ tài liệu.'));
+    return apiCall('/documents/folder', {
+      method: 'POST',
+      body: JSON.stringify({ name, parentId }),
+    });
+  },
+  getDownloadUrl: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}/download-url`);
+  },
+  getStreamUrl: (id) => {
+    const token = localStorage.getItem('token');
+    return `${BASE_URL}/documents/${id}/stream`;
+  },
+  renameDocument: (id, name) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}/rename`, {
+      method: 'PUT',
+      body: JSON.stringify({ name }),
+    });
+  },
+  toggleFavorite: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}/favorite`, { method: 'POST' });
+  },
+  softDelete: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}`, { method: 'DELETE' });
+  },
+  restoreDocument: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}/restore`, { method: 'POST' });
+  },
+  permanentDelete: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/documents/${id}/permanent`, { method: 'DELETE' });
+  },
+  getTrash: () => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall('/documents/trash');
+  },
+  getFavorites: () => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall('/documents/favorites');
+  },
+  searchDocuments: (query) => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall(`/documents/search?q=${encodeURIComponent(query)}`);
+  },
+  getStorageQuota: () => {
+    if (isGuestMode()) return Promise.resolve({ usedBytes: 0, maxBytes: 1048576000, usagePercentage: 0, formattedUsed: '0 MB', formattedMax: '1 GB' });
+    return apiCall('/documents/storage');
+  },
+};
+

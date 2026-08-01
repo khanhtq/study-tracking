@@ -13,7 +13,7 @@ import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock } from 'lucide-react';
+import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock, FolderOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const calculateXpEarned = (durationSeconds) => {
@@ -35,7 +35,7 @@ const getFullAvatarUrl = (url) => {
   return `${backendOrigin}${cleanUrl}`;
 };
 
-export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavigateProfile }) {
+export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavigateProfile, onNavigateDrive }) {
   const { user, token, progress, refreshProgress, activeSession } = useAuth();
   const { t } = useLanguage();
   const [sessions, setSessions] = useState([]);
@@ -183,6 +183,15 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                   {progress.pendingFriendRequestsCount}
                 </span>
               )}
+            </button>
+
+            <button
+              onClick={onNavigateDrive}
+              className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/50 rounded-2xl px-3 py-1.5 text-slate-100 hover:text-sky-400 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md"
+              title={t('nav_drive_title')}
+            >
+              <FolderOpen className="w-4 h-4 text-sky-400" />
+              <span className="hidden sm:inline">{t('nav_drive')}</span>
             </button>
 
 

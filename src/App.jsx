@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
+import DocumentDrive from './pages/DocumentDrive';
 
 import VerifyOtp from './pages/VerifyOtp';
 import ForgotPassword from './pages/ForgotPassword';
@@ -116,11 +117,14 @@ function MainApp() {
           <AdminDashboard />
         ) : view === 'profile' ? (
           <Profile onBackToDashboard={() => setView('dashboard')} />
+        ) : view === 'drive' ? (
+          <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
+            onNavigateDrive={() => setView('drive')}
           />
         )
       ) : user?.isGuest ? (
@@ -132,11 +136,14 @@ function MainApp() {
           />
         ) : view === 'profile' ? (
           <Profile onBackToDashboard={() => setView('dashboard')} />
+        ) : view === 'drive' ? (
+          <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
+            onNavigateDrive={() => setView('drive')}
           />
         )
       ) : (
