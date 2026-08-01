@@ -20,14 +20,14 @@ public interface FriendshipRepository extends JpaRepository<Friendship, UUID> {
            "(f.requester.id = :u2Id AND f.addressee.id = :u1Id)")
     Optional<Friendship> findBetweenUserIds(@Param("u1Id") UUID u1Id, @Param("u2Id") UUID u2Id);
 
-    @Query("SELECT f FROM Friendship f WHERE " +
+    @Query("SELECT f FROM Friendship f JOIN FETCH f.requester JOIN FETCH f.addressee WHERE " +
            "(f.requester.id = :userId OR f.addressee.id = :userId) AND f.status = :status")
     List<Friendship> findAllByUserIdAndStatus(@Param("userId") UUID userId, @Param("status") FriendshipStatus status);
 
-    @Query("SELECT f FROM Friendship f WHERE f.addressee.id = :userId AND f.status = :status ORDER BY f.createdAt DESC")
+    @Query("SELECT f FROM Friendship f JOIN FETCH f.requester JOIN FETCH f.addressee WHERE f.addressee.id = :userId AND f.status = :status ORDER BY f.createdAt DESC")
     List<Friendship> findByAddresseeIdAndStatus(@Param("userId") UUID userId, @Param("status") FriendshipStatus status);
 
-    @Query("SELECT f FROM Friendship f WHERE f.requester.id = :userId AND f.status = :status ORDER BY f.createdAt DESC")
+    @Query("SELECT f FROM Friendship f JOIN FETCH f.requester JOIN FETCH f.addressee WHERE f.requester.id = :userId AND f.status = :status ORDER BY f.createdAt DESC")
     List<Friendship> findByRequesterIdAndStatus(@Param("userId") UUID userId, @Param("status") FriendshipStatus status);
 
     @Query("SELECT COUNT(f) > 0 FROM Friendship f WHERE " +

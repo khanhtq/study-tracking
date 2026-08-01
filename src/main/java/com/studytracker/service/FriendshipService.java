@@ -146,6 +146,18 @@ public class FriendshipService {
     public List<FriendDto> getFriends(User currentUser) {
         List<Friendship> friendships = friendshipRepository.findAllByUserIdAndStatus(currentUser.getId(), FriendshipStatus.ACCEPTED);
 
+        List<User> friendUsers = friendships.stream()
+                .map(f -> f.getRequester().getId().equals(currentUser.getId()) ? f.getAddressee() : f.getRequester())
+                .collect(Collectors.toList());
+
+        List<StudySession> activeSessions = friendUsers.isEmpty()
+                ? java.util.Collections.emptyList()
+                : studySessionRepository.findByUserInAndEndedAtIsNull(friendUsers);
+
+        java.util.Map<UUID, StudySession> activeSessionMap = activeSessions.stream()
+                .filter(s -> s.getUser() != null)
+                .collect(Collectors.toMap(s -> s.getUser().getId(), s -> s, (s1, s2) -> s1));
+
         Instant onlineThreshold = Instant.now().minus(Duration.ofMinutes(2));
 
         return friendships.stream().map(f -> {
@@ -163,11 +175,11 @@ public class FriendshipService {
             int realtimeLevel = baseLevel;
 
             if (canSeeStatus) {
-                Optional<StudySession> activeSessionOpt = studySessionRepository.findByUserAndEndedAtIsNull(friend);
-                if (activeSessionOpt.isPresent()) {
+                StudySession activeSession = activeSessionMap.get(friend.getId());
+                if (activeSession != null) {
                     isStudying = true;
-                    currentSubject = activeSessionOpt.get().getSubject();
-                    studyStartedAt = activeSessionOpt.get().getStartedAt();
+                    currentSubject = activeSession.getSubject();
+                    studyStartedAt = activeSession.getStartedAt();
 
                     if (studyStartedAt != null) {
                         long elapsedSeconds = Math.max(0, Duration.between(studyStartedAt, Instant.now()).getSeconds());
