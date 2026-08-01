@@ -65,7 +65,7 @@ public class DocumentService {
 
     @Transactional(readOnly = true)
     public List<DocumentDto> getTrash(UUID userId) {
-        return documentRepository.findByUserIdAndIsDeletedTrueOrderByDeletedAtDesc(userId)
+        return documentRepository.findTopLevelTrashItems(userId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
@@ -259,7 +259,7 @@ public class DocumentService {
         documentRepository.save(doc);
 
         if (Boolean.TRUE.equals(doc.getIsFolder())) {
-            List<StudyDocument> children = documentRepository.findByUserIdAndParentIdAndIsDeletedFalseOrderByIdDesc(doc.getUser().getId(), doc.getId());
+            List<StudyDocument> children = documentRepository.findByParentId(doc.getId());
             for (StudyDocument child : children) {
                 restoreRecursive(child);
             }
@@ -274,13 +274,18 @@ public class DocumentService {
 
     private void deleteRecursive(StudyDocument doc) {
         if (Boolean.TRUE.equals(doc.getIsFolder())) {
-            List<StudyDocument> children = documentRepository.findByUserIdAndParentIdAndIsDeletedFalseOrderByIdDesc(doc.getUser().getId(), doc.getId());
+            List<StudyDocument> children = documentRepository.findByParentId(doc.getId());
             for (StudyDocument child : children) {
                 deleteRecursive(child);
             }
         } else {
-            if (doc.getStoragePath() != null) {
-                storageProvider.delete(doc.getStoragePath());
+            if (doc.getStoragePath() != null && !doc.getStoragePath().trim().isEmpty()) {
+                try {
+                    storageProvider.delete(doc.getStoragePath());
+                    log.info("Permanently deleted storage blob for document ID {} at path: {}", doc.getId(), doc.getStoragePath());
+                } catch (Exception e) {
+                    log.error("Failed to delete storage blob for path {}: {}", doc.getStoragePath(), e.getMessage(), e);
+                }
             }
         }
         documentRepository.delete(doc);

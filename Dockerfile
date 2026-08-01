@@ -10,12 +10,10 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Cài đặt python3, nodejs (JS runtime cho yt-dlp), ffmpeg, curl và yt-dlp
-RUN apk add --no-cache python3 nodejs ffmpeg curl && \
-    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
-    chmod a+rx /usr/local/bin/yt-dlp
+# Cài đặt curl cho health check
+RUN apk add --no-cache curl
 
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-# Giới hạn JVM Heap 224MB, Metaspace 180MB để chạy mượt mà Spring Boot 3.3 + Spring Security trên Render 512MB
-ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx224m", "-Xms128m", "-XX:MetaspaceSize=128m", "-XX:MaxMetaspaceSize=180m", "-XX:ReservedCodeCacheSize=48m", "-Xss256k", "-jar", "app.jar"]
+# Tối ưu RAM cho Render 512MB: Heap 224MB, Metaspace 160MB, CodeCache 48MB, ThreadStack 256KB
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-Xmx224m", "-Xms128m", "-XX:MetaspaceSize=128m", "-XX:MaxMetaspaceSize=160m", "-XX:ReservedCodeCacheSize=48m", "-Xss256k", "-jar", "app.jar"]
