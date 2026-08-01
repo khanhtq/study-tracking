@@ -687,8 +687,24 @@ export const documentApi = {
     return apiCall(`/documents/${id}/download-url`);
   },
   getStreamUrl: (id) => {
-    const token = localStorage.getItem('token');
     return `${BASE_URL}/documents/${id}/stream`;
+  },
+  downloadDocumentBlob: async (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    const cleanBaseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(`${cleanBaseUrl}/documents/${id}/stream`, {
+      headers,
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+    return await response.blob();
   },
   renameDocument: (id, name) => {
     if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
