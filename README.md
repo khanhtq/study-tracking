@@ -1,4 +1,4 @@
-# 🎓 Study XP Tracker — Monorepo
+# Study XP Tracker — Monorepo
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat-square&logo=openjdk)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.1-brightgreen.svg?style=flat-square&logo=springboot)](https://spring.io/projects/spring-boot)
@@ -14,7 +14,7 @@
 
 ---
 
-## 📌 Tổng Quan Dự Án & Tính Năng Nổi Bật
+## Tổng Quan Dự Án & Tính Năng Nổi Bật
 
 ### 1. Đồng Hồ Học Tập & Động Cơ Chống Gian Lận Server-Side
 * **Đa dạng chế độ:** Hỗ trợ Đếm ngược Pomodoro (25 phút standard) và Đếm xuôi (Stopwatch).
@@ -48,7 +48,7 @@
 
 ---
 
-## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
+## Công Nghệ Sử Dụng (Tech Stack)
 
 ### **Frontend**
 * **Core:** React 19, Vite 8, JavaScript (ES6+).
@@ -70,7 +70,7 @@
 
 ---
 
-## 📁 Cấu Trúc Thư Mục Monorepo
+## Cấu Trúc Thư Mục Monorepo
 
 ```text
 study-tracking/
@@ -95,7 +95,7 @@ study-tracking/
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy Dự Án (Local Development)
+## Hướng Dẫn Cài Đặt & Chạy Dự Án (Local Development)
 
 ### Yêu Cầu Tiền Đề (Prerequisites)
 * **Java 21** hoặc cao hơn.
@@ -136,7 +136,7 @@ docker compose -f backend/docker-compose.yml up -d
    ```bash
    mvn spring-boot:run
    ```
-   👉 Backend sẽ lắng nghe tại: **`http://localhost:8080`**
+   Backend sẽ lắng nghe tại: **`http://localhost:8080`**
 
 ---
 
@@ -153,11 +153,11 @@ docker compose -f backend/docker-compose.yml up -d
    ```bash
    npm run dev
    ```
-   👉 Frontend sẽ lắng nghe tại: **`http://localhost:5173`**
+   Frontend sẽ lắng nghe tại: **`http://localhost:5173`**
 
 ---
 
-## ⚙️ Biến Môi Trường (Environment Variables)
+## Biến Môi Trường (Environment Variables)
 
 ### Backend (`backend/src/main/resources/application.yml` hoặc ENV)
 ```yaml
@@ -177,13 +177,13 @@ VITE_GOOGLE_CLIENT_ID=<your-google-client-id>
 
 ---
 
-## 📄 Giấy Phép (License)
+## Giấy Phép (License)
 
 Dự án này được phân phối dưới giấy phép **MIT License**. Xem thông tin chi tiết tại file [LICENSE](LICENSE).
 
 ---
 
-## 👨‍💻 Tác Giả & Đóng Góp (Author)
+## Tác Giả (Author)
 
 * **Tác giả:** Trần Quốc Khánh ([@khanhtq](https://github.com/khanhtq))
 * **Repository:** [https://github.com/khanhtq/study-tracking](https://github.com/khanhtq/study-tracking)
