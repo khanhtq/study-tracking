@@ -18,6 +18,11 @@ public interface StudyDocumentRepository extends JpaRepository<StudyDocument, Lo
 
     List<StudyDocument> findByUserIdAndIsDeletedTrueOrderByDeletedAtDesc(UUID userId);
 
+    @Query("SELECT d FROM StudyDocument d LEFT JOIN d.parent p WHERE d.user.id = :userId AND d.isDeleted = true AND (p IS NULL OR p.isDeleted = false) ORDER BY d.deletedAt DESC")
+    List<StudyDocument> findTopLevelTrashItems(@Param("userId") UUID userId);
+
+    List<StudyDocument> findByParentId(Long parentId);
+
     List<StudyDocument> findByUserIdAndIsFavoriteTrueAndIsDeletedFalseOrderByIdDesc(UUID userId);
 
     @Query("SELECT COALESCE(SUM(d.sizeBytes), 0) FROM StudyDocument d WHERE d.user.id = :userId AND d.isDeleted = false AND d.isFolder = false")
