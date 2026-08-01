@@ -19,6 +19,17 @@ services:
     volumes:
       - redisdata:/data
 
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: study_xp_tracker_azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - azuritedata:/data
+
 volumes:
   pgdata:
   redisdata:
+  azuritedata:

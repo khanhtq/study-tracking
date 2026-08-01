@@ -19,6 +19,14 @@ $env:CLOUDINARY_CLOUD_NAME="cloud-name"
 $env:CLOUDINARY_API_KEY="api-key"
 $env:CLOUDINARY_API_SECRET="api-secret"
 
+# Variables for Azure Storage configuration
+$env:UPLOAD_DIR=
+$env:MAX_USER_QUOTA_MB=
+$env:MAX_FILE_SIZE_MB=
+$env:AZURE_STORAGE_CONNECTION_STRING=
+$env:AZURE_STORAGE_CONTAINER_NAME=
+$env:AZURE_STORAGE_SAS_EXPIRY_MINUTES=
+
 # Variables for Redis configuration
 $env:SPRING_REDIS_HOST="host"
 $env:SPRING_REDIS_PORT="6379"

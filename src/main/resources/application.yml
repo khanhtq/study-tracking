@@ -9,6 +9,10 @@ server:
 spring:
   application:
     name: study-xp-tracker
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/study_xp_tracker}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -56,8 +60,14 @@ spring:
 
 app:
   storage:
-    provider: ${STORAGE_PROVIDER:local} # Đổi thành 'cloudinary' khi muốn dùng Cloudinary
+    provider: ${STORAGE_PROVIDER:azure} # azure | local | cloudinary
     upload-dir: ${UPLOAD_DIR:uploads}
+    max-user-quota-mb: ${MAX_USER_QUOTA_MB:1000} # 1 GB
+    max-file-size-mb: ${MAX_FILE_SIZE_MB:200} # 200 MB
+    azure:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING:DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;}
+      container-name: ${AZURE_STORAGE_CONTAINER_NAME:study-documents}
+      sas-expiry-minutes: ${AZURE_STORAGE_SAS_EXPIRY_MINUTES:60}
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME:}
       api-key: ${CLOUDINARY_API_KEY:}
