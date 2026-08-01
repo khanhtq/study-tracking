@@ -1,0 +1,9 @@
+package com.studytracker.repository;
+
+import com.studytracker.model.XpLevelConfig;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface XpLevelConfigRepository extends JpaRepository<XpLevelConfig, Integer> {
+}
