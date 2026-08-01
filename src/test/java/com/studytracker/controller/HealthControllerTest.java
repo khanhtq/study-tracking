@@ -2,6 +2,7 @@ package com.studytracker.controller;
 
 import com.studytracker.config.JwtTokenProvider;
 import com.studytracker.repository.UserRepository;
+import com.studytracker.util.CookieUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class HealthControllerTest {
 
     @MockBean
     private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private CookieUtil cookieUtil;
 
     @BeforeEach
     void setUp() throws SQLException {
