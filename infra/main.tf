@@ -96,6 +96,14 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_service
   end_ip_address   = "0.0.0.0"
 }
 
+# Cho phép kết nối công khai từ máy tính cá nhân (DBeaver / pgAdmin)
+resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_public_access" {
+  name             = "AllowPublicAccess"
+  server_id        = azurerm_postgresql_flexible_server.postgres.id
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "255.255.255.255"
+}
+
 # 5. Azure Container Apps Environment & Container App (Backend Spring Boot - HTTPS Tự Động 100%)
 resource "azurerm_container_app_environment" "cae" {
   name                = "cae-study-tracking-prod"
@@ -317,6 +325,12 @@ resource "azurerm_container_app" "backend" {
         value = "8080"
       }
     }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      template[0].container[0].image
+    ]
   }
 
   tags = var.tags
