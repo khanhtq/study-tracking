@@ -52,6 +52,10 @@ jobs:
     needs: lint-and-build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      deployments: write
+      statuses: write
+      contents: read
 
     steps:
       - name: Checkout repository
