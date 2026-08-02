@@ -96,7 +96,7 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_service
   end_ip_address   = "0.0.0.0"
 }
 
-# 5. Azure Container Instance - ACI (Backend Spring Boot Container - Hỗ trợ tích hợp Upstash Redis)
+# 5. Azure Container Instance - ACI (Backend Spring Boot Container)
 resource "azurerm_container_group" "backend" {
   name                = var.backend_app_name
   location            = azurerm_resource_group.rg.location
@@ -124,15 +124,41 @@ resource "azurerm_container_group" "backend" {
 
     environment_variables = {
       "SPRING_PROFILES_ACTIVE"          = "prod"
-      "SPRING_DATASOURCE_URL"           = "jdbc:postgresql://${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.db.name}?sslmode=require"
+      "SPRING_DATASOURCE_URL"           = var.db_url != "" ? var.db_url : "jdbc:postgresql://${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.db.name}?sslmode=require"
       "SPRING_DATASOURCE_USERNAME"      = var.db_admin_username
       "SPRING_DATASOURCE_PASSWORD"      = var.db_admin_password
-      "SPRING_REDIS_HOST"               = var.upstash_redis_host != "" ? var.upstash_redis_host : "localhost"
+      "SPRING_REDIS_HOST"               = var.upstash_redis_host
       "SPRING_REDIS_PORT"               = var.upstash_redis_port
       "SPRING_REDIS_PASSWORD"           = var.upstash_redis_password
-      "SPRING_REDIS_SSL_ENABLED"        = var.upstash_redis_host != "" ? "true" : "false"
-      "AZURE_STORAGE_CONNECTION_STRING" = azurerm_storage_account.storage.primary_connection_string
-      "AZURE_STORAGE_CONTAINER_NAME"    = azurerm_storage_container.container.name
+      "SPRING_REDIS_SSL_ENABLED"        = "true"
+      "SPRING_MAIL_HOST"                = var.mail_host
+      "SPRING_MAIL_PORT"                = var.mail_port
+      "SPRING_MAIL_USERNAME"            = var.mail_username
+      "SPRING_MAIL_PASSWORD"            = var.mail_password
+      "SPRING_MAIL_FROM"                = var.mail_from
+      "SPRING_MAIL_SSL_ENABLE"          = var.mail_ssl_enable
+      "SPRING_MAIL_STARTTLS_ENABLE"     = var.mail_starttls_enable
+      "BREVO_API_KEY"                   = var.brevo_api_key
+      "GOOGLE_CLIENT_ID"                = var.google_client_id
+      "AZURE_STORAGE_CONNECTION_STRING" = var.azure_storage_connection_string != "" ? var.azure_storage_connection_string : azurerm_storage_account.storage.primary_connection_string
+      "AZURE_STORAGE_CONTAINER_NAME"    = var.container_name
+      "AZURE_STORAGE_SAS_EXPIRY_MINUTES"  = "60"
+      "CLOUDINARY_CLOUD_NAME"           = var.cloudinary_cloud_name
+      "CLOUDINARY_API_KEY"              = var.cloudinary_api_key
+      "CLOUDINARY_API_SECRET"           = var.cloudinary_api_secret
+      "STORAGE_PROVIDER"                = var.storage_provider
+      "UPLOAD_DIR"                      = var.upload_dir
+      "MAX_FILE_SIZE_MB"                = var.max_file_size_mb
+      "MAX_USER_QUOTA_MB"               = var.max_user_quota_mb
+      "VNPAY_TMN_CODE"                  = var.vnpay_tmn_code
+      "VNPAY_HASH_SECRET"               = var.vnpay_hash_secret
+      "VNPAY_PAY_URL"                   = var.vnpay_pay_url
+      "VNPAY_RETURN_URL"                = var.vnpay_return_url
+      "VIRTUAL_USERS_ENABLED"           = var.virtual_users_enabled
+      "VIRTUAL_USERS_COUNT"             = var.virtual_users_count
+      "VIRTUAL_USERS_ROTATION_HOURS"    = var.virtual_users_rotation_hours
+      "VIRTUAL_USERS_AUTO_REPLY_ENABLED" = var.virtual_users_auto_reply_enabled
+      "APP_FRONTEND_URL"                = var.app_frontend_url != "" ? var.app_frontend_url : azurerm_storage_account.frontend_storage.primary_web_endpoint
       "JWT_SECRET"                      = var.jwt_secret
       "PORT"                            = "8080"
     }
@@ -141,7 +167,7 @@ resource "azurerm_container_group" "backend" {
   tags = var.tags
 }
 
-# 6. Azure Storage Static Website (Frontend React SPA - Nằm tại vùng 'japaneast', tránh lỗi Policy 403)
+# 6. Azure Storage Static Website (Frontend React SPA - Nằm tại vùng 'japaneast')
 resource "azurerm_storage_account" "frontend_storage" {
   name                     = var.frontend_storage_name
   resource_group_name      = azurerm_resource_group.rg.name
