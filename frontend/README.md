@@ -1,146 +1,91 @@
 # Study XP Tracker — Frontend Web Application
 
-Modern Single Page Application (SPA) frontend for the **Study XP Tracker** platform, built with **React 19**, **Vite 8**, **Tailwind CSS v4**, **Framer Motion**, and **Recharts**.
-
-Designed with a sleek **Glassmorphism** aesthetic, fluid micro-animations, optimized User Experience (UX), and internationalization (i18n) support.
+Modern Single Page Application (SPA) built with **React 19**, **Vite 8**, **Tailwind CSS v4**, **Framer Motion**, and **Recharts**. Designed with a sleek Glassmorphism aesthetic, fluid micro-animations, and internationalization support across English, Vietnamese, and Chinese.
 
 ---
 
-## 1. Key Features & User Experience (UX)
+## Key Features & User Experience
 
-### 1.1. Focus Timer Engine & Real-time XP Calculation
-* **Multiple Modes:** Supports Stopwatch and Pomodoro Countdown timers.
-* **Real-time XP Preview:** Predicts XP gains based on active study duration.
-* **Pomodoro Bonus Mechanism:** Automatically awards a **+10% XP** bonus for completed sessions $\ge 25$ minutes.
-* **Anti-cheat Syncing:** Directly interfaces with server endpoints to validate session integrity.
+### Focus Timer Engine with XP Preview
+The platform supports both Stopwatch and Pomodoro Countdown timers with real-time XP predictions. It automatically rewards a +10% XP bonus for completed Pomodoro sessions (≥25 minutes) and syncs directly with the backend to validate session integrity and prevent cheating.
 
-### 1.2. Gamification & Level Up Celebrations
-* **Leveling Formula:** Calculates XP required for upcoming levels based on $XP = 100 \times Level^{1.5}$.
-* **Celebration Effects:** Triggers Canvas Confetti fireworks and celebration modals upon leveling up.
-* **Titles & Badges:** Unlocks exclusive badges and user titles as milestones are reached.
+### Gamification & Level System
+Users earn XP based on study duration and level up following a formula where XP required = 100 × Level^1.5. Level-up celebrations trigger Canvas Confetti animations and achievement modals. Exclusive badges and user titles unlock as milestones are reached.
 
-### 1.3. Analytics & Interactive Heatmap
-* **Contribution Heatmap:** GitHub-style calendar logging daily study activity and tracking continuous streaks.
-* **7-Day Statistics Chart:** Uses **Recharts** bar charts to visualize weekly study volume and focus trends.
+### Interactive Analytics & Heatmap
+A GitHub-style contribution heatmap logs daily study activity and tracks continuous streaks. Weekly statistics charts powered by Recharts visualize study volume and focus trends over a 7-day period.
 
-### 1.4. Internationalization (i18n)
-* Supports instant language switching without page reloads:
-  * **Vietnamese** (Default)
-  * **English**
-  * **Chinese (中文)**
+### Multi-Language Support
+Instant language switching without page reloads supports:
+- Vietnamese (Default)
+- English
+- Chinese (中文)
 
+### Social Features & Real-Time Messaging
+The platform displays live online/offline presence and user levels in the friend list. Direct messaging powered by WebSocket STOMP enables instant communication with friends.
 
+### Progressive Web App (PWA)
+Install the application directly onto desktop, Android, or iOS home screens as a native-feeling app. Network connectivity detection banners notify users when offline.
 
-### 1.6. Social Hub & Real-time Messaging
-* Friend list displaying live **Online / Offline** presence and levels.
-* Direct Messaging interface powered by WebSocket STOMP for instant communication.
-
-### 1.7. PWA (Progressive Web App) & Offline Shell
-* Installable directly onto Desktop / Android / iOS home screens as a native-feeling app.
-* Includes network connectivity detection banners (Offline Banner).
-
-### 1.8. Guest Mode & Admin Dashboard
-* **Guest Mode:** Instant access to study timers without mandatory registration.
-* **Admin Dashboard:** Dedicated administration portal monitoring system metrics, online users, and session logs.
+### Guest Mode & Admin Dashboard
+Study timers are accessible immediately without registration through Guest Mode. A dedicated Admin Dashboard monitors system metrics, online users, and session activity.
 
 ---
 
-## 2. Tech Stack & Libraries
+## Technology Stack
 
-| Library / Technology | Version | Role & Purpose |
-| :--- | :--- | :--- |
-| **React** | `19.2.7` | Core UI Library |
-| **Vite** | `8.1.1` | Build Tool & Dev Server |
-| **Tailwind CSS** | `4.3.3` | Utility-first Styling Framework |
-| **Framer Motion** | `12.42.2` | Motion & Animation Library |
-| **Recharts** | `3.9.2` | Interactive Analytics Charting |
-| **Canvas Confetti** | `1.9.4` | Level Up Celebration Fireworks |
-| **StompJS & SockJS** | `7.3.0` | Real-time WebSocket Client |
-| **Lucide React** | `1.25.0` | Modern UI Icon Set |
-| **Google OAuth** | `0.13.5` | Google Single Sign-On |
-| **Oxlint** | `1.71.0` | Code Linter |
+- **UI Framework:** React 19.2.7
+- **Build Tool:** Vite 8.1.1
+- **Styling:** Tailwind CSS 4.3.3 with Glassmorphism design system
+- **Animation:** Framer Motion 12.42.2 with Canvas Confetti 1.9.4 for celebrations
+- **Charts:** Recharts 3.9.2 for analytics visualization
+- **Real-Time Communication:** StompJS 7.3.0 and SockJS for WebSocket
+- **Icons:** Lucide React 1.25.0
+- **Authentication:** Google OAuth 0.13.5
+- **Code Quality:** Oxlint 1.71.0
 
 ---
 
-## 3. Frontend Directory Structure
+## Project Structure
 
 ```
 frontend/
 ├── src/
 │   ├── assets/              # Static media assets
 │   ├── components/          # Reusable UI Components
-│   │   ├── AdminOnlineTable.jsx       # Admin online users table
-│   │   ├── AdminOverviewCards.jsx     # Admin metric summary cards
-│   │   ├── AdminUserStatsTable.jsx    # Admin detailed user statistics table
-│   │   ├── ChatBox.jsx                # Real-time direct chat modal
-│   │   ├── FriendList.jsx             # Friend list & online presence
-│   │   ├── HeatmapCalendar.jsx        # GitHub-style contribution heatmap
-│   │   ├── Leaderboard.jsx            # Top XP & Level leaderboard
-│   │   ├── LevelProgress.jsx          # XP progress bar & level badge
-│   │   ├── ManualSessionModal.jsx     # Manual session entry modal
-│   │   ├── Navbar.jsx                 # Main navigation header
-│   │   ├── OfflineBanner.jsx          # Network disconnection banner
-│   │   ├── PwaInstallPrompt.jsx       # PWA installation banner
-│   │   ├── UserSessionDetailModal.jsx # User session history modal
-│   │   └── WeeklyChart.jsx            # Recharts 7-day analytics chart
-│   ├── context/             # React Context State Providers
-│   │   ├── AuthContext.jsx            # Auth state, user profile, JWT handling
-│   │   ├── LanguageContext.jsx        # i18n translation state
-│   │   └── ThemeContext.jsx           # Dark/Light theme state
+│   │   ├── AdminOnlineTable.jsx
+│   │   ├── AdminOverviewCards.jsx
+│   │   ├── AdminUserStatsTable.jsx
+│   │   ├── ChatBox.jsx
+│   │   ├── FriendList.jsx
+│   │   ├── HeatmapCalendar.jsx
+│   │   ├── Leaderboard.jsx
+│   │   ├── LevelProgress.jsx
+│   │   ├── ManualSessionModal.jsx
+│   │   ├── Navbar.jsx
+│   │   ├── OfflineBanner.jsx
+│   │   ├── PwaInstallPrompt.jsx
+│   │   ├── UserSessionDetailModal.jsx
+│   │   └── WeeklyChart.jsx
+│   ├── context/             # React Context State
+│   │   ├── AuthContext.jsx            # Auth & JWT handling
+│   │   ├── LanguageContext.jsx        # i18n translations
+│   │   └── ThemeContext.jsx           # Dark/Light theme
 │   ├── pages/               # Top-level Page Views
-│   │   ├── AdminDashboard.jsx         # Admin management portal
-│   │   ├── Dashboard.jsx              # Main user study workplace
-│   │   ├── ForgotPassword.jsx         # Password recovery page
-│   │   ├── Landing.jsx                # Landing page
-│   │   ├── Login.jsx                  # Login page
-│   │   ├── Profile.jsx                # User profile settings
-│   │   ├── Register.jsx               # Account registration page
-│   │   └── VerifyOtp.jsx              # Email OTP verification page
-│   ├── App.jsx              # App Root Component & Router
+│   │   ├── AdminDashboard.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── ForgotPassword.jsx
+│   │   ├── Landing.jsx
+│   │   ├── Login.jsx
+│   │   ├── Profile.jsx
+│   │   ├── Register.jsx
+│   │   └── VerifyOtp.jsx
+│   ├── App.jsx              # Root Component & Router
 │   ├── main.jsx             # Entry Point
-│   └── index.css            # Main Stylesheet & Tailwind v4 Config
-├── public/                  # Static web assets & PWA manifest
+│   └── index.css            # Tailwind v4 Stylesheet
+├── public/                  # Static assets & PWA manifest
 ├── package.json             # NPM dependencies & scripts
 └── vite.config.js           # Vite Configuration
-```
-
----
-
-## 4. Setup & Running Frontend
-
-### Prerequisites:
-* **Node.js** 18.x or higher.
-* **npm** 9.x or higher.
-
-### Step 1: Install Dependencies
-Navigate to the `frontend` directory:
-```bash
-npm install
-```
-
-### Step 2: Environment Configuration (Optional)
-Create a `.env` file in the `frontend` directory if custom backend URLs or Google Client IDs are required:
-```env
-VITE_API_BASE_URL=http://localhost:8080
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-```
-
-### Step 3: Run Development Server
-```bash
-npm run dev
-```
-Access the application in your browser at: `http://localhost:5173`
-
-### Step 4: Production Build
-```bash
-# Lint code
-npm run lint
-
-# Build optimized production bundle
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
 ---
