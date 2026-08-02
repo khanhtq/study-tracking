@@ -1,65 +1,72 @@
+# Resource Group Name
 output "resource_group_name" {
+  description = "Tên Resource Group"
   value       = azurerm_resource_group.rg.name
-  description = "Tên Resource Group đã khởi tạo"
 }
 
+# Azure Storage Account
 output "storage_account_name" {
+  description = "Tên Azure Storage Account"
   value       = azurerm_storage_account.storage.name
-  description = "Tên Storage Account cho tài liệu học tập"
 }
 
 output "storage_container_name" {
+  description = "Tên Container chứa tài liệu"
   value       = azurerm_storage_container.container.name
-  description = "Tên Storage Container"
 }
 
 output "primary_connection_string" {
+  description = "Chuỗi kết nối Azure Storage Account"
   value       = azurerm_storage_account.storage.primary_connection_string
-  description = "Chuỗi kết nối Azure Storage Connection String dùng cho backend"
   sensitive   = true
 }
 
+# Azure Container Registry
 output "container_registry_login_server" {
+  description = "Login server của Azure Container Registry"
   value       = azurerm_container_registry.acr.login_server
-  description = "Địa chỉ Login Server của Azure Container Registry (dùng cho docker login & CI/CD)"
 }
 
 output "container_registry_admin_username" {
+  description = "Tài khoản Admin của ACR"
   value       = azurerm_container_registry.acr.admin_username
-  description = "Admin Username của ACR"
 }
 
+# Azure Database for PostgreSQL Flexible Server
 output "postgresql_server_fqdn" {
+  description = "Tên miền FQDN của PostgreSQL Flexible Server"
   value       = azurerm_postgresql_flexible_server.postgres.fqdn
-  description = "Địa chỉ FQDN của PostgreSQL Flexible Server"
 }
 
 output "postgresql_database_name" {
+  description = "Tên cơ sở dữ liệu PostgreSQL"
   value       = azurerm_postgresql_flexible_server_database.db.name
-  description = "Tên Database PostgreSQL"
 }
 
+# Upstash Redis Connection Status
 output "redis_connection_status" {
-  value       = var.upstash_redis_host != "" ? "Connected to Upstash Redis (${var.upstash_redis_host})" : "Disabled (PostgreSQL Fallback Active)"
-  description = "Trạng thái kết nối Redis"
+  description = "Trạng thái cấu hình Redis"
+  value       = var.upstash_redis_host != "" ? "Connected to Upstash Redis (${var.upstash_redis_host})" : "PostgreSQL Database Fallback Active"
 }
 
-output "backend_container_group_name" {
-  value       = azurerm_container_group.backend.name
-  description = "Tên Azure Container Instance (Backend)"
-}
-
+# Azure Container Apps Backend (Spring Boot API - HTTPS Tự Động 100%)
 output "backend_app_service_url" {
-  value       = "http://${azurerm_container_group.backend.fqdn}:8080"
-  description = "Đường dẫn URL truy cập Backend REST API & WebSockets"
+  description = "Đường dẫn HTTPS Endpoint chính thức của Backend Spring Boot API trên Azure Container Apps"
+  value       = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
 }
 
+output "backend_container_app_name" {
+  description = "Tên Azure Container App cho Backend"
+  value       = azurerm_container_app.backend.name
+}
+
+# Azure Storage Static Website Frontend
 output "frontend_static_website_url" {
+  description = "Đường dẫn Web Frontend React SPA"
   value       = azurerm_storage_account.frontend_storage.primary_web_endpoint
-  description = "Đường dẫn URL truy cập Web Application (React SPA Static Website)"
 }
 
 output "frontend_storage_account_name" {
+  description = "Tên Storage Account Frontend"
   value       = azurerm_storage_account.frontend_storage.name
-  description = "Tên Storage Account chứa Static Website Frontend"
 }
