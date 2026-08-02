@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { documentApi, getErrorMessage } from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useUpload } from '../context/UploadContext';
 
 export default function DocumentDrive({ onBackToDashboard }) {
-  const { user } = useAuth();
   const { t } = useLanguage();
+  const { startUploadBatch, updateProgress, finishUploadBatch } = useUpload() || {};
   
   // Navigation & State
   const [activeTab, setActiveTab] = useState('mydrive'); // 'mydrive' | 'favorites' | 'trash'
@@ -73,8 +73,9 @@ export default function DocumentDrive({ onBackToDashboard }) {
     loadDocuments();
   }, [currentFolder.id, activeTab, searchQuery]);
 
-  const showSuccess = (msg, title = 'Thao tác thành công 🎉') => {
-    setToast({ message: msg, type: 'success', title });
+  const showSuccess = (msg, title = null) => {
+    const successTitle = title || t('toast_success_title') || 'Thành công';
+    setToast({ message: msg, type: 'success', title: successTitle });
     setTimeout(() => {
       setToast((prev) => (prev?.message === msg ? null : prev));
     }, 4500);
@@ -111,22 +112,37 @@ export default function DocumentDrive({ onBackToDashboard }) {
 
     setUploading(true);
     setError('');
-    let successCount = 0;
+    if (startUploadBatch) startUploadBatch(fileList);
 
-    for (const file of fileList) {
+    let successCount = 0;
+    let lastError = null;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
       try {
-        await documentApi.uploadFile(file, currentFolder.id);
+        await documentApi.uploadFile(file, currentFolder.id, (percent) => {
+          if (updateProgress) {
+            updateProgress(i + 1, fileList.length, file.name, percent);
+          }
+        });
         successCount++;
       } catch (err) {
+        lastError = err;
         showError(getErrorMessage(err, 'error_upload_failed', t));
       }
     }
 
     setUploading(false);
     if (successCount > 0) {
-      showSuccess(`Đã tải lên ${successCount} tập tin thành công!`, 'Tải File Thành Công 🚀');
+      if (finishUploadBatch) finishUploadBatch(true);
+      const title = t('drive_upload_success_title') || 'Tải file thành công';
+      const descTemplate = t('drive_upload_success_desc') || 'Đã tải lên {count} tập tin thành công';
+      const msg = descTemplate.replace('{count}', successCount);
+      showSuccess(msg, title);
       loadDocuments();
       loadQuota();
+    } else {
+      if (finishUploadBatch) finishUploadBatch(false, getErrorMessage(lastError, 'error_upload_failed', t));
     }
   };
 
@@ -983,13 +999,8 @@ export default function DocumentDrive({ onBackToDashboard }) {
       {/* Floating Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 rounded-2xl p-4 shadow-2xl shadow-slate-950/80 animate-fade-in max-w-md border-l-4 border-l-emerald-500">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          </div>
           <div className="flex-1 min-w-0 pr-2">
-            <h4 className="text-sm font-bold text-slate-100">{toast.title || 'Thông báo'}</h4>
+            <h4 className="text-sm font-bold text-slate-100">{toast.title || t('toast_success_title')}</h4>
             <p className="text-xs text-slate-300 font-medium mt-0.5">{toast.message}</p>
           </div>
           <button

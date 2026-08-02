@@ -27,13 +27,13 @@ resource "azurerm_resource_group" "rg" {
 
 # 2. Azure Storage Account & Blob Container (Study Document Drive & Avatars)
 resource "azurerm_storage_account" "storage" {
-  name                     = var.storage_account_name
-  resource_group_name      = azurerm_resource_group.rg.name
-  location                 = azurerm_resource_group.rg.location
-  account_tier             = var.storage_account_tier
-  account_replication_type = var.storage_replication_type
-  account_kind             = "StorageV2"
-  access_tier              = "Hot"
+  name                            = var.storage_account_name
+  resource_group_name             = azurerm_resource_group.rg.name
+  location                        = azurerm_resource_group.rg.location
+  account_tier                    = var.storage_account_tier
+  account_replication_type        = var.storage_replication_type
+  account_kind                    = "StorageV2"
+  access_tier                     = "Hot"
   allow_nested_items_to_be_public = true
 
   blob_properties {
@@ -86,6 +86,13 @@ resource "azurerm_postgresql_flexible_server_database" "db" {
   server_id = azurerm_postgresql_flexible_server.postgres.id
   collation = "en_US.utf8"
   charset   = "utf8"
+}
+
+# Bật Logical Replication wal_level = logical trên Azure PostgreSQL
+resource "azurerm_postgresql_flexible_server_configuration" "wal_level" {
+  name      = "wal_level"
+  server_id = azurerm_postgresql_flexible_server.postgres.id
+  value     = "logical"
 }
 
 # Cho phép các dịch vụ đám mây nội bộ Azure kết nối PostgreSQL

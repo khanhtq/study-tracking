@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useUpload } from '../context/UploadContext';
 import { userApi, leaderboardApi, paymentApi, getErrorMessage } from '../api';
 import AvatarUploader from '../components/AvatarUploader';
 import SEO from '../components/SEO';
@@ -12,6 +13,7 @@ export default function Profile({ onBackToDashboard }) {
   const { user, progress, refreshUserProgress, logout, togglePremium } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
+  const { startUploadBatch, updateProgress, finishUploadBatch } = useUpload() || {};
 
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'security' | 'titles' | 'preferences'
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
@@ -115,11 +117,16 @@ export default function Profile({ onBackToDashboard }) {
     setIsLoading(true);
     setSuccessMsg('');
     setErrorMsg('');
+    if (startUploadBatch) startUploadBatch([file]);
     try {
-      await userApi.uploadAvatar(file);
+      await userApi.uploadAvatar(file, (percent) => {
+        if (updateProgress) updateProgress(1, 1, file.name, percent);
+      });
+      if (finishUploadBatch) finishUploadBatch(true);
       await refreshUserProgress();
       setSuccessMsg(t('profile_toast_avatar_success'));
     } catch (err) {
+      if (finishUploadBatch) finishUploadBatch(false, getErrorMessage(err, 'error_unknown', t));
       setErrorMsg(getErrorMessage(err, 'error_unknown', t));
     } finally {
       setIsLoading(false);
