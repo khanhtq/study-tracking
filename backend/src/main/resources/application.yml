@@ -61,6 +61,10 @@ spring:
             trust: ${SPRING_MAIL_HOST:*}
 
 app:
+  auth:
+    cookie:
+      same-site: ${APP_AUTH_COOKIE_SAME_SITE:Lax}
+      secure: ${APP_AUTH_COOKIE_SECURE:false}
   storage:
     provider: ${STORAGE_PROVIDER:azure} # azure | local | cloudinary
     upload-dir: ${UPLOAD_DIR:uploads}
@@ -96,4 +100,3 @@ vnpay:
   return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payment/vnpay/return}
   version: 2.1.0
   command: pay
-

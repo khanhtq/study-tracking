@@ -1,0 +1,5 @@
+app:
+  auth:
+    cookie:
+      same-site: None
+      secure: true
