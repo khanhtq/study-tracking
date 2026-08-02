@@ -1,4 +1,4 @@
-name: Backend CI/CD (Azure Container Instance - ACI)
+name: Backend CI/CD (Azure Container Apps - ACA)
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
         run: mvn clean package -DskipTests=false
 
   build-and-push-azure:
-    name: Build, Push to ACR & Update ACI (CD)
+    name: Build, Push to ACR & Update ACA (CD)
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
@@ -81,17 +81,9 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy new Spring Boot Image to Azure Container Instance
+      - name: Deploy new Spring Boot Image to Azure Container App
         run: |
-          az container create \
+          az containerapp update \
             --resource-group rg-study-tracking-prod \
             --name app-study-tracking-api-prod \
-            --image ${{ secrets.AZURE_REGISTRY_SERVER }}/study-tracking-backend:latest \
-            --registry-login-server ${{ secrets.AZURE_REGISTRY_SERVER }} \
-            --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
-            --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }} \
-            --dns-name-label app-study-tracking-api-prod \
-            --os-type Linux \
-            --cpu 1.0 \
-            --memory 1.5 \
-            --ports 8080
+            --image ${{ secrets.AZURE_REGISTRY_SERVER }}/study-tracking-backend:latest
