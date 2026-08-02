@@ -31,9 +31,9 @@ mail_password    = ""                # Mật khẩu ứng dụng Gmail 16 ký t�
 
 # VNPay Payment Gateway Configuration
 vnpay_tmn_code    = "DEMO0001"
-vnpay_hash_secret = "SECRETKEYDEMO1234567890ABCDEF"
-vnpay_pay_url     = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-vnpay_return_url  = "https://app-study-tracking-api-prod.japaneast.azurecontainerapps.io/api/payment/vnpay/return"
+vnpay_hash_secret = "DEMOSECRET"
+vnpay_pay_url     = "https://sandbox.vnpayment.vn/paymentv2/v"
+vnpay_return_url  = "https://yourdomain.com/payment-return" # Thay bằng URL trả về của bạn
 
 # Azure App Service Backend
 backend_app_name      = "app-study-tracking-api-prod"
@@ -42,7 +42,7 @@ backend_app_name      = "app-study-tracking-api-prod"
 frontend_storage_name = "stfestudytrackingprod"
 
 # Application Secrets
-jwt_secret = "9a8f7e6d5c4b3a210987654321fedcba9a8f7e6d5c4b3a210987654321fedcba"
+jwt_secret = "your_jwt_secret_key_here" # Thay bằng khóa
 
 # Tags
 tags = {

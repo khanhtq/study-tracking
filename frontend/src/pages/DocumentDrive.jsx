@@ -97,17 +97,41 @@ export default function DocumentDrive({ onBackToDashboard }) {
     setFolderHistory((prev) => prev.slice(0, index + 1));
   };
 
-  // Upload File logic (Checks < 200MB)
+  const formatBytes = (bytes) => {
+    if (bytes === 0 || !bytes) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  // Upload File logic (Checks < 200MB & User Quota immediately on file selection)
   const handleFileUpload = async (files) => {
     if (!files || files.length === 0) return;
     const fileList = Array.from(files);
     
-    const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
+    const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB limit per file
+
+    // 1. Immediate validation: Check single file size limit (200MB)
     for (const f of fileList) {
       if (f.size > MAX_FILE_SIZE) {
-        showError(`File "${f.name}" max size limit 200 MB!`);
-        return;
+        const errorMsgTemplate = t('error_file_size_exceeded') || `Tập tin "${f.name}" vượt quá dung lượng tối đa 200 MB.`;
+        showError(errorMsgTemplate.replace('{name}', f.name));
+        return; // STOP IMMEDIATELY before starting upload batch
       }
+    }
+
+    // 2. Immediate validation: Check total remaining storage quota
+    const totalBatchBytes = fileList.reduce((sum, f) => sum + f.size, 0);
+    const availableQuotaBytes = (quota.maxBytes || 1048576000) - (quota.usedBytes || 0);
+
+    if (totalBatchBytes > availableQuotaBytes) {
+      const quotaErrorTemplate = t('error_quota_exceeded') || 'Dung lượng bộ nhớ không đủ để lưu trữ file! (Còn trống: {available}, Tập tin: {required})';
+      const msg = quotaErrorTemplate
+        .replace('{available}', formatBytes(Math.max(0, availableQuotaBytes)))
+        .replace('{required}', formatBytes(totalBatchBytes));
+      showError(msg);
+      return; // STOP IMMEDIATELY before starting upload batch
     }
 
     setUploading(true);
