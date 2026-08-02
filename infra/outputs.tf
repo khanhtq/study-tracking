@@ -4,9 +4,9 @@ output "resource_group_name" {
   value       = azurerm_resource_group.rg.name
 }
 
-# Azure Storage Account
+# Azure Storage Account (Backend Document Storage)
 output "storage_account_name" {
-  description = "Tên Azure Storage Account"
+  description = "Tên Azure Storage Account chứa tài liệu"
   value       = azurerm_storage_account.storage.name
 }
 
@@ -58,15 +58,4 @@ output "backend_app_service_url" {
 output "backend_container_app_name" {
   description = "Tên Azure Container App cho Backend"
   value       = azurerm_container_app.backend.name
-}
-
-# Azure Storage Static Website Frontend
-output "frontend_static_website_url" {
-  description = "Đường dẫn Web Frontend React SPA"
-  value       = azurerm_storage_account.frontend_storage.primary_web_endpoint
-}
-
-output "frontend_storage_account_name" {
-  description = "Tên Storage Account Frontend"
-  value       = azurerm_storage_account.frontend_storage.name
 }

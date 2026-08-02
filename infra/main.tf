@@ -66,7 +66,7 @@ resource "azurerm_container_registry" "acr" {
   tags = var.tags
 }
 
-# 4. Azure Database for PostgreSQL Flexible Server
+# 4. Azure Database for PostgreSQL Flexible Server (Tách biệt 100%)
 resource "azurerm_postgresql_flexible_server" "postgres" {
   name                   = "pg-study-tracking-${var.resource_group_name}"
   resource_group_name    = azurerm_resource_group.rg.name
@@ -314,7 +314,7 @@ resource "azurerm_container_app" "backend" {
       }
       env {
         name  = "APP_FRONTEND_URL"
-        value = var.app_frontend_url != "" ? var.app_frontend_url : azurerm_storage_account.frontend_storage.primary_web_endpoint
+        value = var.app_frontend_url != "" ? var.app_frontend_url : "https://ax-study.vercel.app"
       }
       env {
         name        = "JWT_SECRET"
@@ -331,23 +331,6 @@ resource "azurerm_container_app" "backend" {
     ignore_changes = [
       template[0].container[0].image
     ]
-  }
-
-  tags = var.tags
-}
-
-# 6. Azure Storage Static Website (Frontend React SPA - Nằm tại vùng 'japaneast')
-resource "azurerm_storage_account" "frontend_storage" {
-  name                     = var.frontend_storage_name
-  resource_group_name      = azurerm_resource_group.rg.name
-  location                 = azurerm_resource_group.rg.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  account_kind             = "StorageV2"
-
-  static_website {
-    index_document     = "index.html"
-    error_404_document = "index.html"
   }
 
   tags = var.tags
