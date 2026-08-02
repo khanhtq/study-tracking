@@ -18,9 +18,22 @@ db_sku_name       = "B_Standard_B1ms" # Phù hợp Azure Student Free Offer (12 
 db_storage_mb     = 32768            # 32GB storage free tier
 
 # Upstash Redis Configuration (Dùng Redis miễn phí từ Console.upstash.com)
-upstash_redis_host     = ""          # Ví dụ: "glowing-cat-12345.upstash.io" (Điền host Upstash của bạn vào đây)
+upstash_redis_host     = "large-jackal-177919.upstash.io"
 upstash_redis_port     = "6379"
-upstash_redis_password = ""          # Điền password Upstash của bạn vào đây
+upstash_redis_password = ""          # Mật khẩu Upstash của bạn
+
+# Google OAuth2 & Gmail SMTP Configuration
+google_client_id = ""                # Điền Google Client ID (ví dụ: xxx-xxx.apps.googleusercontent.com)
+mail_host        = "smtp.gmail.com"
+mail_port        = "587"
+mail_username    = ""                # Tài khoản Gmail gửi mail
+mail_password    = ""                # Mật khẩu ứng dụng Gmail 16 ký tự (App Password)
+
+# VNPay Payment Gateway Configuration
+vnpay_tmn_code    = "DEMO0001"
+vnpay_hash_secret = "SECRETKEYDEMO1234567890ABCDEF"
+vnpay_pay_url     = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+vnpay_return_url  = "http://app-study-tracking-api-prod.japaneast.azurecontainer.io:8080/api/payment/vnpay/return"
 
 # Azure App Service Backend
 backend_app_name      = "app-study-tracking-api-prod"
