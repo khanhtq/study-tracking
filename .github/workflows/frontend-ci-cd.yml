@@ -78,8 +78,13 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          DEPLOY_URL=$(npx vercel@latest deploy --prod --token=$VERCEL_TOKEN --yes 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
-          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          DEPLOY_URL=$(
+            npx vercel@latest deploy --prod --token="$VERCEL_TOKEN" --yes \
+            | grep -Eo 'https://[^ ]+\.vercel\.app' \
+            | tail -n1
+          )
+
+          echo "deploy_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
 
       # Step 3: Update Deployment Status (Success)
       - name: Update Deployment Status (Success)
