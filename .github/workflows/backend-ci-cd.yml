@@ -91,4 +91,7 @@ jobs:
             --registry-username ${{ secrets.AZURE_REGISTRY_USERNAME }} \
             --registry-password ${{ secrets.AZURE_REGISTRY_PASSWORD }} \
             --dns-name-label app-study-tracking-api-prod \
+            --os-type Linux \
+            --cpu 1.0 \
+            --memory 1.5 \
             --ports 8080
