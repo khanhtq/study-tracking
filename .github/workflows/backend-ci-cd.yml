@@ -79,12 +79,10 @@ jobs:
 
       - name: Azure Login
         uses: azure/login@v2
-        if: secrets.AZURE_CREDENTIALS != ''
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy new Spring Boot Image to Azure Container Instance
-        if: secrets.AZURE_CREDENTIALS != ''
         run: |
           az container create \
             --resource-group rg-study-tracking-prod \

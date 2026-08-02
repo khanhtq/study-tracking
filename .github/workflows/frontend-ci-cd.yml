@@ -69,12 +69,10 @@ jobs:
 
       - name: Azure Login
         uses: azure/login@v2
-        if: secrets.AZURE_CREDENTIALS != ''
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy static files to Azure Storage $web container
-        if: secrets.AZURE_FRONTEND_STORAGE_NAME != ''
         run: |
           az storage blob upload-batch \
             --account-name ${{ secrets.AZURE_FRONTEND_STORAGE_NAME }} \
