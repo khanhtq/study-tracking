@@ -168,7 +168,7 @@ resource "azurerm_container_app" "backend" {
   template {
     container {
       name   = "backend"
-      image  = "mcr.microsoft.com/azuredocs/aci-helloworld"
+      image  = "acrstudytrackingprod.azurecr.io/study-tracking-backend:latest"
       cpu    = 0.5
       memory = "1.0Gi"
 
