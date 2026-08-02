@@ -1,10 +1,11 @@
-name: Frontend CI/CD (Azure Static Website Storage)
+name: Frontend CI/CD (Vercel Deployment)
 
 on:
   push:
     branches:
       - main
       - master
+      - feat/*
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci-cd.yml'
@@ -54,31 +55,21 @@ jobs:
           name: frontend-dist
           path: ./frontend/dist
 
-  deploy-to-azure-storage:
-    name: Deploy to Azure Storage Static Website (CD)
+  deploy-to-vercel:
+    name: Deploy to Vercel (CD)
     needs: lint-and-build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
         with:
-          name: frontend-dist
-          path: ./frontend/dist
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy static files to Azure Storage $web container
-        run: |
-          az storage blob upload-batch \
-            --account-name ${{ secrets.AZURE_FRONTEND_STORAGE_NAME }} \
-            --destination '$web' \
-            --source ./dist \
-            --overwrite true
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          vercel-args: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && '--prod' || '' }}
