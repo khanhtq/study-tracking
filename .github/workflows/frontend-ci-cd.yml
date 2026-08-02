@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - feat/*
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci-cd.yml'
@@ -51,8 +52,8 @@ jobs:
     name: Deploy to Vercel (CD)
     needs: lint-and-build
     runs-on: ubuntu-latest
-    # Chỉ deploy khi push trực tiếp hoặc merge PR vào main/master
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    # Tự động deploy Production trên Vercel khi push code
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout repository
