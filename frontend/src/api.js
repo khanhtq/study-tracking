@@ -340,11 +340,13 @@ export const userApi = {
       body: JSON.stringify(profileData),
     });
   },
-  uploadAvatar: (file) => {
+  uploadAvatar: (file, onProgress = null) => {
     if (isGuestMode()) {
       return new Promise((resolve) => {
+        if (onProgress) onProgress(50, file.size / 2, file.size);
         const reader = new FileReader();
         reader.onloadend = () => {
+          if (onProgress) onProgress(100, file.size, file.size);
           const avatarUrl = reader.result;
           const current = getGuestProgress();
           const updated = { ...current, avatarUrl };
@@ -356,9 +358,39 @@ export const userApi = {
     }
     const formData = new FormData();
     formData.append('file', file);
-    return apiCall('/users/avatar', {
-      method: 'POST',
-      body: formData,
+    const token = localStorage.getItem('token');
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BASE_URL}/users/avatar`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress(percent, e.loaded, e.total);
+          }
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) {
+            resolve(xhr.responseText);
+          }
+        } else {
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            reject(new Error(errorData.message || 'Lỗi khi tải ảnh đại diện'));
+          } catch (e) {
+            reject(new Error('Lỗi khi tải ảnh đại diện'));
+          }
+        }
+      };
+      xhr.onerror = () => reject(new Error('Lỗi kết nối khi tải ảnh đại diện'));
+      xhr.send(formData);
     });
   },
   changePassword: (currentPassword, newPassword, confirmPassword) => {
@@ -654,25 +686,45 @@ export const documentApi = {
     const query = parentId ? `?parentId=${parentId}` : '';
     return apiCall(`/documents${query}`);
   },
-  uploadFile: (file, parentId = null) => {
+  uploadFile: (file, parentId = null, onProgress = null) => {
     if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để sử dụng bộ nhớ tài liệu.'));
     const formData = new FormData();
     formData.append('file', file);
     if (parentId) formData.append('parentId', parentId);
 
     const token = localStorage.getItem('token');
-    return fetch(`${BASE_URL}/documents/upload`, {
-      method: 'POST',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: formData,
-    }).then(async (res) => {
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Lỗi khi tải file lên');
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BASE_URL}/documents/upload`);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
-      return res.json();
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress(percent, e.loaded, e.total);
+          }
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) {
+            resolve(xhr.responseText);
+          }
+        } else {
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            reject(new Error(errorData.message || 'Lỗi khi tải file lên'));
+          } catch (e) {
+            reject(new Error('Lỗi khi tải file lên'));
+          }
+        }
+      };
+      xhr.onerror = () => reject(new Error('Lỗi kết nối khi tải file lên'));
+      xhr.send(formData);
     });
   },
   createFolder: (name, parentId = null) => {

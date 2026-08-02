@@ -16,6 +16,8 @@ import ForgotPassword from './pages/ForgotPassword';
 
 import BannedUserNoticeModal from './components/BannedUserNoticeModal';
 import PaymentResultModal from './components/PaymentResultModal';
+import { UploadProvider } from './context/UploadContext';
+import UploadProgressPopup from './components/UploadProgressPopup';
 
 function MainApp() {
   const { user, token, loading, logout, refreshProgress } = useAuth();
@@ -190,6 +192,7 @@ function MainApp() {
           setView('dashboard');
         }}
       />
+      <UploadProgressPopup />
     </>
   );
 }
@@ -199,7 +202,9 @@ export default function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AuthProvider>
-          <MainApp />
+          <UploadProvider>
+            <MainApp />
+          </UploadProvider>
         </AuthProvider>
       </ThemeProvider>
     </LanguageProvider>
