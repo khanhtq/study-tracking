@@ -314,7 +314,7 @@ resource "azurerm_container_app" "backend" {
       }
       env {
         name  = "APP_FRONTEND_URL"
-        value = var.app_frontend_url != "" ? var.app_frontend_url : "https://ax-study.vercel.app"
+        value = var.app_frontend_url != "" ? var.app_frontend_url : "https://studyxp.khaxnh.id.vn"
       }
       env {
         name        = "JWT_SECRET"
