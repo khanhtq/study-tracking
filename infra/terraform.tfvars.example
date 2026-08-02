@@ -33,7 +33,7 @@ mail_password    = ""                # Mật khẩu ứng dụng Gmail 16 ký t�
 vnpay_tmn_code    = "DEMO0001"
 vnpay_hash_secret = "SECRETKEYDEMO1234567890ABCDEF"
 vnpay_pay_url     = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-vnpay_return_url  = "http://app-study-tracking-api-prod.japaneast.azurecontainer.io:8080/api/payment/vnpay/return"
+vnpay_return_url  = "https://app-study-tracking-api-prod.japaneast.azurecontainerapps.io/api/payment/vnpay/return"
 
 # Azure App Service Backend
 backend_app_name      = "app-study-tracking-api-prod"

@@ -96,71 +96,226 @@ resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_service
   end_ip_address   = "0.0.0.0"
 }
 
-# 5. Azure Container Instance - ACI (Backend Spring Boot Container)
-resource "azurerm_container_group" "backend" {
-  name                = var.backend_app_name
+# 5. Azure Container Apps Environment & Container App (Backend Spring Boot - HTTPS Tự Động 100%)
+resource "azurerm_container_app_environment" "cae" {
+  name                = "cae-study-tracking-prod"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  ip_address_type     = "Public"
-  dns_name_label      = var.backend_app_name
-  os_type             = "Linux"
+  tags                = var.tags
+}
 
-  image_registry_credential {
-    server   = azurerm_container_registry.acr.login_server
-    username = azurerm_container_registry.acr.admin_username
-    password = azurerm_container_registry.acr.admin_password
+resource "azurerm_container_app" "backend" {
+  name                         = var.backend_app_name
+  container_app_environment_id = azurerm_container_app_environment.cae.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+
+  secret {
+    name  = "container-registry-password"
+    value = azurerm_container_registry.acr.admin_password
   }
 
-  container {
-    name   = "backend"
-    image  = "mcr.microsoft.com/azuredocs/aci-helloworld"
-    cpu    = "1.0"
-    memory = "1.5"
+  secret {
+    name  = "db-password"
+    value = var.db_admin_password
+  }
 
-    ports {
-      port     = 8080
-      protocol = "TCP"
+  secret {
+    name  = "jwt-secret"
+    value = var.jwt_secret
+  }
+
+  secret {
+    name  = "redis-password"
+    value = var.upstash_redis_password
+  }
+
+  secret {
+    name  = "mail-password"
+    value = var.mail_password
+  }
+
+  secret {
+    name  = "azure-storage-connection-string"
+    value = var.azure_storage_connection_string != "" ? var.azure_storage_connection_string : azurerm_storage_account.storage.primary_connection_string
+  }
+
+  registry {
+    server               = azurerm_container_registry.acr.login_server
+    username             = azurerm_container_registry.acr.admin_username
+    password_secret_name = "container-registry-password"
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    transport        = "auto"
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
     }
+  }
 
-    environment_variables = {
-      "SPRING_PROFILES_ACTIVE"          = "prod"
-      "SPRING_DATASOURCE_URL"           = var.db_url != "" ? var.db_url : "jdbc:postgresql://${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.db.name}?sslmode=require"
-      "SPRING_DATASOURCE_USERNAME"      = var.db_admin_username
-      "SPRING_DATASOURCE_PASSWORD"      = var.db_admin_password
-      "SPRING_REDIS_HOST"               = var.upstash_redis_host
-      "SPRING_REDIS_PORT"               = var.upstash_redis_port
-      "SPRING_REDIS_PASSWORD"           = var.upstash_redis_password
-      "SPRING_REDIS_SSL_ENABLED"        = "true"
-      "SPRING_MAIL_HOST"                = var.mail_host
-      "SPRING_MAIL_PORT"                = var.mail_port
-      "SPRING_MAIL_USERNAME"            = var.mail_username
-      "SPRING_MAIL_PASSWORD"            = var.mail_password
-      "SPRING_MAIL_FROM"                = var.mail_from
-      "SPRING_MAIL_SSL_ENABLE"          = var.mail_ssl_enable
-      "SPRING_MAIL_STARTTLS_ENABLE"     = var.mail_starttls_enable
-      "BREVO_API_KEY"                   = var.brevo_api_key
-      "GOOGLE_CLIENT_ID"                = var.google_client_id
-      "AZURE_STORAGE_CONNECTION_STRING" = var.azure_storage_connection_string != "" ? var.azure_storage_connection_string : azurerm_storage_account.storage.primary_connection_string
-      "AZURE_STORAGE_CONTAINER_NAME"    = var.container_name
-      "AZURE_STORAGE_SAS_EXPIRY_MINUTES"  = "60"
-      "CLOUDINARY_CLOUD_NAME"           = var.cloudinary_cloud_name
-      "CLOUDINARY_API_KEY"              = var.cloudinary_api_key
-      "CLOUDINARY_API_SECRET"           = var.cloudinary_api_secret
-      "STORAGE_PROVIDER"                = var.storage_provider
-      "UPLOAD_DIR"                      = var.upload_dir
-      "MAX_FILE_SIZE_MB"                = var.max_file_size_mb
-      "MAX_USER_QUOTA_MB"               = var.max_user_quota_mb
-      "VNPAY_TMN_CODE"                  = var.vnpay_tmn_code
-      "VNPAY_HASH_SECRET"               = var.vnpay_hash_secret
-      "VNPAY_PAY_URL"                   = var.vnpay_pay_url
-      "VNPAY_RETURN_URL"                = var.vnpay_return_url
-      "VIRTUAL_USERS_ENABLED"           = var.virtual_users_enabled
-      "VIRTUAL_USERS_COUNT"             = var.virtual_users_count
-      "VIRTUAL_USERS_ROTATION_HOURS"    = var.virtual_users_rotation_hours
-      "VIRTUAL_USERS_AUTO_REPLY_ENABLED" = var.virtual_users_auto_reply_enabled
-      "APP_FRONTEND_URL"                = var.app_frontend_url != "" ? var.app_frontend_url : azurerm_storage_account.frontend_storage.primary_web_endpoint
-      "JWT_SECRET"                      = var.jwt_secret
-      "PORT"                            = "8080"
+  template {
+    container {
+      name   = "backend"
+      image  = "mcr.microsoft.com/azuredocs/aci-helloworld"
+      cpu    = 0.5
+      memory = "1.0Gi"
+
+      env {
+        name  = "SPRING_PROFILES_ACTIVE"
+        value = "prod"
+      }
+      env {
+        name  = "SPRING_DATASOURCE_URL"
+        value = var.db_url != "" ? var.db_url : "jdbc:postgresql://${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.db.name}?sslmode=require"
+      }
+      env {
+        name  = "SPRING_DATASOURCE_USERNAME"
+        value = var.db_admin_username
+      }
+      env {
+        name        = "SPRING_DATASOURCE_PASSWORD"
+        secret_name = "db-password"
+      }
+      env {
+        name  = "SPRING_REDIS_HOST"
+        value = var.upstash_redis_host
+      }
+      env {
+        name  = "SPRING_REDIS_PORT"
+        value = var.upstash_redis_port
+      }
+      env {
+        name        = "SPRING_REDIS_PASSWORD"
+        secret_name = "redis-password"
+      }
+      env {
+        name  = "SPRING_REDIS_SSL_ENABLED"
+        value = "true"
+      }
+      env {
+        name  = "SPRING_MAIL_HOST"
+        value = var.mail_host
+      }
+      env {
+        name  = "SPRING_MAIL_PORT"
+        value = var.mail_port
+      }
+      env {
+        name  = "SPRING_MAIL_USERNAME"
+        value = var.mail_username
+      }
+      env {
+        name        = "SPRING_MAIL_PASSWORD"
+        secret_name = "mail-password"
+      }
+      env {
+        name  = "SPRING_MAIL_FROM"
+        value = var.mail_from
+      }
+      env {
+        name  = "SPRING_MAIL_SSL_ENABLE"
+        value = var.mail_ssl_enable
+      }
+      env {
+        name  = "SPRING_MAIL_STARTTLS_ENABLE"
+        value = var.mail_starttls_enable
+      }
+      env {
+        name  = "BREVO_API_KEY"
+        value = var.brevo_api_key
+      }
+      env {
+        name  = "GOOGLE_CLIENT_ID"
+        value = var.google_client_id
+      }
+      env {
+        name        = "AZURE_STORAGE_CONNECTION_STRING"
+        secret_name = "azure-storage-connection-string"
+      }
+      env {
+        name  = "AZURE_STORAGE_CONTAINER_NAME"
+        value = var.container_name
+      }
+      env {
+        name  = "AZURE_STORAGE_SAS_EXPIRY_MINUTES"
+        value = "60"
+      }
+      env {
+        name  = "CLOUDINARY_CLOUD_NAME"
+        value = var.cloudinary_cloud_name
+      }
+      env {
+        name  = "CLOUDINARY_API_KEY"
+        value = var.cloudinary_api_key
+      }
+      env {
+        name  = "CLOUDINARY_API_SECRET"
+        value = var.cloudinary_api_secret
+      }
+      env {
+        name  = "STORAGE_PROVIDER"
+        value = var.storage_provider
+      }
+      env {
+        name  = "UPLOAD_DIR"
+        value = var.upload_dir
+      }
+      env {
+        name  = "MAX_FILE_SIZE_MB"
+        value = var.max_file_size_mb
+      }
+      env {
+        name  = "MAX_USER_QUOTA_MB"
+        value = var.max_user_quota_mb
+      }
+      env {
+        name  = "VNPAY_TMN_CODE"
+        value = var.vnpay_tmn_code
+      }
+      env {
+        name  = "VNPAY_HASH_SECRET"
+        value = var.vnpay_hash_secret
+      }
+      env {
+        name  = "VNPAY_PAY_URL"
+        value = var.vnpay_pay_url
+      }
+      env {
+        name  = "VNPAY_RETURN_URL"
+        value = var.vnpay_return_url
+      }
+      env {
+        name  = "VIRTUAL_USERS_ENABLED"
+        value = var.virtual_users_enabled
+      }
+      env {
+        name  = "VIRTUAL_USERS_COUNT"
+        value = var.virtual_users_count
+      }
+      env {
+        name  = "VIRTUAL_USERS_ROTATION_HOURS"
+        value = var.virtual_users_rotation_hours
+      }
+      env {
+        name  = "VIRTUAL_USERS_AUTO_REPLY_ENABLED"
+        value = var.virtual_users_auto_reply_enabled
+      }
+      env {
+        name  = "APP_FRONTEND_URL"
+        value = var.app_frontend_url != "" ? var.app_frontend_url : azurerm_storage_account.frontend_storage.primary_web_endpoint
+      }
+      env {
+        name        = "JWT_SECRET"
+        secret_name = "jwt-secret"
+      }
+      env {
+        name  = "PORT"
+        value = "8080"
+      }
     }
   }
 

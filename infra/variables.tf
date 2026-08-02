@@ -243,8 +243,8 @@ variable "vnpay_pay_url" {
 
 variable "vnpay_return_url" {
   type        = string
-  description = "URL Callback nhận kết quả thanh toán VNPay trên Azure"
-  default     = "http://app-study-tracking-api-prod.japaneast.azurecontainer.io:8080/api/payment/vnpay/return"
+  description = "URL Callback nhận kết quả thanh toán VNPay trên Azure Container Apps"
+  default     = "https://app-study-tracking-api-prod.lemonsky-47aa863f.japaneast.azurecontainerapps.io/api/payment/vnpay/return"
 }
 
 # --- Storage & Limits ---
