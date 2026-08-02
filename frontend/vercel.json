@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://app-study-tracking-api-prod.japaneast.azurecontainer.io:8080/api/:path*"
+      "destination": "https://app-study-tracking-api-prod.lemonsky-47aa863f.japaneast.azurecontainerapps.io/api/:path*"
     },
     {
       "source": "/(.*)",
