@@ -2,12 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://ax-study.vercel.app/</loc>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://ax-study.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://ax-study.vercel.app/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://ax-study.vercel.app/?lang=zh" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://ax-study.vercel.app/" />
-    <lastmod>2026-07-22</lastmod>
+    <loc>https://studyxp.khaxnh.id.vn/</loc>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://studyxp.khaxnh.id.vn/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://studyxp.khaxnh.id.vn/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh" href="https://studyxp.khaxnh.id.vn/?lang=zh" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://studyxp.khaxnh.id.vn/" />
+    <lastmod>2026-08-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>

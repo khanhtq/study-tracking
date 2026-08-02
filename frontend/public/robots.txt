@@ -4,5 +4,5 @@ Allow: /
 Disallow: /api/
 
 # Host & Sitemap
-Host: https://ax-study.vercel.app
-Sitemap: https://ax-study.vercel.app/sitemap.xml
+Host: https://studyxp.khaxnh.id.vn
+Sitemap: https://studyxp.khaxnh.id.vn/sitemap.xml

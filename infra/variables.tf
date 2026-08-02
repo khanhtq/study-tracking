@@ -300,7 +300,7 @@ variable "virtual_users_auto_reply_enabled" {
 variable "app_frontend_url" {
   type        = string
   description = "APP_FRONTEND_URL"
-  default     = "https://ax-study.vercel.app"
+  default     = "https://studyxp.khaxnh.id.vn"
 }
 
 # --- Azure App Service (Backend Spring Boot) ---
