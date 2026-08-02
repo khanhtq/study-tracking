@@ -186,7 +186,22 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
       window.dispatchEvent(new CustomEvent('ban-notice-trigger', { detail: banNotice }));
     }
 
+    // If 401/403, avoid immediately notifying listeners while a refresh is in progress.
     if ((response.status === 403 || response.status === 401) && !isGuestMode() && !cleanEndpoint.startsWith('/auth/')) {
+      // If a refresh is currently running and this request is not already a retry,
+      // wait for the refresh result so route guards / middleware don't redirect prematurely.
+      if (isRefreshing && !isRetry) {
+        const refreshSuccess = await new Promise((resolve) => {
+          subscribeTokenRefresh((s) => resolve(s));
+        });
+        if (refreshSuccess) {
+          // Retry original request once after a successful refresh
+          return apiCall(endpoint, options, true);
+        }
+        // fallthrough to trigger auth-expired if refresh failed
+      }
+
+      // No refresh in progress or refresh failed — notify listeners and clear user state
       localStorage.removeItem('user');
       window.dispatchEvent(new CustomEvent('auth-expired', {
         detail: isBanError ? {
