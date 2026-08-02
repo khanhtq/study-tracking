@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - master
-      - feat/*
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci-cd.yml'
@@ -52,16 +51,49 @@ jobs:
     name: Deploy to Vercel (CD)
     needs: lint-and-build
     runs-on: ubuntu-latest
-    # Tự động deploy Production trên Vercel khi push code
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel via Latest Vercel CLI
+      # Step 1: Create GitHub Deployment
+      - name: Create GitHub Deployment
+        id: deployment
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: Production
+          description: 'Deploy frontend to Vercel Production'
+
+      # Step 2: Deploy to Vercel
+      - name: Deploy Vercel
+        id: vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: npx vercel@latest deploy --prod --token=$VERCEL_TOKEN --yes
+        run: |
+          DEPLOY_URL=$(npx vercel@latest deploy --prod --token=$VERCEL_TOKEN --yes 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
+          echo "deploy_url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+
+      # Step 3: Update Deployment Status (Success)
+      - name: Update Deployment Status (Success)
+        if: success()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          state: success
+          environment-url: https://studyxp.khaxnh.id.vn
+          description: 'Vercel Production deployment succeeded'
+
+      # Step 3: Update Deployment Status (Failure)
+      - name: Update Deployment Status (Failure)
+        if: failure()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          state: failure
+          description: 'Vercel Production deployment failed'
