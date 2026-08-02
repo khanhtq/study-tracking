@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "http://app-study-tracking-api-prod.japaneast.azurecontainer.io:8080/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
