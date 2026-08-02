@@ -16,14 +16,13 @@ on:
       - 'frontend/**'
       - '.github/workflows/frontend-ci-cd.yml'
 
-defaults:
-  run:
-    working-directory: ./frontend
-
 jobs:
   lint-and-build:
     name: Lint & Build (CI)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
 
     steps:
       - name: Checkout repository
