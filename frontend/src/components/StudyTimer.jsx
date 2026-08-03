@@ -153,6 +153,8 @@ function StudyTimer({ onStopResult }) {
         if (err.status === 404 || err.status === 400) {
           setActiveSession(null);
           refreshProgress();
+        } else if (err.status === 401 || err.status === 403) {
+          setActiveSession(null);
         }
       });
     };
