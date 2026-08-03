@@ -47,15 +47,6 @@ function MainApp() {
   });
 
   React.useEffect(() => {
-    const logoutSafe = () => {
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('ban_notice');
-      } catch (e) { /* ignore */ }
-      if (logout) logout();
-    };
-
     const handleAuthExpired = (e) => {
       let notice = e.detail;
       const saved = localStorage.getItem('ban_notice');
@@ -66,11 +57,11 @@ function MainApp() {
       if (notice && notice.banned) {
         // Show ban modal and clear auth state
         setBanNotice(notice);
-        logoutSafe();
+        if (logout) logout({ localOnly: true });
         setView('login');
       } else {
         // Normal expiry: ensure auth state is cleared and navigate to login
-        logoutSafe();
+        if (logout) logout({ localOnly: true });
         setView('login');
       }
     };
@@ -91,9 +82,6 @@ function MainApp() {
   }, [logout]);
 
   const handleLogoutFromBanScreen = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('ban_notice');
     setBanNotice(null);
     if (logout) logout();
     setView('login');

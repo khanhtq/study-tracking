@@ -132,8 +132,11 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
     }
   }
 
-  // Handle 401 Unauthorized with silent refresh
-  if (response.status === 401 && !isRetry && !cleanEndpoint.startsWith('/auth/')) {
+  const errorData = !response.ok ? await response.json().catch(() => ({})) : {};
+  const shouldTryRefresh = !isRetry && isAuthExpiryResponse(response.status, cleanEndpoint, errorData);
+
+  // Handle auth-expiry responses with silent refresh
+  if (shouldTryRefresh) {
     if (!isRefreshing) {
       isRefreshing = true;
       try {
@@ -174,7 +177,6 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
     const isBanError = errorData.banned || (errorData.message && (
       errorData.message.toLowerCase().includes('banned') ||
       errorData.message.toLowerCase().includes('cấm') ||
@@ -190,8 +192,8 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
       window.dispatchEvent(new CustomEvent('ban-notice-trigger', { detail: banNotice }));
     }
 
-    // If 401/403, avoid immediately notifying listeners while a refresh is in progress.
-    if ((response.status === 403 || response.status === 401) && !isGuestMode() && !cleanEndpoint.startsWith('/auth/')) {
+    // Notify listeners only when the response looks like an auth-expiry, not a real permission denial.
+    if (shouldTryRefresh && !isGuestMode()) {
       // If a refresh is currently running and this request is not already a retry,
       // wait for the refresh result so route guards / middleware don't redirect prematurely.
       if (isRefreshing && !isRetry) {
@@ -291,6 +293,16 @@ const updateGuestProgressWithXp = (xpEarned) => {
 
   localStorage.setItem('guest_progress', JSON.stringify(updatedProgress));
   return updatedProgress;
+};
+
+const isAuthExpiryResponse = (status, endpoint, errorData) => {
+  if (endpoint.startsWith('/auth/')) return false;
+  if (errorData && errorData.banned) return false;
+  if (status === 401) return true;
+  if (status === 403 && endpoint.includes('/study-sessions')) return true;
+
+  const message = (errorData && errorData.message ? String(errorData.message) : '').toLowerCase();
+  return message.includes('access token has expired') || message.includes('authentication is required') || message.includes('unauthorized');
 };
 
 export const authApi = {
@@ -817,4 +829,3 @@ export const documentApi = {
     return apiCall('/documents/storage');
   },
 };
-

@@ -11,16 +11,28 @@ export const AuthProvider = ({ children }) => {
   const [activeSession, setActiveSessionState] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const clearAuthState = () => {
+    disconnectWebSocket();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('ban_notice');
+    localStorage.removeItem('isGuest');
+    localStorage.removeItem('guest_user');
+    localStorage.removeItem('guest_sessions');
+    localStorage.removeItem('guest_active_session');
+    localStorage.removeItem('guest_progress');
+    localStorage.removeItem('pending_guest_sessions');
+    setUser(null);
+    setToken(null);
+    setProgress(null);
+    setActiveSessionState(null);
+  };
+
   useEffect(() => {
     const handleAuthExpired = () => {
       const isGuest = localStorage.getItem('isGuest') === 'true';
       if (isGuest) return;
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setUser(null);
-      setToken(null);
-      setProgress(null);
-      setActiveSessionState(null);
+      clearAuthState();
     };
 
     const handleTokenRefreshed = (event) => {
@@ -379,31 +391,25 @@ export const AuthProvider = ({ children }) => {
     return await authApi.resetPassword(email, otp, newPassword);
   };
 
-  const logout = async () => {
-    if (activeSession) {
+  const logout = async (options = {}) => {
+    const { localOnly = false } = options;
+
+    if (!localOnly && activeSession) {
       try {
         await sessionApi.stop(activeSession.id);
       } catch (err) {
         console.warn('Failed to stop active session during logout:', err);
       }
     }
-    try {
-      await authApi.logout();
-    } catch (err) {
-      console.warn('Logout API failed:', err);
+
+    if (!localOnly) {
+      try {
+        await authApi.logout();
+      } catch (err) {
+        console.warn('Logout API failed:', err);
+      }
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isGuest');
-    localStorage.removeItem('guest_user');
-    localStorage.removeItem('guest_sessions');
-    localStorage.removeItem('guest_active_session');
-    localStorage.removeItem('guest_progress');
-    localStorage.removeItem('pending_guest_sessions');
-    setToken(null);
-    setUser(null);
-    setProgress(null);
-    setActiveSessionState(null);
+    clearAuthState();
   };
 
   const togglePremium = async () => {
