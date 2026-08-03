@@ -47,15 +47,31 @@ function MainApp() {
   });
 
   React.useEffect(() => {
+    const logoutSafe = () => {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('ban_notice');
+      } catch (e) { /* ignore */ }
+      if (logout) logout();
+    };
+
     const handleAuthExpired = (e) => {
-      setView('login');
       let notice = e.detail;
       const saved = localStorage.getItem('ban_notice');
       if (saved) {
         try { notice = JSON.parse(saved); } catch (err) { notice = { reason: saved }; }
       }
-      if (notice) {
+
+      if (notice && notice.banned) {
+        // Show ban modal and clear auth state
         setBanNotice(notice);
+        logoutSafe();
+        setView('login');
+      } else {
+        // Normal expiry: ensure auth state is cleared and navigate to login
+        logoutSafe();
+        setView('login');
       }
     };
 
@@ -72,7 +88,7 @@ function MainApp() {
       window.removeEventListener('auth-expired', handleAuthExpired);
       window.removeEventListener('ban-notice-trigger', handleBanTrigger);
     };
-  }, []);
+  }, [logout]);
 
   const handleLogoutFromBanScreen = () => {
     localStorage.removeItem('token');
