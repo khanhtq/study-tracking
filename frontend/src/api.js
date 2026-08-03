@@ -145,6 +145,10 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
           const refreshData = await refreshRes.json().catch(() => ({}));
           if (refreshData?.token) {
             localStorage.setItem('token', refreshData.token);
+            // Keep React auth state in sync with the token used by future API calls.
+            window.dispatchEvent(new CustomEvent('auth-token-refreshed', {
+              detail: { token: refreshData.token }
+            }));
           }
           isRefreshing = false;
           onRefreshed(true);

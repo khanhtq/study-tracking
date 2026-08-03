@@ -15,14 +15,27 @@ export const AuthProvider = ({ children }) => {
     const handleAuthExpired = () => {
       const isGuest = localStorage.getItem('isGuest') === 'true';
       if (isGuest) return;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setUser(null);
       setToken(null);
       setProgress(null);
       setActiveSessionState(null);
     };
 
+    const handleTokenRefreshed = (event) => {
+      const refreshedToken = event.detail?.token;
+      if (refreshedToken) {
+        setToken(refreshedToken);
+      }
+    };
+
     window.addEventListener('auth-expired', handleAuthExpired);
-    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+    window.addEventListener('auth-token-refreshed', handleTokenRefreshed);
+    return () => {
+      window.removeEventListener('auth-expired', handleAuthExpired);
+      window.removeEventListener('auth-token-refreshed', handleTokenRefreshed);
+    };
   }, []);
 
   const refreshProgress = async () => {
