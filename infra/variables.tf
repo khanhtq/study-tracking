@@ -1,20 +1,20 @@
 variable "location" {
   type        = string
-  description = "Khu vực đám mây Azure cho phép triển khai (dựa trên chính sách Azure Student: japaneast - Nhật Bản)"
-  default     = "japaneast"
+  description = "Khu vực đám mây Azure cho phép triển khai"
+  default     = ""
 }
 
 variable "resource_group_name" {
   type        = string
   description = "Tên Resource Group chứa tài nguyên Azure"
-  default     = "rg-study-tracking-prod"
+  default     = ""
 }
 
 # --- Azure Storage Account ---
 variable "storage_account_name" {
   type        = string
   description = "Tên duy nhất của Azure Storage Account (chữ cái viết thường và số, 3-24 ký tự)"
-  default     = "ststudytrackingprod"
+  default     = ""
 }
 
 variable "storage_account_tier" {
@@ -96,14 +96,14 @@ variable "db_url" {
 variable "db_admin_username" {
   type        = string
   description = "Tên tài khoản Administrator cho PostgreSQL"
-  default     = "pgadmin"
+  default     = ""
 }
 
 variable "db_admin_password" {
   type        = string
   description = "Mật khẩu Administrator cho PostgreSQL"
   sensitive   = true
-  default     = "P@ssw0rdStudyXP2026!"
+  default     = ""
 }
 
 variable "db_name" {
@@ -148,7 +148,7 @@ variable "upstash_redis_password" {
 variable "google_client_id" {
   type        = string
   description = "Google OAuth2 Client ID"
-  default     = "224799995016-gs297ph4n9ldsuikvabcaufkupdalgch.apps.googleusercontent.com"
+  default     = ""
 }
 
 variable "mail_host" {
@@ -211,7 +211,7 @@ variable "cloudinary_cloud_name" {
 variable "cloudinary_api_key" {
   type        = string
   description = "Cloudinary API Key"
-  default     = "263947446783275"
+  default     = ""
 }
 
 variable "cloudinary_api_secret" {
@@ -225,26 +225,26 @@ variable "cloudinary_api_secret" {
 variable "vnpay_tmn_code" {
   type        = string
   description = "Mã TMN Code do VNPay cấp"
-  default     = "UBV2RBA3"
+  default     = ""
 }
 
 variable "vnpay_hash_secret" {
   type        = string
   description = "Chuỗi mã hóa Secret Key do VNPay cấp"
   sensitive   = true
-  default     = "BTNAWUGNPUBDDSRBGMCCNHQFQSMUTRMF"
+  default     = ""
 }
 
 variable "vnpay_pay_url" {
   type        = string
   description = "URL cổng thanh toán VNPay"
-  default     = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  default     = ""
 }
 
 variable "vnpay_return_url" {
   type        = string
   description = "URL Callback nhận kết quả thanh toán VNPay trên Azure Container Apps"
-  default     = "https://app-study-tracking-api-prod.lemonsky-47aa863f.japaneast.azurecontainerapps.io/api/payment/vnpay/return"
+  default     = ""
 }
 
 # --- Storage & Limits ---
@@ -300,7 +300,7 @@ variable "virtual_users_auto_reply_enabled" {
 variable "app_frontend_url" {
   type        = string
   description = "APP_FRONTEND_URL"
-  default     = "https://studyxp.khaxnh.id.vn"
+  default     = ""
 }
 
 # --- Azure App Service (Backend Spring Boot) ---
@@ -322,7 +322,23 @@ variable "jwt_secret" {
   type        = string
   description = "Secret key dùng để ký JWT Authentication Token"
   sensitive   = true
-  default     = "9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9a62aa5c1d2e8b0a701dfc0b2bb2b45a27e7f6e07a3c306dcd37c1527ef94c6f9"
+  default     = "jwt-secret-study-xp-tracker-2026"
+}
+
+# --- Cookie Settings for Cross-site Requests ---
+# These control the SameSite and Secure flags used when the backend sets auth cookies.
+# In production with a cross-origin frontend, set SameSite=None and Secure=true so
+# browsers will include HttpOnly cookies on cross-site fetch requests over HTTPS.
+variable "app_auth_cookie_same_site" {
+  type        = string
+  description = "APP_AUTH_COOKIE_SAME_SITE (None | Lax | Strict)"
+  default     = "None"
+}
+
+variable "app_auth_cookie_secure" {
+  type        = string
+  description = "APP_AUTH_COOKIE_SECURE (true | false)"
+  default     = "true"
 }
 
 # --- Cookie Settings for Cross-site Requests ---
