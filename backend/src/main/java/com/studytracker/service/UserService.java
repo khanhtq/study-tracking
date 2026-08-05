@@ -303,49 +303,37 @@ public class UserService {
     @Transactional
     public AuthResponse login(LoginRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-
-            // Nếu tài khoản CHƯA kích hoạt
-            if (Boolean.FALSE.equals(user.getEnabled())) {
-                // Kiểm tra quá 5 phút chưa
-                if (user.getCreatedAt() != null && user.getCreatedAt().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES))) {
-                    studySessionRepository.deleteByUser(user);
-                    userRepository.delete(user);
-                    throw new IllegalArgumentException("Tài khoản chưa xác minh đã quá hạn 5 phút và đã bị xóa. Vui lòng đăng ký lại.");
-                }
-
-                // Kiểm tra mật khẩu
-                if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-                    throw new IllegalArgumentException("Email hoặc mật khẩu không chính xác.");
-                }
-
-                // Tự động chuyển đến màn hình xác minh OTP
-                return AuthResponse.builder()
-                        .requiresVerification(true)
-                        .email(user.getEmail())
-                        .displayName(user.getDisplayName())
-                        .message("Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP gửi tới email của bạn.")
-                        .build();
-            }
-
-            // Kiểm tra mật khẩu đối với tài khoản thường / tài khoản Google chưa tạo password
-            if (user.getPasswordHash() == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-                if (user.getAuthProvider() == com.studytracker.model.AuthProvider.GOOGLE) {
-                    throw new IllegalArgumentException("Tài khoản này được khởi tạo qua Google. Vui lòng bấm 'Đăng nhập bằng Google' hoặc dùng tính năng 'Quên mật khẩu' để tạo mật khẩu.");
-                }
-                throw new IllegalArgumentException("Email hoặc mật khẩu không chính xác.");
-            }
-        }
-
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Email hoặc mật khẩu không chính xác."));
 
         if (Boolean.TRUE.equals(user.getBanned())) {
             String reason = user.getBanReason() != null ? user.getBanReason() : "Vi phạm quy chuẩn cộng đồng";
             throw new IllegalArgumentException("Tài khoản của bạn đã bị cấm. Lý do: " + reason);
+        }
+
+        // Nếu tài khoản CHƯA kích hoạt
+        if (Boolean.FALSE.equals(user.getEnabled())) {
+            if (user.getCreatedAt() != null && user.getCreatedAt().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES))) {
+                studySessionRepository.deleteByUser(user);
+                userRepository.delete(user);
+                throw new IllegalArgumentException("Tài khoản chưa xác minh đã quá hạn 5 phút và đã bị xóa. Vui lòng đăng ký lại.");
+            }
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                throw new IllegalArgumentException("Email hoặc mật khẩu không chính xác.");
+            }
+
+            return AuthResponse.builder()
+                    .requiresVerification(true)
+                    .email(user.getEmail())
+                    .displayName(user.getDisplayName())
+                    .message("Tài khoản chưa được kích hoạt. Vui lòng nhập mã OTP gửi tới email của bạn.")
+                    .build();
+        }
+
+        // Kiểm tra tài khoản Google chưa khởi tạo mật khẩu
+        if (user.getPasswordHash() == null && user.getAuthProvider() == com.studytracker.model.AuthProvider.GOOGLE) {
+            throw new IllegalArgumentException("Tài khoản này được khởi tạo qua Google. Vui lòng bấm 'Đăng nhập bằng Google' hoặc dùng tính năng 'Quên mật khẩu' để tạo mật khẩu.");
         }
 
         authenticationManager.authenticate(

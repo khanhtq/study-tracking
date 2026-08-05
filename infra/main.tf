@@ -173,6 +173,9 @@ resource "azurerm_container_app" "backend" {
   }
 
   template {
+    min_replicas = 1
+    max_replicas = 10
+
     container {
       name   = "backend"
       image  = "acrstudytrackingprod.azurecr.io/study-tracking-backend:latest"
