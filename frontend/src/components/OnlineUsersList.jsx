@@ -208,9 +208,39 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
   };
 
   useEffect(() => {
-    fetchOnlineUsers();
-    const interval = setInterval(fetchOnlineUsers, 6000); // refresh every 6 seconds
-    return () => clearInterval(interval);
+    let interval = null;
+
+    const startPolling = () => {
+      fetchOnlineUsers();
+      if (!interval) {
+        interval = setInterval(fetchOnlineUsers, 30000); // refresh every 30 seconds
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   return (

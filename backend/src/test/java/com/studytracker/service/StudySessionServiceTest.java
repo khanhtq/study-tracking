@@ -132,10 +132,9 @@ public class StudySessionServiceTest {
     }
 
     @Test
-    void stopSession_ShouldCapEndedAtToLastHeartbeat_WhenInactivityExceeds2Minutes() {
+    void stopSession_ShouldCalculateFullDuration_WhenStopped() {
         UUID sessionId = UUID.randomUUID();
         Instant startedAt = Instant.now().minusSeconds(7200); // Started 2 hours ago
-        Instant lastHeartbeatAt = Instant.now().minusSeconds(3600); // Last heartbeat 1 hour ago (inactive > 120s)
 
         StudySession session = StudySession.builder()
                 .id(sessionId)
@@ -143,19 +142,17 @@ public class StudySessionServiceTest {
                 .subject("Physics")
                 .source(SessionSource.TIMER)
                 .startedAt(startedAt)
-                .lastHeartbeatAt(lastHeartbeatAt)
                 .build();
 
         when(studySessionRepository.findById(sessionId)).thenReturn(Optional.of(session));
-        when(xpService.calculateXpEarned(anyInt(), any())).thenReturn(660);
+        when(xpService.calculateXpEarned(anyInt(), any())).thenReturn(1320);
         when(xpService.addXp(any(), anyInt()))
-                .thenReturn(new XpService.XpCalculationResult(1, 1, 0, 660, 100, false));
+                .thenReturn(new XpService.XpCalculationResult(1, 1, 0, 1320, 100, false));
 
         SessionStopResponse response = studySessionService.stopSession(testUser, sessionId);
 
         assertNotNull(response);
-        // Duration should be between startedAt and lastHeartbeatAt (3600s), NOT 7200s!
-        assertEquals(3600, response.getDurationSeconds());
-        assertEquals(lastHeartbeatAt, session.getEndedAt());
+        // Duration should be calculated from startedAt to now (~7200s)
+        assertTrue(response.getDurationSeconds() >= 7199 && response.getDurationSeconds() <= 7205);
     }
 }

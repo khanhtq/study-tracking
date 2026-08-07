@@ -49,12 +49,21 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
     }
   };
 
-  // Poll conversations & messages periodically
+  // Fetch conversations when modal opens or user/activeTargetUser changes
   useEffect(() => {
     if (!user) return;
-    fetchConversations();
-    const interval = setInterval(fetchConversations, 6000);
-    return () => clearInterval(interval);
+    if (isOpen) {
+      fetchConversations();
+    }
+  }, [user, isOpen]);
+
+  // Global WebSocket listener to update conversations & unread count in real-time
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribeWs = subscribeToMessages(() => {
+      fetchConversations();
+    });
+    return () => unsubscribeWs();
   }, [user]);
 
   // Handle pre-selected target user from props
@@ -134,7 +143,7 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
       })
       .catch(() => {});
 
-    // Real-time message listener via WebSocket
+    // Real-time message listener via WebSocket for the active chat conversation
     const unsubscribeWs = subscribeToMessages((incomingMsg) => {
       fetchConversations();
       if (incomingMsg.senderId === selectedPartner.partnerId) {
@@ -146,20 +155,9 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
       }
     });
 
-    const msgInterval = setInterval(async () => {
-      try {
-        const data = await messageApi.getConversationMessages(selectedPartner.partnerId, 0, 50);
-        if (isMounted) {
-          const list = (data.content || []).reverse();
-          setMessages(list);
-        }
-      } catch (ignored) {}
-    }, 4000);
-
     return () => {
       isMounted = false;
       unsubscribeWs();
-      clearInterval(msgInterval);
     };
   }, [selectedPartner?.partnerId, user]);
 

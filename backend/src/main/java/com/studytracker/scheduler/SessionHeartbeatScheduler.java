@@ -26,16 +26,15 @@ public class SessionHeartbeatScheduler {
     private final XpService xpService;
 
     private static final int MAX_DURATION_SECONDS = 43200; // 12 hours
-    private static final int INACTIVITY_TIMEOUT_SECONDS = 60; // 1 minute cutoff
 
     /**
-     * Tự động quét và chốt các session quá 1 phút không gửi heartbeat.
-     * Chạy định kỳ mỗi 30 giây.
+     * Tự động quét và chốt các session quá 12 giờ chưa kết thúc (quên tắt qua đêm).
+     * Chạy định kỳ mỗi 15 phút.
      */
-    @Scheduled(fixedRate = 30000)
+    @Scheduled(fixedRate = 900000) // 15 minutes
     @Transactional
     public void cleanupInactiveSessions() {
-        Instant cutoff = Instant.now().minusSeconds(INACTIVITY_TIMEOUT_SECONDS);
+        Instant cutoff = Instant.now().minusSeconds(MAX_DURATION_SECONDS);
 
         List<StudySession> expiredWithHeartbeat = studySessionRepository
                 .findByEndedAtIsNullAndLastHeartbeatAtBefore(cutoff);
@@ -55,16 +54,8 @@ public class SessionHeartbeatScheduler {
 
         for (StudySession session : expiredSessions) {
             try {
-                Instant endTimestamp = session.getLastHeartbeatAt() != null
-                        ? session.getLastHeartbeatAt()
-                        : session.getStartedAt();
-
-                int durationSeconds = (int) Duration.between(session.getStartedAt(), endTimestamp).toSeconds();
-
-                if (durationSeconds > MAX_DURATION_SECONDS) {
-                    durationSeconds = MAX_DURATION_SECONDS;
-                    endTimestamp = session.getStartedAt().plusSeconds(MAX_DURATION_SECONDS);
-                }
+                Instant endTimestamp = session.getStartedAt().plusSeconds(MAX_DURATION_SECONDS);
+                int durationSeconds = MAX_DURATION_SECONDS;
 
                 if (durationSeconds < 1) {
                     durationSeconds = 1;

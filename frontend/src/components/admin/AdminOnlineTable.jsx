@@ -134,9 +134,39 @@ export default function AdminOnlineTable({ onSelectUser, onOpenChat }) {
   };
 
   useEffect(() => {
-    fetchOnline();
-    const interval = setInterval(fetchOnline, 3000);
-    return () => clearInterval(interval);
+    let interval = null;
+
+    const startPolling = () => {
+      fetchOnline();
+      if (!interval) {
+        interval = setInterval(fetchOnline, 30000); // refresh every 30 seconds
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const filteredUsers = onlineUsers.filter((u) => {
