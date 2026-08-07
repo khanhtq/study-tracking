@@ -42,7 +42,9 @@ backend_app_name      = "app-study-tracking-api-prod"
 frontend_storage_name = "stfestudytrackingprod"
 
 # Application Secrets
-jwt_secret = "your_jwt_secret_key_here" # Thay bằng khóa
+jwt_secret                = "your_jwt_secret_key_here" # Thay bằng khóa
+app_auth_cookie_same_site = "None"
+app_auth_cookie_secure    = "true"
 
 # Virtual Users / Bot Configuration
 virtual_users_enabled            = "true"
