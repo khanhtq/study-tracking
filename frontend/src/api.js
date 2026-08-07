@@ -829,3 +829,14 @@ export const documentApi = {
     return apiCall('/documents/storage');
   },
 };
+
+export const presenceApi = {
+  sendBatch: (batchData) => {
+    if (isGuestMode()) return Promise.resolve({ success: true, savedCount: 0 });
+    return apiCall('/presence/batch', {
+      method: 'POST',
+      body: JSON.stringify(batchData),
+    });
+  },
+};
+
