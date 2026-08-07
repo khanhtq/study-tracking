@@ -10,185 +10,55 @@
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg?style=flat-square&logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-**Study XP Tracker** is a modern gamified study time management and productivity platform. The project combines a sleek Glassmorphic user interface (React 19, Framer Motion) with a robust backend architecture (Spring Boot 3.3, Redis ZSET, Real-time WebSocket STOMP), empowering learners to maintain focus, earn Experience Points (XP), level up, and compete on dynamic leaderboards.
+## Overview
+
+**Study XP Tracker** is a gamified study platform that helps learners maintain focus and stay productive. The platform combines a modern, elegant interface with advanced backend systems to deliver real-time features, anti-cheat mechanisms, and social collaboration tools. Users earn Experience Points (XP) while studying, compete on leaderboards, track progress through heatmaps, and enjoy a fully responsive, installable experience across all devices.
 
 ---
 
-## Project Overview & Key Features
+### 1. Smart Focus Timer with Anti-Cheat Engine
+Track study sessions with multiple timer modes (Pomodoro and Stopwatch) while the backend validates all session data server-side to prevent cheating. Sessions are monitored continuously, with a 12-hour limit enforced and a +10% XP bonus awarded for completed Pomodoro sessions.
 
-### 1. Focus Timer & Server-Side Anti-Cheat Engine
-* **Multiple Timer Modes:** Supports Pomodoro Countdown (25-minute standard) and Stopwatch modes.
-* **Server-Side Validation:** The backend records session start timestamps and calculates duration server-side to prevent client-side timer manipulation.
-* **Heartbeat Scheduler:** Automatically monitors active sessions, enforcing a 12-hour session limit and awarding a **+10% XP** bonus for completed Pomodoro sessions $\ge 25$ minutes.
+### 2. Study Document Management
+Upload, organize, and access study materials seamlessly. The platform integrates with cloud storage providers (Azure Blob Storage, Cloudinary) with secure fallback streaming for maximum reliability.
 
-### 2. Study Document Drive & Storage Integration
-* **Document Management:** Upload, organize, and access personal study documents.
-* **Cloud Storage & Fallback Stream:** Interfaces with Azure Blob Storage and Cloudinary CDN using secure access tokens, featuring an authenticated backend stream fallback for CORS resilience.
+### 3. Real-Time Leaderboards
+Powered by Redis sorted sets for high-performance querying, leaderboards update asynchronously as users earn XP. The system gracefully falls back to PostgreSQL if Redis becomes unavailable.
 
-### 3. High-Performance Real-Time Leaderboard (Redis ZSET)
-* **Redis Sorted Sets:** Stores user XP ranks with $O(\log N + M)$ query complexity.
-* **Asynchronous Updates:** Listens to `XpEarnedEvent` to update leaderboard state asynchronously without blocking primary response paths.
-* **Graceful Fallback:** Automatically falls back to PostgreSQL queries if Redis connectivity is interrupted.
+### 4. Social Features & Real-Time Messaging
+Connect with friends through instant messaging and real-time presence updates. Privacy controls let users manage who can see their activity status and send them messages.
 
-### 4. Social Hub & Real-Time Messaging (WebSocket STOMP)
-* **Friend Presence:** Displays real-time online/offline status and current activity.
-* **Granular Privacy Controls:** Configurable status visibility (`ActivityStatusVisibility`) and message permissions (`MessagePermission`).
-* **Direct Messaging:** Instant, encrypted-in-transit messaging powered by WebSocket STOMP / SockJS.
+### 5. Analytics & Activity Heatmap
+Visualize study progress with GitHub-style contribution heatmaps showing daily study volume and active streaks. Weekly focus charts display productivity trends over time.
 
-### 5. Interactive Analytics & Heatmap
-* **Contribution Heatmap:** GitHub-style activity grid tracking daily study volume and active streaks.
-* **7-Day Focus Chart:** Visualizes weekly study duration and productivity trends via Recharts.
+### 6. Multi-Language & Progressive Web App
+Switch instantly between English, Vietnamese, and Chinese. Install the app directly on desktop, Android, or iOS devices with full offline shell support.
 
-### 6. Internationalization (i18n) & PWA Support
-* **Multi-Language Support:** Instant switching between English, Vietnamese, and Chinese (中文).
-* **Progressive Web App (PWA):** Installable directly on Desktop, Android, and iOS devices with offline shell detection.
-
-### 7. Administration Portal (Admin Dashboard)
-* Real-time active user monitoring, account status management (ban/unban), suspicious activity alert logging, and system-wide metric tracking.
+### 7. Admin Dashboard
+Monitor active users in real-time, manage account statuses, track suspicious activity, and view system-wide metrics.
 
 ---
 
-## Tech Stack & Architecture
+## Technology Stack
 
-### **Frontend**
-* **Core:** React 19, Vite 8, JavaScript (ES6+).
-* **Styling & UI:** Tailwind CSS v4, Lucide Icons, Glassmorphism System.
-* **Animation & Charts:** Framer Motion, Recharts, Canvas Confetti.
-* **Real-time & Networking:** SockJS-client, StompJS, Axios.
+### Frontend
+- **Framework:** React 19 with Vite 8
+- **Styling:** Tailwind CSS v4 with Glassmorphism design system
+- **Animations:** Framer Motion and Canvas Confetti
+- **Charts & Visualization:** Recharts
+- **Real-time Communication:** SockJS-client and StompJS
 
-### **Backend**
-* **Core Framework:** Java 21 (LTS), Spring Boot 3.3.1.
-* **Security & Auth:** Spring Security 6, JJWT (Dual Cookie Token Auth: HTTP-Only Refresh Cookie + Access Token), Google OAuth2.
-* **Database & ORM:** PostgreSQL 15, Spring Data JPA, Flyway Database Migration.
-* **Caching & Real-Time:** Spring Data Redis (ZSET Leaderboard), Spring WebSocket (STOMP / SockJS).
-* **Storage Provider:** Pluggable Architecture (Azure Blob Storage / Cloudinary / Local Disk).
+### Backend
+- **Runtime:** Java 21 with Spring Boot 3.3.1
+- **Authentication:** Spring Security 6 with JWT and Google OAuth2
+- **Database:** PostgreSQL 15 with Spring Data JPA and Flyway migrations
+- **Caching & Real-time:** Redis for leaderboards and WebSocket STOMP for messaging
+- **Storage:** Pluggable cloud storage architecture
 
-### **Infrastructure & CI/CD**
-* **Containerization:** Docker, Docker Compose.
-* **Infrastructure as Code:** Terraform scripts.
-* **Automation:** GitHub Actions Monorepo Workflows (`backend-ci-cd.yml`, `frontend-ci-cd.yml`).
-
----
-
-## Monorepo Directory Structure
-
-```text
-study-tracking/
-├── .github/
-│   └── workflows/
-│       ├── backend-ci-cd.yml      # GitHub Actions CI/CD for Backend
-│       └── frontend-ci-cd.yml     # GitHub Actions CI/CD for Frontend
-├── backend/                       # Java Spring Boot Backend Service
-│   ├── src/                       # Controllers, Services, Repositories, DTOs, Configs
-│   ├── Dockerfile                 # Backend Containerization
-│   └── pom.xml                    # Maven Configuration
-├── frontend/                      # React SPA Frontend Web Application
-│   ├── src/                       # Components, Pages, Contexts, Hooks
-│   ├── public/                    # Static Assets & PWA Manifest
-│   ├── package.json               # NPM Dependencies & Scripts
-│   └── vite.config.js             # Vite Configuration
-├── infra/                         # Terraform Scripts & Deployment Shells
-├── .gitignore
-├── LICENSE                        # MIT License
-└── README.md                      # Monorepo Documentation
-```
-
----
-
-## Setup & Local Development Guide
-
-### Prerequisites
-* **Java 21** or higher.
-* **Node.js** 18.x+ & **npm** 9.x+.
-* **Maven** 3.8+ (or Maven wrapper included).
-* **Docker & Docker Compose** (for running PostgreSQL & Redis).
-
----
-
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/khanhtq/study-tracking.git
-cd study-tracking
-```
-
----
-
-### Step 2: Start Databases (PostgreSQL & Redis)
-Run Docker Compose from the root directory to spin up PostgreSQL (Port `5432`) and Redis (Port `6379`):
-```bash
-docker compose -f backend/docker-compose.yml up -d
-```
-
----
-
-### Step 3: Configure & Run Backend Service
-1. Open terminal and navigate to `backend`:
-   ```bash
-   cd backend
-   ```
-2. Build Maven package:
-   ```bash
-   mvn clean package -DskipTests
-   ```
-3. Run Spring Boot application:
-   ```bash
-   mvn spring-boot:run
-   ```
-   Backend listens at: **`http://localhost:8080`**
-
----
-
-### Step 4: Run Frontend Application
-1. Open a second terminal and navigate to `frontend`:
-   ```bash
-   cd frontend
-   ```
-2. Install NPM dependencies:
-   ```bash
-   npm install
-   ```
-3. Start Vite dev server:
-   ```bash
-   npm run dev
-   ```
-   Frontend listens at: **`http://localhost:5173`**
-
----
-
-## Environment Configuration
-
-Environment variables can be loaded quickly using the provided configuration scripts:
-
-### Backend Environment Scripts
-
-1. Copy the environment script template for your Operating System:
-   - **Windows (PowerShell)**: Copy `backend/scripts/environment/set-env.example.ps1` to `set-env.ps1`
-   - **Linux / macOS (Bash)**: Copy `backend/scripts/environment/set-env.example.sh` to `set-env.sh`
-
-2. Open the file and update your credentials (Database, Redis, JWT Secret, Mail, Cloud Storage, VNPay).
-
-3. Execute the script in your terminal to export all environment variables before running the backend:
-   ```powershell
-   # Windows (PowerShell)
-   .\backend\scripts\environment\set-env.ps1
-   ```
-   ```bash
-   # Linux / macOS (Bash)
-   source backend/scripts/environment/set-env.sh
-   ```
-
-### Frontend Configuration
-
-1. Copy the frontend `.env` template:
-   ```bash
-   cp frontend/.env.example frontend/.env
-   ```
-
-2. Configure your API endpoint and Google Client ID inside `frontend/.env`:
-   ```env
-   VITE_API_URL=http://localhost:8080/api
-   VITE_GOOGLE_CLIENT_ID=your-google-client-id
-   ```
+### Infrastructure
+- **Containerization:** Docker and Docker Compose
+- **Deployment:** Terraform infrastructure as code
+- **CI/CD:** GitHub Actions automated workflows
 
 ---
 

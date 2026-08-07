@@ -327,6 +327,14 @@ resource "azurerm_container_app" "backend" {
         value = var.app_frontend_url != "" ? var.app_frontend_url : "https://studyxp.khaxnh.id.vn"
       }
       env {
+        name        = "APP_AUTH_COOKIE_SAME_SITE"
+        value       = var.app_auth_cookie_same_site
+      }
+      env {
+        name        = "APP_AUTH_COOKIE_SECURE"
+        value       = var.app_auth_cookie_secure
+      }
+      env {
         name        = "JWT_SECRET"
         secret_name = "jwt-secret"
       }

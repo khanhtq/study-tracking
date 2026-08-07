@@ -341,6 +341,22 @@ variable "app_auth_cookie_secure" {
   default     = "true"
 }
 
+# --- Cookie Settings for Cross-site Requests ---
+# These control the SameSite and Secure flags used when the backend sets auth cookies.
+# In production with a cross-origin frontend, set SameSite=None and Secure=true so
+# browsers will include HttpOnly cookies on cross-site fetch requests over HTTPS.
+variable "app_auth_cookie_same_site" {
+  type        = string
+  description = "APP_AUTH_COOKIE_SAME_SITE (None | Lax | Strict)"
+  default     = "None"
+}
+
+variable "app_auth_cookie_secure" {
+  type        = string
+  description = "APP_AUTH_COOKIE_SECURE (true | false)"
+  default     = "true"
+}
+
 variable "tags" {
   type        = map(string)
   description = "Nhãn đánh dấu tài nguyên Azure"

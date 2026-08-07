@@ -151,14 +151,15 @@ function StudyTimer({ onStopResult }) {
 
   // VisibilityChange listener to instantly sync timers when user returns to tab
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        if (activeSession) {
-          const offset = localOffset !== 0 ? localOffset : getServerClientOffset();
-          const start = new Date(activeSession.startedAt).getTime();
-          const now = Date.now() - offset;
-          const diff = Math.max(0, Math.floor((now - start) / 1000));
-          setSeconds(diff);
+    if (!activeSession) return;
+
+    const sendHeartbeatPing = () => {
+      sessionApi.sendHeartbeat(activeSession.id).catch((err) => {
+        if (err.status === 404 || err.status === 400) {
+          setActiveSession(null);
+          refreshProgress();
+        } else if (err.status === 401 || err.status === 403) {
+          setActiveSession(null);
         }
 
         if (isBreakActive && breakEndTimestampRef.current) {
