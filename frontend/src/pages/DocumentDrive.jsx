@@ -506,7 +506,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
           <div className="space-y-1.5">
             <button
               onClick={() => { setActiveTab('mydrive'); setFolderHistory([{ id: null, name: t('drive_tab_mydrive') }]); setSearchQuery(''); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 select-none ${
                 activeTab === 'mydrive' && !searchQuery
                   ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -520,7 +520,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
 
             <button
               onClick={() => { setActiveTab('favorites'); setSearchQuery(''); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 select-none ${
                 activeTab === 'favorites' && !searchQuery
                   ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -534,7 +534,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
 
             <button
               onClick={() => { setActiveTab('trash'); setSearchQuery(''); }}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 ${
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition flex items-center gap-3 select-none ${
                 activeTab === 'trash' && !searchQuery
                   ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
@@ -609,7 +609,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
                     {index > 0 && <span className="text-slate-600 font-medium">/</span>}
                     <button
                       onClick={() => handleNavigateBreadcrumb(index)}
-                      className={`text-sm font-semibold transition hover:text-indigo-400 ${
+                      className={`text-sm font-semibold transition hover:text-indigo-400 select-none ${
                         index === folderHistory.length - 1 ? 'text-slate-100' : 'text-slate-400'
                       }`}
                     >
@@ -674,7 +674,7 @@ export default function DocumentDrive({ onBackToDashboard }) {
                 <div
                   key={doc.id}
                   onDoubleClick={() => doc.isFolder ? handleOpenFolder(doc) : handlePreview(doc)}
-                  className="group bg-slate-900/70 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 rounded-2xl p-4 transition flex flex-col justify-between cursor-pointer relative shadow-sm hover:shadow-xl hover:shadow-indigo-950/40"
+                  className="group bg-slate-900/70 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 rounded-2xl p-4 transition flex flex-col justify-between cursor-pointer relative shadow-sm hover:shadow-xl hover:shadow-indigo-950/40 select-none"
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -682,10 +682,10 @@ export default function DocumentDrive({ onBackToDashboard }) {
                         {getFileIcon(doc)}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-sm font-semibold text-slate-200 truncate group-hover:text-indigo-300 transition" title={doc.name}>
+                        <h4 className="text-sm font-semibold text-slate-200 truncate group-hover:text-indigo-300 transition select-none" title={doc.name}>
                           {doc.name}
                         </h4>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
+                        <p className="text-[11px] text-slate-500 mt-0.5 select-none">
                           {doc.isFolder ? t('drive_folder') : formatSize(doc.sizeBytes)}
                         </p>
                       </div>
@@ -781,19 +781,19 @@ export default function DocumentDrive({ onBackToDashboard }) {
                     <tr
                       key={doc.id}
                       onDoubleClick={() => doc.isFolder ? handleOpenFolder(doc) : handlePreview(doc)}
-                      className="hover:bg-slate-800/40 transition cursor-pointer"
+                      className="hover:bg-slate-800/40 transition cursor-pointer select-none"
                     >
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="p-1 bg-slate-950 rounded-lg border border-slate-800 shrink-0">
                             {getFileIcon(doc)}
                           </div>
-                          <span className="font-semibold text-slate-200 hover:text-indigo-400 transition" title={doc.name}>
+                          <span className="font-semibold text-slate-200 hover:text-indigo-400 transition select-none" title={doc.name}>
                             {doc.name}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-slate-400 text-xs">{doc.isFolder ? t('drive_folder') : formatSize(doc.sizeBytes)}</td>
+                      <td className="py-3 px-4 text-slate-400 text-xs select-none">{doc.isFolder ? t('drive_folder') : formatSize(doc.sizeBytes)}</td>
                       <td className="py-3 px-4 text-slate-400 text-xs">{new Date(doc.createdAt).toLocaleDateString()}</td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
