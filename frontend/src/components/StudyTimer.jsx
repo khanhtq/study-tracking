@@ -56,6 +56,7 @@ function StudyTimer({ onStopResult }) {
 
   const timerRef = useRef(null);
   const breakTimerRef = useRef(null);
+  const breakEndTimestampRef = useRef(null);
   const autoStopHandledRef = useRef(false);
   const [localOffset, setLocalOffset] = useState(0);
 
@@ -122,72 +123,60 @@ function StudyTimer({ onStopResult }) {
     }
   }, [seconds, activeSession]);
 
-  // Break Countdown Timer
+  // Timestamp-based Break Countdown Timer (Immune to browser background throttling)
   useEffect(() => {
-    if (isBreakActive && breakRemainingSeconds > 0) {
-      breakTimerRef.current = setInterval(() => {
-        setBreakRemainingSeconds(prev => {
-          if (prev <= 1) {
-            clearInterval(breakTimerRef.current);
-            setIsBreakActive(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (!isBreakActive || !breakEndTimestampRef.current) return;
+
+    const updateBreakTimer = () => {
+      const remaining = Math.max(0, Math.ceil((breakEndTimestampRef.current - Date.now()) / 1000));
+      setBreakRemainingSeconds(remaining);
+      if (remaining <= 0) {
+        setIsBreakActive(false);
+        breakEndTimestampRef.current = null;
+        if (breakTimerRef.current) {
+          clearInterval(breakTimerRef.current);
+        }
+      }
+    };
+
+    updateBreakTimer();
+    breakTimerRef.current = setInterval(updateBreakTimer, 1000);
 
     return () => {
       if (breakTimerRef.current) {
         clearInterval(breakTimerRef.current);
       }
     };
-  }, [isBreakActive, breakRemainingSeconds]);
+  }, [isBreakActive]);
 
-  // Heartbeat loop (10s)
+  // VisibilityChange listener to instantly sync timers when user returns to tab
   useEffect(() => {
-    if (!activeSession) return;
-
-    const sendHeartbeatPing = () => {
-      sessionApi.sendHeartbeat(activeSession.id).catch((err) => {
-        if (err.status === 404 || err.status === 400) {
-          setActiveSession(null);
-          refreshProgress();
-        } else if (err.status === 401 || err.status === 403) {
-          setActiveSession(null);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (activeSession) {
+          const offset = localOffset !== 0 ? localOffset : getServerClientOffset();
+          const start = new Date(activeSession.startedAt).getTime();
+          const now = Date.now() - offset;
+          const diff = Math.max(0, Math.floor((now - start) / 1000));
+          setSeconds(diff);
         }
-      });
-    };
 
-    sendHeartbeatPing();
-    const heartbeatInterval = setInterval(sendHeartbeatPing, 10000);
-
-    const handlePageHide = () => {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-      const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-      const heartbeatUrl = `${cleanBaseUrl}/study-sessions/${activeSession.id}/heartbeat`;
-
-      if ('keepalive' in Request.prototype) {
-        fetch(heartbeatUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          keepalive: true
-        }).catch(() => {});
-      } else if (navigator.sendBeacon) {
-        navigator.sendBeacon(heartbeatUrl);
+        if (isBreakActive && breakEndTimestampRef.current) {
+          const remaining = Math.max(0, Math.ceil((breakEndTimestampRef.current - Date.now()) / 1000));
+          setBreakRemainingSeconds(remaining);
+          if (remaining <= 0) {
+            setIsBreakActive(false);
+            breakEndTimestampRef.current = null;
+          }
+        }
       }
     };
 
-    window.addEventListener('pagehide', handlePageHide);
-
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      clearInterval(heartbeatInterval);
-      window.removeEventListener('pagehide', handlePageHide);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [activeSession, setActiveSession, refreshProgress]);
+  }, [activeSession, localOffset, isBreakActive]);
 
   const handleStart = async (e) => {
     if (e) e.preventDefault();
@@ -224,6 +213,7 @@ function StudyTimer({ onStopResult }) {
 
       if (isAutoBreakTransition && methodForBreak && methodForBreak.breakSeconds > 0) {
         setCompletedMethodForBreak(methodForBreak);
+        breakEndTimestampRef.current = Date.now() + methodForBreak.breakSeconds * 1000;
         setBreakRemainingSeconds(methodForBreak.breakSeconds);
         setIsBreakActive(true);
       }

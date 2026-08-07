@@ -117,12 +117,6 @@ public class StudySessionService {
 
         Instant endedAt = Instant.now();
 
-        // Anti-Cheat: If more than 2 minutes (120s) passed without a heartbeat, cap endedAt to lastHeartbeatAt to prevent idling
-        Instant lastActiveTime = session.getLastHeartbeatAt() != null ? session.getLastHeartbeatAt() : session.getStartedAt();
-        if (Duration.between(lastActiveTime, endedAt).getSeconds() > 120) {
-            endedAt = lastActiveTime;
-        }
-
         int durationSeconds = (int) Duration.between(session.getStartedAt(), endedAt).toSeconds();
         
         // Prevent overnight idling (max duration cap of 12 hours)

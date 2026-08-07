@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { messageApi, friendsApi, getErrorMessage } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToMessages } from '../websocket';
 import {
   MessageSquare, X, Send, Search, Smile, ShieldAlert, UserPlus, CheckCheck,
-  ChevronLeft, Loader2, Sparkles, User, Minimize2, Maximize2, Circle
+  ChevronLeft, Loader2, Sparkles, Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,7 +23,6 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
   const [sending, setSending] = useState(false);
   const [restrictionNotice, setRestrictionNotice] = useState(null);
   const [canSend, setCanSend] = useState(true);
-  const [unreadTotal, setUnreadTotal] = useState(0);
   const [loadedPartnerId, setLoadedPartnerId] = useState(null);
 
   const messagesEndRef = useRef(null);
@@ -34,28 +33,35 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
   };
 
   // Load conversations list
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return;
     try {
       setLoadingConversations(true);
       const data = await messageApi.getConversations();
       setConversations(data || []);
-      const totalUnread = (data || []).reduce((acc, c) => acc + (c.unreadCount || 0), 0);
-      setUnreadTotal(totalUnread);
     } catch (err) {
       console.warn('Lỗi tải danh sách cuộc trò chuyện:', err);
     } finally {
       setLoadingConversations(false);
     }
-  };
+  }, [user]);
 
-  // Poll conversations & messages periodically
+  // Fetch conversations when modal opens or user/activeTargetUser changes
   useEffect(() => {
     if (!user) return;
-    fetchConversations();
-    const interval = setInterval(fetchConversations, 6000);
-    return () => clearInterval(interval);
-  }, [user]);
+    if (isOpen) {
+      fetchConversations();
+    }
+  }, [user, isOpen, fetchConversations]);
+
+  // Global WebSocket listener to update conversations & unread count in real-time
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribeWs = subscribeToMessages(() => {
+      fetchConversations();
+    });
+    return () => unsubscribeWs();
+  }, [user, fetchConversations]);
 
   // Handle pre-selected target user from props
   useEffect(() => {
@@ -134,7 +140,7 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
       })
       .catch(() => {});
 
-    // Real-time message listener via WebSocket
+    // Real-time message listener via WebSocket for the active chat conversation
     const unsubscribeWs = subscribeToMessages((incomingMsg) => {
       fetchConversations();
       if (incomingMsg.senderId === selectedPartner.partnerId) {
@@ -146,22 +152,11 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
       }
     });
 
-    const msgInterval = setInterval(async () => {
-      try {
-        const data = await messageApi.getConversationMessages(selectedPartner.partnerId, 0, 50);
-        if (isMounted) {
-          const list = (data.content || []).reverse();
-          setMessages(list);
-        }
-      } catch (ignored) {}
-    }, 4000);
-
     return () => {
       isMounted = false;
       unsubscribeWs();
-      clearInterval(msgInterval);
     };
-  }, [selectedPartner?.partnerId, user]);
+  }, [selectedPartner?.partnerId, user, fetchConversations, loadedPartnerId, refreshProgress]);
 
   const handleSendMessage = async (e) => {
     e?.preventDefault();

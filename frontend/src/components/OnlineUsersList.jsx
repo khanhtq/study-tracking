@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { userApi } from '../api';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -190,7 +190,7 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOnlineUsers = async () => {
+  const fetchOnlineUsers = useCallback(async () => {
     try {
       const data = await userApi.getOnline();
       // Sort users: studying first, then by name
@@ -205,13 +205,43 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchOnlineUsers();
-    const interval = setInterval(fetchOnlineUsers, 6000); // refresh every 6 seconds
-    return () => clearInterval(interval);
-  }, []);
+    let interval = null;
+
+    const startPolling = () => {
+      fetchOnlineUsers();
+      if (!interval) {
+        interval = setInterval(fetchOnlineUsers, 30000); // refresh every 30 seconds
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startPolling();
+      } else {
+        stopPolling();
+      }
+    };
+
+    if (document.visibilityState === 'visible') {
+      startPolling();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchOnlineUsers]);
 
   return (
     <div className="w-full glass-panel rounded-3xl p-6 relative overflow-hidden flex flex-col">

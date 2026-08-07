@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [token]);
 
-  // Real-time WebSocket + Background Polling + Focus event for 100% reliable message notifications
+  // Real-time WebSocket + Focus event for 100% reliable message notifications (NO polling)
   useEffect(() => {
     const isGuest = localStorage.getItem('isGuest') === 'true';
     if (!token || isGuest || !user?.id) return;
@@ -174,13 +174,9 @@ export const AuthProvider = ({ children }) => {
     };
     window.addEventListener('focus', handleFocus);
 
-    // 4. Fallback interval polling every 5 seconds
-    const interval = setInterval(fetchUnreadCount, 5000);
-
     return () => {
       unsubscribeWs();
       window.removeEventListener('focus', handleFocus);
-      clearInterval(interval);
     };
   }, [token, user?.id]);
 
