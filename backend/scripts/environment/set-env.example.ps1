@@ -47,6 +47,6 @@ $env:FRONTEND_URL="https://example.com"
 $env:VIRTUAL_USERS_ENABLED="true"
 $env:VIRTUAL_USERS_COUNT="8"
 $env:VIRTUAL_USERS_ROTATION_HOURS="2"
-$env:VIRTUAL_USERS_AUTO_REPLY_ENABLED="true"
+$env:VIRTUAL_USERS_AUTO_REPLY_ENABLED="false"
 
 Write-Host "Environment variables loaded."

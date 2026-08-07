@@ -107,6 +107,13 @@ const translations = {
     break_time_title: "Giờ Nghỉ Thư Giãn ☕",
     break_time_desc: "Hãy thả lỏng mắt và thư giãn trước chu kỳ mới!",
     bonus_xp_tag: "+15% XP Thưởng",
+    camera_presence_guard: "Xác nhận có mặt (Camera AI)",
+    camera_presence_guard_on: "AI Camera Guard: ĐANG BẬT (+15% XP)",
+    camera_presence_guard_off: "AI Camera Guard: ĐANG TẮT",
+    status_present: "Đang có mặt",
+    status_absent: "Cảnh báo: Vắng mặt",
+    camera_access_denied: "Không thể truy cập camera",
+    camera_loading: "Đang khởi tạo AI...",
 
     // manual session
     manual_title: "Tự Ghi Nhận Buổi Học",
@@ -560,6 +567,13 @@ const translations = {
     break_time_title: "Relaxing Break Time ☕",
     break_time_desc: "Rest your eyes and relax before the next cycle!",
     bonus_xp_tag: "+15% Bonus XP",
+    camera_presence_guard: "AI Presence Guard",
+    camera_presence_guard_on: "AI Camera Guard: ON (+15% XP)",
+    camera_presence_guard_off: "AI Camera Guard: OFF",
+    status_present: "Present",
+    status_absent: "Alert: Absent",
+    camera_access_denied: "Camera access denied",
+    camera_loading: "Initializing AI...",
 
     // manual session
     manual_title: "Manual Session Log",
@@ -1113,6 +1127,13 @@ const translations = {
     timer_ready: "准备就绪",
     timer_input_placeholder: "科目 / 主题 (例如: 数学, 编程...)",
     timer_btn_start: "开始学习",
+    camera_presence_guard: "AI出席确认",
+    camera_presence_guard_on: "AI摄像头守卫：已开启 (+15% XP)",
+    camera_presence_guard_off: "AI摄像头守卫：已关闭",
+    status_present: "在位",
+    status_absent: "警告：缺席",
+    camera_access_denied: "无法访问摄像头",
+    camera_loading: "正在初始化AI...",
 
     // manual session
     manual_title: "手动记录学习",

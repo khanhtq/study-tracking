@@ -5,6 +5,8 @@ import { sessionApi, getServerClientOffset } from '../api';
 import { Play, Square, BookOpen, Clock, Loader2, Coffee, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumUpgradeModal from './PremiumUpgradeModal';
+import CameraPresenceTracker from './CameraPresenceTracker';
+
 
 const STUDY_METHODS = [
   { id: 'FREE_MODE', icon: '⏱️', labelKey: 'method_free', descKey: 'method_free_desc', focusSeconds: 0, breakSeconds: 0 },
@@ -48,6 +50,7 @@ function StudyTimer({ onStopResult }) {
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isCameraPresenceEnabled, setIsCameraPresenceEnabled] = useState(false);
   
   // Break state
   const [isBreakActive, setIsBreakActive] = useState(false);
@@ -343,6 +346,13 @@ function StudyTimer({ onStopResult }) {
             </div>
           )}
         </div>
+
+        {/* Camera Presence Guard Component */}
+        <CameraPresenceTracker
+          activeSession={activeSession}
+          enabled={isCameraPresenceEnabled}
+          onToggleEnabled={setIsCameraPresenceEnabled}
+        />
 
         {/* Dynamic Panels */}
         <AnimatePresence mode="wait">

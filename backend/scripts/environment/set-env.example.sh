@@ -44,6 +44,6 @@ export FRONTEND_URL="http://localhost:5173"
 export VIRTUAL_USERS_ENABLED="true"
 export VIRTUAL_USERS_COUNT="8"
 export VIRTUAL_USERS_ROTATION_HOURS="2"
-export VIRTUAL_USERS_AUTO_REPLY_ENABLED="true"
+export VIRTUAL_USERS_AUTO_REPLY_ENABLED="false"
 
 echo "Environment variables loaded."

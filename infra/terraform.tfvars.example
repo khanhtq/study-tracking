@@ -44,6 +44,12 @@ frontend_storage_name = "stfestudytrackingprod"
 # Application Secrets
 jwt_secret = "your_jwt_secret_key_here" # Thay bằng khóa
 
+# Virtual Users / Bot Configuration
+virtual_users_enabled            = "true"
+virtual_users_count              = "5"
+virtual_users_rotation_hours     = "1"
+virtual_users_auto_reply_enabled = "false"
+
 # Tags
 tags = {
   Environment = "Production"

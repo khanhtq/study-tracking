@@ -294,7 +294,7 @@ variable "virtual_users_rotation_hours" {
 variable "virtual_users_auto_reply_enabled" {
   type        = string
   description = "VIRTUAL_USERS_AUTO_REPLY_ENABLED"
-  default     = "true"
+  default     = "false"
 }
 
 variable "app_frontend_url" {
@@ -323,22 +323,6 @@ variable "jwt_secret" {
   description = "Secret key dùng để ký JWT Authentication Token"
   sensitive   = true
   default     = "jwt-secret-study-xp-tracker-2026"
-}
-
-# --- Cookie Settings for Cross-site Requests ---
-# These control the SameSite and Secure flags used when the backend sets auth cookies.
-# In production with a cross-origin frontend, set SameSite=None and Secure=true so
-# browsers will include HttpOnly cookies on cross-site fetch requests over HTTPS.
-variable "app_auth_cookie_same_site" {
-  type        = string
-  description = "APP_AUTH_COOKIE_SAME_SITE (None | Lax | Strict)"
-  default     = "None"
-}
-
-variable "app_auth_cookie_secure" {
-  type        = string
-  description = "APP_AUTH_COOKIE_SECURE (true | false)"
-  default     = "true"
 }
 
 # --- Cookie Settings for Cross-site Requests ---

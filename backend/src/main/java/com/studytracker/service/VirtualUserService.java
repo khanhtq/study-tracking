@@ -38,7 +38,7 @@ public class VirtualUserService {
     @Value("${app.virtual-users.rotation-hours:2}")
     private int rotationHours;
 
-    @Value("${app.virtual-users.auto-reply-enabled:true}")
+    @Value("${app.virtual-users.auto-reply-enabled:false}")
     private boolean autoReplyEnabled;
 
     private static final List<String> NAMES = Arrays.asList(
