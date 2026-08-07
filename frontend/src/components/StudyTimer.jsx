@@ -62,9 +62,29 @@ function StudyTimer({ onStopResult }) {
   const breakTimerRef = useRef(null);
   const breakEndTimestampRef = useRef(null);
   const autoStopHandledRef = useRef(false);
+  const accumulatedPausedMsRef = useRef(0);
+  const pauseStartTimestampRef = useRef(null);
+  const isAutoPausedRef = useRef(false);
   const [localOffset, setLocalOffset] = useState(0);
 
   const currentMethodObj = STUDY_METHODS.find(m => m.id === selectedMethod) || STUDY_METHODS[0];
+
+  const handleAutoPauseTrigger = () => {
+    if (isAutoPausedRef.current) return;
+    isAutoPausedRef.current = true;
+    pauseStartTimestampRef.current = Date.now();
+    setIsAutoPausedByCamera(true);
+  };
+
+  const handleResumeFromAutoPause = () => {
+    if (pauseStartTimestampRef.current) {
+      const pausedMs = Date.now() - pauseStartTimestampRef.current;
+      accumulatedPausedMsRef.current += pausedMs;
+      pauseStartTimestampRef.current = null;
+    }
+    isAutoPausedRef.current = false;
+    setIsAutoPausedByCamera(false);
+  };
 
   // Synchronize method if activeSession restored from backend
   useEffect(() => {
@@ -81,8 +101,9 @@ function StudyTimer({ onStopResult }) {
       };
 
       const calculateElapsed = () => {
+        if (isAutoPausedRef.current) return;
         const start = new Date(activeSession.startedAt).getTime();
-        const now = Date.now() - getOffset();
+        const now = Date.now() - getOffset() - accumulatedPausedMsRef.current;
         const diff = Math.max(0, Math.floor((now - start) / 1000));
         setSeconds(diff);
       };
@@ -90,14 +111,19 @@ function StudyTimer({ onStopResult }) {
       calculateElapsed();
 
       timerRef.current = setInterval(() => {
+        if (isAutoPausedRef.current) return;
         const start = new Date(activeSession.startedAt).getTime();
-        const now = Date.now() - getOffset();
+        const now = Date.now() - getOffset() - accumulatedPausedMsRef.current;
         const diff = Math.max(0, Math.floor((now - start) / 1000));
         setSeconds(diff);
       }, 1000);
     } else {
       setSeconds(0);
       setLocalOffset(0);
+      accumulatedPausedMsRef.current = 0;
+      pauseStartTimestampRef.current = null;
+      isAutoPausedRef.current = false;
+      setIsAutoPausedByCamera(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -353,7 +379,7 @@ function StudyTimer({ onStopResult }) {
           activeSession={activeSession}
           enabled={isCameraPresenceEnabled}
           onToggleEnabled={setIsCameraPresenceEnabled}
-          onAutoPause={() => setIsAutoPausedByCamera(true)}
+          onAutoPause={handleAutoPauseTrigger}
         />
 
         {/* Dynamic Panels */}
@@ -556,7 +582,7 @@ function StudyTimer({ onStopResult }) {
               </div>
               <button
                 type="button"
-                onClick={() => setIsAutoPausedByCamera(false)}
+                onClick={handleResumeFromAutoPause}
                 className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
               >
                 <Play className="w-4 h-4 fill-current" />
