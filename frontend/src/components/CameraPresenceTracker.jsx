@@ -9,6 +9,7 @@ export default function CameraPresenceTracker({
   activeSession,
   enabled,
   onToggleEnabled,
+  onAutoPause,
   isMandatory = false,
 }) {
   const { t } = useLanguage();
@@ -46,6 +47,11 @@ export default function CameraPresenceTracker({
         setIsPresent(result.present);
         if (batcherRef.current) {
           batcherRef.current.addCheck(result);
+        }
+      },
+      onAbsenceTimeout: (durationMs) => {
+        if (onAutoPause) {
+          onAutoPause(durationMs);
         }
       },
       onError: (err) => {

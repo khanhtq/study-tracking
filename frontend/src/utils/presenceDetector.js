@@ -44,9 +44,11 @@ export async function getFaceDetector() {
  * PresenceDetectionEngine manages camera stream, detection loop, adaptive throttling, and page visibility.
  */
 export class PresenceDetectionEngine {
-  constructor({ onCheckResult, onError }) {
+  constructor({ onCheckResult, onError, onAbsenceTimeout, maxAbsenceMs = 300000 }) {
     this.onCheckResult = onCheckResult;
     this.onError = onError;
+    this.onAbsenceTimeout = onAbsenceTimeout;
+    this.maxAbsenceMs = maxAbsenceMs;
 
     this.stream = null;
     this.videoElement = null;
@@ -54,6 +56,7 @@ export class PresenceDetectionEngine {
 
     this.currentIntervalMs = 3000; // default 3s
     this.slowCount = 0;
+    this.consecutiveAbsentMs = 0;
     this.isRunning = false;
 
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
@@ -132,6 +135,19 @@ export class PresenceDetectionEngine {
     } else if (execTime < 80) {
       this.slowCount = 0;
       this.currentIntervalMs = 3000; // fast client -> 3 seconds
+    }
+
+    // Track continuous absence duration
+    if (isPresent) {
+      this.consecutiveAbsentMs = 0;
+    } else {
+      this.consecutiveAbsentMs += this.currentIntervalMs;
+      if (this.consecutiveAbsentMs >= this.maxAbsenceMs) {
+        if (this.onAbsenceTimeout) {
+          this.onAbsenceTimeout(this.consecutiveAbsentMs);
+        }
+        this.consecutiveAbsentMs = 0; // reset counter after triggering timeout
+      }
     }
 
     if (this.onCheckResult) {
