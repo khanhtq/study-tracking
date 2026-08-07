@@ -114,6 +114,9 @@ const translations = {
     status_absent: "Cảnh báo: Vắng mặt",
     camera_access_denied: "Không thể truy cập camera",
     camera_loading: "Đang khởi tạo AI...",
+    auto_pause_title: "Tự động Tạm dừng Phiên học",
+    auto_pause_desc: "Đã tự động tạm dừng do không phát hiện bạn trước camera trong 5 phút.",
+    btn_resume_study: "Tôi đã quay lại (Tiếp tục học)",
 
     // manual session
     manual_title: "Tự Ghi Nhận Buổi Học",
@@ -574,6 +577,9 @@ const translations = {
     status_absent: "Alert: Absent",
     camera_access_denied: "Camera access denied",
     camera_loading: "Initializing AI...",
+    auto_pause_title: "Session Auto-Paused",
+    auto_pause_desc: "Auto-paused because no user was detected in front of the camera for 5 minutes.",
+    btn_resume_study: "I'm Back (Resume Study)",
 
     // manual session
     manual_title: "Manual Session Log",
@@ -1134,6 +1140,9 @@ const translations = {
     status_absent: "警告：缺席",
     camera_access_denied: "无法访问摄像头",
     camera_loading: "正在初始化AI...",
+    auto_pause_title: "学习已自动暂停",
+    auto_pause_desc: "由于5分钟内未在摄像头前检测到您，已自动暂停。",
+    btn_resume_study: "我回来了 (继续学习)",
 
     // manual session
     manual_title: "手动记录学习",

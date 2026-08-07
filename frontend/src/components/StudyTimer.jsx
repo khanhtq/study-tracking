@@ -51,6 +51,7 @@ function StudyTimer({ onStopResult }) {
   const [isStopping, setIsStopping] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isCameraPresenceEnabled, setIsCameraPresenceEnabled] = useState(false);
+  const [isAutoPausedByCamera, setIsAutoPausedByCamera] = useState(false);
   
   // Break state
   const [isBreakActive, setIsBreakActive] = useState(false);
@@ -61,9 +62,29 @@ function StudyTimer({ onStopResult }) {
   const breakTimerRef = useRef(null);
   const breakEndTimestampRef = useRef(null);
   const autoStopHandledRef = useRef(false);
+  const accumulatedPausedMsRef = useRef(0);
+  const pauseStartTimestampRef = useRef(null);
+  const isAutoPausedRef = useRef(false);
   const [localOffset, setLocalOffset] = useState(0);
 
   const currentMethodObj = STUDY_METHODS.find(m => m.id === selectedMethod) || STUDY_METHODS[0];
+
+  const handleAutoPauseTrigger = () => {
+    if (isAutoPausedRef.current) return;
+    isAutoPausedRef.current = true;
+    pauseStartTimestampRef.current = Date.now();
+    setIsAutoPausedByCamera(true);
+  };
+
+  const handleResumeFromAutoPause = () => {
+    if (pauseStartTimestampRef.current) {
+      const pausedMs = Date.now() - pauseStartTimestampRef.current;
+      accumulatedPausedMsRef.current += pausedMs;
+      pauseStartTimestampRef.current = null;
+    }
+    isAutoPausedRef.current = false;
+    setIsAutoPausedByCamera(false);
+  };
 
   // Synchronize method if activeSession restored from backend
   useEffect(() => {
@@ -80,8 +101,9 @@ function StudyTimer({ onStopResult }) {
       };
 
       const calculateElapsed = () => {
+        if (isAutoPausedRef.current) return;
         const start = new Date(activeSession.startedAt).getTime();
-        const now = Date.now() - getOffset();
+        const now = Date.now() - getOffset() - accumulatedPausedMsRef.current;
         const diff = Math.max(0, Math.floor((now - start) / 1000));
         setSeconds(diff);
       };
@@ -89,14 +111,19 @@ function StudyTimer({ onStopResult }) {
       calculateElapsed();
 
       timerRef.current = setInterval(() => {
+        if (isAutoPausedRef.current) return;
         const start = new Date(activeSession.startedAt).getTime();
-        const now = Date.now() - getOffset();
+        const now = Date.now() - getOffset() - accumulatedPausedMsRef.current;
         const diff = Math.max(0, Math.floor((now - start) / 1000));
         setSeconds(diff);
       }, 1000);
     } else {
       setSeconds(0);
       setLocalOffset(0);
+      accumulatedPausedMsRef.current = 0;
+      pauseStartTimestampRef.current = null;
+      isAutoPausedRef.current = false;
+      setIsAutoPausedByCamera(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -352,6 +379,7 @@ function StudyTimer({ onStopResult }) {
           activeSession={activeSession}
           enabled={isCameraPresenceEnabled}
           onToggleEnabled={setIsCameraPresenceEnabled}
+          onAutoPause={handleAutoPauseTrigger}
         />
 
         {/* Dynamic Panels */}
@@ -525,6 +553,45 @@ function StudyTimer({ onStopResult }) {
         onClose={() => setIsPremiumModalOpen(false)}
         featureName="Chế độ Đếm giờ Khoa học"
       />
+
+      {/* Auto Pause Modal when absent for 5 minutes */}
+      <AnimatePresence>
+        {isAutoPausedByCamera && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900/90 border border-amber-500/30 rounded-3xl p-6 max-w-md w-full text-center shadow-2xl space-y-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center mx-auto">
+                <Clock className="w-6 h-6 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-slate-100 mb-1">
+                  {t('auto_pause_title')}
+                </h4>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {t('auto_pause_desc')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleResumeFromAutoPause}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-6 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>{t('btn_resume_study')}</span>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
