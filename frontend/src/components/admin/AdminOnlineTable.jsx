@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
 import { Search, Filter, Radio, BookOpen, Clock, Loader2, ShieldCheck, User, MessageSquare } from 'lucide-react';
@@ -122,7 +122,7 @@ export default function AdminOnlineTable({ onSelectUser, onOpenChat }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const fetchOnline = async () => {
+  const fetchOnline = useCallback(async () => {
     try {
       const data = await adminApi.getOnlineUsersDetailed();
       setOnlineUsers(data);
@@ -131,7 +131,7 @@ export default function AdminOnlineTable({ onSelectUser, onOpenChat }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let interval = null;
@@ -167,7 +167,7 @@ export default function AdminOnlineTable({ onSelectUser, onOpenChat }) {
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [fetchOnline]);
 
   const filteredUsers = onlineUsers.filter((u) => {
     const matchesSearch =

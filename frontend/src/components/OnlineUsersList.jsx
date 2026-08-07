@@ -190,7 +190,7 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOnlineUsers = async () => {
+  const fetchOnlineUsers = useCallback(async () => {
     try {
       const data = await userApi.getOnline();
       // Sort users: studying first, then by name
@@ -205,7 +205,7 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let interval = null;
@@ -241,7 +241,7 @@ function OnlineUsersList({ onSelectUser, onOpenSearch, onOpenChat }) {
       stopPolling();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [fetchOnlineUsers]);
 
   return (
     <div className="w-full glass-panel rounded-3xl p-6 relative overflow-hidden flex flex-col">
