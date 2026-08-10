@@ -840,3 +840,41 @@ export const presenceApi = {
   },
 };
 
+/**
+ * Countdown API Endpoints
+ */
+export const countdownApi = {
+  getPresets: () => apiCall('/countdowns/presets'),
+  getEvents: () => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall('/countdowns');
+  },
+  createEvent: (data) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để lưu đếm ngược.'));
+    return apiCall('/countdowns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  updateEvent: (id, data) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/countdowns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  pinEvent: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/countdowns/${id}/pin`, {
+      method: 'PATCH',
+    });
+  },
+  deleteEvent: (id) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/countdowns/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+
