@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import { sessionApi } from '../api';
+import { sessionApi, countdownApi } from '../api';
 import XpBar from '../components/XpBar';
 import StudyTimer from '../components/StudyTimer';
 import ManualSessionForm from '../components/ManualSessionForm';
@@ -12,9 +12,39 @@ import UserSearchModal from '../components/UserSearchModal';
 import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
+import CountdownWidget from '../components/CountdownWidget';
+import FloatingCountdownBadge from '../components/FloatingCountdownBadge';
+import CountdownModal from '../components/CountdownModal';
 import Footer from '../components/Footer';
 import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock, FolderOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const DEFAULT_GUEST_PRESETS = [
+  {
+    examCode: 'THPT_QG_2027',
+    title: 'Kỳ thi Tốt nghiệp THPT Quốc Gia 2027',
+    targetDate: '2027-06-25T07:30:00.000Z',
+    isOfficialDate: false,
+    color: 'indigo',
+    description: 'Kỳ thi tốt nghiệp THPT Quốc Gia chính thức hàng năm'
+  },
+  {
+    examCode: 'DGNL_HCMUT_2027',
+    title: 'Kỳ thi ĐGNL Bách Khoa HCMUT 2027',
+    targetDate: '2027-04-04T07:30:00.000Z',
+    isOfficialDate: false,
+    color: 'cyan',
+    description: 'Kỳ thi Đánh giá năng lực Trường Đại học Bách Khoa TP.HCM'
+  },
+  {
+    examCode: 'DGNL_VNU_HCM_2027',
+    title: 'Kỳ thi ĐGNL ĐHQG TP.HCM Đợt 1 2027',
+    targetDate: '2027-03-28T07:30:00.000Z',
+    isOfficialDate: false,
+    color: 'emerald',
+    description: 'Kỳ thi Đánh giá năng lực Đại học Quốc gia TP.HCM'
+  }
+];
 
 const calculateXpEarned = (durationSeconds) => {
   const minutes = durationSeconds / 60;
@@ -47,6 +77,110 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
+
+  // Countdown state
+  const [countdownPresets, setCountdownPresets] = useState(DEFAULT_GUEST_PRESETS);
+  const [userCountdowns, setUserCountdowns] = useState([]);
+  const [activeCountdown, setActiveCountdown] = useState(DEFAULT_GUEST_PRESETS[0]);
+  const [isCountdownModalOpen, setIsCountdownModalOpen] = useState(false);
+
+  const fetchCountdowns = useCallback(async () => {
+    try {
+      const presets = await countdownApi.getPresets();
+      if (presets && presets.length > 0) {
+        setCountdownPresets(presets);
+      }
+    } catch (e) {
+      console.warn('Using default countdown presets');
+    }
+
+    if (!user?.isGuest) {
+      try {
+        const events = await countdownApi.getEvents();
+        setUserCountdowns(events);
+        const pinned = events.find(e => e.isPinned);
+        if (pinned) {
+          setActiveCountdown(pinned);
+        } else if (events.length > 0) {
+          setActiveCountdown(events[0]);
+        } else {
+          setActiveCountdown(DEFAULT_GUEST_PRESETS[0]);
+        }
+      } catch (e) {
+        console.error('Failed to load user countdowns', e);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchCountdowns();
+  }, [fetchCountdowns]);
+
+  const handleSaveCountdown = async (payload) => {
+    const tempId = `temp_${Date.now()}`;
+    const newEvent = {
+      id: tempId,
+      ...payload,
+      isPinned: true
+    };
+
+    // Optimistic UI update - Instant 0ms feedback
+    setUserCountdowns(prev => [newEvent, ...prev.filter(e => e.presetExamCode !== payload.presetExamCode)]);
+    setActiveCountdown(newEvent);
+
+    if (user?.isGuest) return;
+
+    try {
+      const savedEvent = await countdownApi.createEvent(payload);
+      setUserCountdowns(prev => prev.map(e => e.id === tempId ? savedEvent : e));
+      setActiveCountdown(savedEvent);
+    } catch (err) {
+      console.error('Save countdown failed:', err);
+      setUserCountdowns(prev => prev.filter(e => e.id !== tempId));
+    }
+  };
+
+  const handleDeleteCountdown = async (id) => {
+    const targetToDelete = userCountdowns.find(e => e.id === id || e.presetExamCode === id);
+    const targetId = targetToDelete ? targetToDelete.id : id;
+
+    // Optimistic UI update - Instant 0ms feedback
+    const updatedEvents = userCountdowns.filter(e => e.id !== targetId && e.presetExamCode !== id);
+    setUserCountdowns(updatedEvents);
+
+    if (activeCountdown?.id === targetId || activeCountdown?.presetExamCode === id) {
+      setActiveCountdown(updatedEvents.length > 0 ? updatedEvents[0] : (countdownPresets[0] || DEFAULT_GUEST_PRESETS[0]));
+    }
+
+    if (user?.isGuest || !targetId || targetId.startsWith('temp_') || targetId.startsWith('preset_')) return;
+
+    try {
+      await countdownApi.deleteEvent(targetId);
+    } catch (err) {
+      console.error('Delete countdown failed:', err);
+      if (targetToDelete) {
+        setUserCountdowns(prev => [targetToDelete, ...prev]);
+      }
+    }
+  };
+
+  const handlePinCountdown = async (id) => {
+    const target = userCountdowns.find(e => e.id === id);
+    if (target) {
+      setUserCountdowns(prev => prev.map(e => ({ ...e, isPinned: e.id === id })));
+      setActiveCountdown({ ...target, isPinned: true });
+    }
+
+    if (user?.isGuest) return;
+
+    try {
+      await countdownApi.pinEvent(id);
+    } catch (err) {
+      console.error('Pin countdown failed:', err);
+    }
+  };
+
+
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -275,8 +409,16 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
             />
           </div>
 
-          {/* Right Column: Statistics & History */}
-          <div className="lg:col-span-2">
+          {/* Right Column: Countdown Widget & History */}
+          <div className="lg:col-span-2 space-y-8">
+            <CountdownWidget
+              activeCountdown={activeCountdown}
+              presets={countdownPresets}
+              events={userCountdowns}
+              onOpenManage={() => setIsCountdownModalOpen(true)}
+              onSelectEvent={(event) => setActiveCountdown(event)}
+            />
+
             {loadingHistory ? (
               <div className="glass-panel rounded-3xl p-12 flex items-center justify-center">
                 <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
@@ -293,6 +435,25 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
       </main>
 
       <Footer />
+
+      {/* Floating Bottom-Right Countdown Badge */}
+      <FloatingCountdownBadge
+        activeCountdown={activeCountdown}
+        onClick={() => setIsCountdownModalOpen(true)}
+      />
+
+      {/* Day Countdown Management Modal */}
+      <CountdownModal
+        isOpen={isCountdownModalOpen}
+        onClose={() => setIsCountdownModalOpen(false)}
+        activeCountdown={activeCountdown}
+        presets={countdownPresets}
+        events={userCountdowns}
+        onSaveEvent={handleSaveCountdown}
+        onDeleteEvent={handleDeleteCountdown}
+        onPinEvent={handlePinCountdown}
+      />
+
 
       {/* User Search Modal */}
       <UserSearchModal 

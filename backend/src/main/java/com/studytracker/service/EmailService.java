@@ -301,4 +301,83 @@ public class EmailService {
             </html>
             """;
     }
+
+    @Async
+    public void sendCountdownReminderEmail(String toEmail, String eventTitle, long daysRemaining, String targetDateStr) {
+        log.info("Sending countdown reminder email to: {} for event: {}", toEmail, eventTitle);
+        String subject = "⏰ Nhắc nhở đếm ngược: Còn " + daysRemaining + " ngày đến " + eventTitle;
+        String htmlBody = buildCountdownEmailHtml(eventTitle, daysRemaining, targetDateStr);
+
+        if (sendViaBrevoHttpApi(toEmail, subject, htmlBody)) {
+            return;
+        }
+
+        try {
+            if (mailSender != null) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                String sender = (fromEmail != null && !fromEmail.isBlank()) ? fromEmail : "no-reply@studyxptracker.com";
+                helper.setFrom(sender, "Study XP Tracker");
+                helper.setTo(toEmail);
+                helper.setSubject(subject);
+                helper.setText(htmlBody, true);
+                mailSender.send(message);
+                log.info("Successfully sent countdown email via SMTP fallback to {}", toEmail);
+            }
+        } catch (Exception e) {
+            log.warn("SMTP fallback for countdown email failed: {}", e.getMessage());
+        }
+    }
+
+    private String buildCountdownEmailHtml(String eventTitle, long daysRemaining, String targetDateStr) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 40px 20px;">
+                    <tr>
+                        <td align="center">
+                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+                                <tr>
+                                    <td style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 32px 24px; text-align: center;">
+                                        <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff;">Study XP Tracker</h1>
+                                        <p style="margin: 6px 0 0 0; font-size: 14px; color: #e0e7ff;">Nhắc nhở mục tiêu học tập</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 36px 32px; text-align: center;">
+                                        <h2 style="margin: 0 0 12px 0; font-size: 20px; color: #f8fafc;">""" + eventTitle + """
+                                        </h2>
+                                        <p style="margin: 0 0 24px 0; font-size: 14px; color: #94a3b8;">Thời gian diễn ra: """ + targetDateStr + """
+                                        </p>
+                                        <div style="background-color: #090d16; border: 1px solid #6366f1; border-radius: 14px; padding: 24px; margin: 0 auto 24px auto; text-align: center;">
+                                            <div style="font-size: 48px; font-weight: 800; color: #818cf8;">""" + daysRemaining + """
+                                            </div>
+                                            <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #cbd5e1; margin-top: 4px;">ngày còn lại</div>
+                                        </div>
+                                        <p style="margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+                                            Hãy giữ vững phong độ học tập và tiếp tục tích lũy XP hôm nay nhé! Cố gắng hết mình vì mục tiêu của bạn! 💪
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #0f172a; padding: 20px 32px; text-align: center; border-top: 1px solid #334155;">
+                                        <p style="margin: 0; font-size: 12px; color: #64748b;">
+                                            © 2026 Study XP Tracker. Bạn nhận được email này vì đã đăng ký nhắc nhở đếm ngược.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
 }
+
