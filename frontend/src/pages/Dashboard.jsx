@@ -15,9 +15,12 @@ import ChatModal from '../components/ChatModal';
 import CountdownWidget from '../components/CountdownWidget';
 import FloatingCountdownBadge from '../components/FloatingCountdownBadge';
 import CountdownModal from '../components/CountdownModal';
+import DashboardCustomizerModal, { DEFAULT_WIDGET_VISIBILITY } from '../components/DashboardCustomizerModal';
 import Footer from '../components/Footer';
-import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock, FolderOpen } from 'lucide-react';
+import { User, Flame, X, ShieldCheck, Search, Users, MessageSquare, CheckCircle2, Sparkles, Plus, Clock, FolderOpen, SlidersHorizontal, LayoutGrid, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const WIDGET_STORAGE_KEY = 'study_tracker_dashboard_widgets_v1';
 
 const DEFAULT_GUEST_PRESETS = [
   {
@@ -77,6 +80,41 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeChatUser, setActiveChatUser] = useState(null);
+
+  // Widget customizer state
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [widgetVisibility, setWidgetVisibility] = useState(() => {
+    try {
+      const saved = localStorage.getItem(WIDGET_STORAGE_KEY);
+      if (saved) {
+        return { ...DEFAULT_WIDGET_VISIBILITY, ...JSON.parse(saved) };
+      }
+    } catch (e) {
+      console.warn('Failed to parse dashboard widget settings', e);
+    }
+    return DEFAULT_WIDGET_VISIBILITY;
+  });
+
+  const handleToggleWidget = useCallback((widgetId) => {
+    setWidgetVisibility(prev => {
+      const updated = { ...prev, [widgetId]: !prev[widgetId] };
+      try {
+        localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to save widget settings', e);
+      }
+      return updated;
+    });
+  }, []);
+
+  const handleResetWidgetVisibility = useCallback(() => {
+    setWidgetVisibility(DEFAULT_WIDGET_VISIBILITY);
+    try {
+      localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(DEFAULT_WIDGET_VISIBILITY));
+    } catch (e) {
+      console.error('Failed to reset widget settings', e);
+    }
+  }, []);
 
   // Countdown state
   const [countdownPresets, setCountdownPresets] = useState(DEFAULT_GUEST_PRESETS);
@@ -328,6 +366,15 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               <span className="hidden sm:inline">{t('nav_drive')}</span>
             </button>
 
+            <button
+              onClick={() => setIsCustomizerOpen(true)}
+              className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 rounded-2xl px-3 py-1.5 text-slate-100 hover:text-indigo-400 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md"
+              title={t('customize_dashboard')}
+            >
+              <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
+              <span className="hidden sm:inline">{t('customize_dashboard')}</span>
+            </button>
+
 
             {user?.role === 'ROLE_ADMIN' && (
               <button
@@ -383,55 +430,111 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
       {/* Main Dashboard Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         
-        {/* XP Progress Bar */}
-        {(liveXpProgress || progress) && (
-          <XpBar
-            currentLevel={liveXpProgress?.currentLevel ?? progress.currentLevel}
-            currentXp={liveXpProgress?.currentXp ?? progress.currentXp}
-            xpRequiredForNextLevel={liveXpProgress?.xpRequiredForNextLevel ?? progress.xpRequiredForNextLevel}
-            totalXp={liveXpProgress?.totalXp ?? progress.totalXp}
-          />
+        {/* XP Progress Bar Widget */}
+        {widgetVisibility.xpBar && (liveXpProgress || progress) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <XpBar
+              currentLevel={liveXpProgress?.currentLevel ?? progress.currentLevel}
+              currentXp={liveXpProgress?.currentXp ?? progress.currentXp}
+              xpRequiredForNextLevel={liveXpProgress?.xpRequiredForNextLevel ?? progress.xpRequiredForNextLevel}
+              totalXp={liveXpProgress?.totalXp ?? progress.totalXp}
+            />
+          </motion.div>
         )}
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* Left Column: Timer & Manual Log */}
-          <div className="lg:col-span-1 space-y-8">
-            <StudyTimer onStopResult={handleStopResult} />
-            <ManualSessionForm onSuccess={handleManualSuccess} />
-            <OnlineUsersList 
-              onSelectUser={(userId) => setSelectedUserId(userId)} 
-              onOpenSearch={() => setIsSearchOpen(true)} 
-              onOpenChat={(targetUser) => {
-                setActiveChatUser(targetUser);
-                setIsChatOpen(true);
-              }}
-            />
+        {/* Empty state when all widgets are hidden */}
+        {Object.values(widgetVisibility).every(v => !v) ? (
+          <div className="glass-panel rounded-3xl p-12 text-center max-w-lg mx-auto space-y-4 border border-slate-800/80 my-12">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto">
+              <LayoutGrid className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-200">{t('all_widgets_hidden')}</h3>
+              <p className="text-xs text-slate-400 mt-1">{t('all_widgets_hidden_desc')}</p>
+            </div>
+            <button
+              onClick={() => setIsCustomizerOpen(true)}
+              className="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-indigo-600/30 transition-all cursor-pointer inline-flex items-center gap-2"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>{t('customize_dashboard')}</span>
+            </button>
           </div>
+        ) : (
+          /* Dashboard Grid */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* Left Column: Timer, Manual Log, Online Users */}
+            {(widgetVisibility.studyTimer || widgetVisibility.manualSession || widgetVisibility.onlineUsers) && (
+              <div className="lg:col-span-1 space-y-8">
+                {widgetVisibility.studyTimer && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <StudyTimer onStopResult={handleStopResult} />
+                  </motion.div>
+                )}
 
-          {/* Right Column: Countdown Widget & History */}
-          <div className="lg:col-span-2 space-y-8">
-            <CountdownWidget
-              activeCountdown={activeCountdown}
-              presets={countdownPresets}
-              events={userCountdowns}
-              onOpenManage={() => setIsCountdownModalOpen(true)}
-              onSelectEvent={(event) => setActiveCountdown(event)}
-            />
+                {widgetVisibility.manualSession && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <ManualSessionForm onSuccess={handleManualSuccess} />
+                  </motion.div>
+                )}
 
-            {loadingHistory ? (
-              <div className="glass-panel rounded-3xl p-12 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                {widgetVisibility.onlineUsers && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <OnlineUsersList 
+                      onSelectUser={(userId) => setSelectedUserId(userId)} 
+                      onOpenSearch={() => setIsSearchOpen(true)} 
+                      onOpenChat={(targetUser) => {
+                        setActiveChatUser(targetUser);
+                        setIsChatOpen(true);
+                      }}
+                    />
+                  </motion.div>
+                )}
               </div>
-            ) : (
-              <SessionHistoryList 
-                sessions={sessions} 
-                isGuest={user?.isGuest} 
-                onNavigateRegister={onNavigateRegister} 
-              />
+            )}
+
+            {/* Right Column: Countdown Widget & History */}
+            {(widgetVisibility.countdown || widgetVisibility.sessionHistory) && (
+              <div className={`space-y-8 ${
+                !(widgetVisibility.studyTimer || widgetVisibility.manualSession || widgetVisibility.onlineUsers)
+                  ? 'lg:col-span-3'
+                  : 'lg:col-span-2'
+              }`}>
+                {widgetVisibility.countdown && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <CountdownWidget
+                      activeCountdown={activeCountdown}
+                      presets={countdownPresets}
+                      events={userCountdowns}
+                      onOpenManage={() => setIsCountdownModalOpen(true)}
+                      onSelectEvent={(event) => setActiveCountdown(event)}
+                    />
+                  </motion.div>
+                )}
+
+                {widgetVisibility.sessionHistory && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    {loadingHistory ? (
+                      <div className="glass-panel rounded-3xl p-12 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+                      </div>
+                    ) : (
+                      <SessionHistoryList 
+                        sessions={sessions} 
+                        isGuest={user?.isGuest} 
+                        onNavigateRegister={onNavigateRegister} 
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        )}
       </main>
 
       <Footer />
@@ -452,6 +555,15 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
         onSaveEvent={handleSaveCountdown}
         onDeleteEvent={handleDeleteCountdown}
         onPinEvent={handlePinCountdown}
+      />
+
+      {/* Dashboard Customizer Modal */}
+      <DashboardCustomizerModal
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        widgetVisibility={widgetVisibility}
+        onToggleWidget={handleToggleWidget}
+        onResetDefault={handleResetWidgetVisibility}
       />
 
 
