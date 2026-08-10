@@ -323,7 +323,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
               <Flame className="w-5 h-5 text-white fill-white/20" />
             </div>
-            <span className="hidden sm:inline-block font-extrabold text-xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-text-gradient-start to-text-gradient-end">
+            <span className="hidden lg:inline-block font-extrabold text-xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-text-gradient-start to-text-gradient-end">
               Study XP Tracker
             </span>
           </div>
@@ -335,7 +335,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               title={t('nav_messages_title')}
             >
               <MessageSquare className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span className="hidden sm:inline">{t('nav_messages')}</span>
+              <span className="hidden lg:inline">{t('nav_messages')}</span>
               {progress?.unreadMessagesCount > 0 && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-rose-500 text-white font-extrabold rounded-full animate-pulse">
                   {progress.unreadMessagesCount}
@@ -349,7 +349,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               title={t('nav_friends_title')}
             >
               <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="hidden sm:inline">{t('nav_friends')}</span>
+              <span className="hidden lg:inline">{t('nav_friends')}</span>
               {progress?.pendingFriendRequestsCount > 0 && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-rose-500 text-white font-extrabold rounded-full animate-pulse">
                   {progress.pendingFriendRequestsCount}
@@ -363,7 +363,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               title={t('nav_drive_title')}
             >
               <FolderOpen className="w-4 h-4 text-sky-400" />
-              <span className="hidden sm:inline">{t('nav_drive')}</span>
+              <span className="hidden lg:inline">{t('nav_drive')}</span>
             </button>
 
             <button
@@ -372,7 +372,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               title={t('customize_dashboard')}
             >
               <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
-              <span className="hidden sm:inline">{t('customize_dashboard')}</span>
+              <span className="hidden lg:inline">{t('customize_dashboard')}</span>
             </button>
 
 
@@ -383,7 +383,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                 title="Admin Dashboard"
               >
                 <ShieldCheck className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                <span>Admin</span>
+                <span className="hidden lg:inline">Admin</span>
               </button>
             )}
 
@@ -394,7 +394,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                 </span>
                 <button
                   onClick={onNavigateRegister}
-                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
+                  className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
                 >
                   <span>{t('guest_register_cta')}</span>
                 </button>
@@ -421,7 +421,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                   <span>👤</span>
                 )}
               </div>
-              <span className="text-slate-200 font-semibold text-xs sm:text-sm">{user?.displayName}</span>
+              <span className="hidden lg:inline text-slate-200 font-semibold text-xs sm:text-sm">{user?.displayName}</span>
             </button>
           </div>
         </div>
