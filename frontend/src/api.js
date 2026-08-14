@@ -844,7 +844,11 @@ export const presenceApi = {
  * Countdown API Endpoints
  */
 export const countdownApi = {
-  getPresets: () => apiCall('/countdowns/presets'),
+  getPresets: (search = '') => {
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiCall(`/countdowns/presets${query}`);
+  },
+
   getEvents: () => {
     if (isGuestMode()) return Promise.resolve([]);
     return apiCall('/countdowns');

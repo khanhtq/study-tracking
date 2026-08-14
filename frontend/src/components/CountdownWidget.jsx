@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Settings, Calendar, CheckCircle2, RefreshCw, ChevronDown } from 'lucide-react';
+import { Settings, Calendar, CheckCircle2, RefreshCw, ChevronDown, Users } from 'lucide-react';
 
 export default function CountdownWidget({ activeCountdown, presets = [], events = [], onOpenManage, onSelectEvent }) {
   const { t } = useLanguage();
@@ -28,9 +28,9 @@ export default function CountdownWidget({ activeCountdown, presets = [], events 
       const diff = Math.max(0, target - now);
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
 
       setTimeLeft({ days, hours, minutes, seconds, totalMs: diff });
     };
@@ -56,20 +56,25 @@ export default function CountdownWidget({ activeCountdown, presets = [], events 
     );
   }
 
-  // Combined options for quick switcher
+  // Combine user custom events & preset events into dropdown list
   const allEvents = [...events];
-  presets.forEach(p => {
-    if (!allEvents.some(e => e.presetExamCode === p.examCode || e.title === p.title)) {
+  presets.forEach((preset) => {
+    if (!allEvents.some((e) => e.presetExamCode === preset.examCode || e.title === preset.title)) {
       allEvents.push({
-        id: `preset_${p.examCode}`,
-        title: p.title,
-        targetDate: p.targetDate,
-        isOfficialDate: p.isOfficialDate,
-        presetExamCode: p.examCode,
-        color: p.color
+        presetExamCode: preset.examCode,
+        title: preset.title,
+        targetDate: preset.targetDate,
+        isOfficialDate: preset.isOfficialDate,
+        category: preset.category,
+        color: preset.color,
+        trackerCount: preset.trackerCount
       });
     }
   });
+
+  // Find matching preset to obtain trackerCount if missing on user event object
+  const matchedPreset = presets.find(p => p.examCode === activeCountdown?.presetExamCode || p.title === activeCountdown?.title);
+  const displayTrackerCount = activeCountdown?.trackerCount ?? matchedPreset?.trackerCount ?? 0;
 
   const formattedDate = new Date(activeCountdown.targetDate).toLocaleDateString('vi-VN', {
     weekday: 'long',
@@ -153,7 +158,7 @@ export default function CountdownWidget({ activeCountdown, presets = [], events 
       </div>
 
       {/* Target Status Line */}
-      <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 relative z-10">
+      <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 relative z-10 flex-wrap">
         <span className="truncate">{formattedDate}</span>
         {activeCountdown.isOfficialDate ? (
           <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
@@ -166,6 +171,10 @@ export default function CountdownWidget({ activeCountdown, presets = [], events 
             {t('countdown_estimated_badge')}
           </span>
         )}
+        <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
+          <Users className="w-3 h-3 text-indigo-400" />
+          {displayTrackerCount} {t('countdown_trackers_count_suffix')}
+        </span>
       </div>
 
       {/* Main Countdown Digit Grid */}
