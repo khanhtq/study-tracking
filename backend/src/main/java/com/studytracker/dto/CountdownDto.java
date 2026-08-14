@@ -25,5 +25,7 @@ public class CountdownDto {
     private Boolean emailNotify;
     private Boolean isOfficialDate;
     private String sourceUrl;
+    private Integer trackerCount;
     private Instant createdAt;
 }
+

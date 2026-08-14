@@ -20,5 +20,10 @@ public class SystemPresetExamDto {
     private String sourceUrl;
     private String description;
     private String color;
+    private Integer trackerCount;
+    private String createdByUserId;
+    private String creatorDisplayName;
+    private Boolean isCommunityEvent;
     private Instant lastSyncedAt;
 }
+

@@ -28,4 +28,6 @@ public class CreateCountdownRequest {
     private String note;
     private Boolean isPinned;
     private Boolean emailNotify;
+    private Boolean isCommunityEvent;
 }
+

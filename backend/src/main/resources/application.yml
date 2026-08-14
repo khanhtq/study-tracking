@@ -27,15 +27,19 @@ spring:
       leak-detection-threshold: 20000
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
+
     properties:
       hibernate:
         format_sql: false
   flyway:
     enabled: true
     baseline-on-migrate: true
+    validate-on-migrate: false
     locations: classpath:db/migration
+
+
   data:
     redis:
       host: ${SPRING_REDIS_HOST:localhost}

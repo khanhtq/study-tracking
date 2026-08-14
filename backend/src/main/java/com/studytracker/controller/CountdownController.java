@@ -22,9 +22,11 @@ public class CountdownController {
     private final CountdownService countdownService;
 
     @GetMapping("/presets")
-    public ResponseEntity<List<SystemPresetExamDto>> getPresetExams() {
-        return ResponseEntity.ok(countdownService.getAllPresets());
+    public ResponseEntity<List<SystemPresetExamDto>> getPresetExams(
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(countdownService.getAllPresets(search));
     }
+
 
     @GetMapping
     public ResponseEntity<List<CountdownDto>> getUserCountdowns(@AuthenticationPrincipal User user) {

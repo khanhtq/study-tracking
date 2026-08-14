@@ -44,6 +44,18 @@ public class SystemPresetExam {
     @Builder.Default
     private String color = "indigo";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_user_id")
+    private User createdByUser;
+
+    @Column(name = "is_community_event", nullable = false)
+    @Builder.Default
+    private Boolean isCommunityEvent = false;
+
+    @Column(name = "tracker_count", nullable = false)
+    @Builder.Default
+    private Integer trackerCount = 0;
+
     @CreationTimestamp
     @Column(name = "last_synced_at")
     private Instant lastSyncedAt;
@@ -52,3 +64,4 @@ public class SystemPresetExam {
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 }
+
