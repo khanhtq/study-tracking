@@ -6,10 +6,11 @@ import GroupChatRoom from '../components/chat/GroupChatRoom';
 import PublicProfileModal from '../components/PublicProfileModal';
 import ChatToast from '../components/chat/ChatToast';
 import ConfirmModal from '../components/chat/ConfirmModal';
+import EditGroupModal from '../components/chat/EditGroupModal';
 import SEO from '../components/SEO';
 import {
   Users, Search, Plus, Compass, MessageSquare, Shield,
-  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2, Trash2
+  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2, Trash2, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -32,6 +33,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
   const validInitialId = typeof initialGroupId === 'string' && initialGroupId.trim() ? initialGroupId.trim() : null;
   const [activeGroupId, setActiveGroupId] = useState(validInitialId);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
+  const [groupToEdit, setGroupToEdit] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -372,6 +374,15 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {isMember && (group.currentUserRole === 'OWNER' || group.currentUserRole === 'ADMIN') && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setGroupToEdit(group); }}
+                          className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer"
+                          title={t('edit_group_info')}
+                        >
+                          <Settings className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       {isMember && group.currentUserRole === 'OWNER' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setGroupToDelete(group); }}
@@ -581,6 +592,22 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
           onClose={() => setSelectedProfileUserId(null)}
         />
       )}
+
+      {/* Edit Group Modal */}
+      <EditGroupModal
+        group={groupToEdit}
+        isOpen={!!groupToEdit}
+        onClose={() => setGroupToEdit(null)}
+        onGroupUpdated={() => {
+          showToast(t('group_update_success') || 'Cập nhật thông tin nhóm thành công!', 'success');
+          loadData();
+        }}
+        onGroupDeleted={() => {
+          showToast(t('delete_group_success') || 'Đã xóa nhóm thành công', 'info');
+          loadData();
+        }}
+        isOwner={groupToEdit?.currentUserRole === 'OWNER'}
+      />
 
       {/* Delete Group Confirm Modal */}
       <ConfirmModal

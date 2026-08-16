@@ -7,13 +7,14 @@ import ShareDocumentModal from './ShareDocumentModal';
 import GroupMembersModal from './GroupMembersModal';
 import GroupInviteModal from './GroupInviteModal';
 import GroupMediaModal from './GroupMediaModal';
+import EditGroupModal from './EditGroupModal';
 import ChatToast from './ChatToast';
 import ConfirmModal from './ConfirmModal';
 import {
   ArrowLeft, Search, Pin, Users, Link2, FileText, Send, Paperclip,
   Smile, CornerDownRight, X, Edit2, Trash2, ChevronDown, Check,
   Download, Loader2, Play, Image as ImageIcon, Volume2, VolumeX, ShieldCheck,
-  Shield, Crown, Eye
+  Shield, Crown, Eye, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -63,6 +64,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
   const [isShareDocOpen, setIsShareDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -599,6 +601,17 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           >
             <Users className="w-4 h-4" />
           </button>
+
+          {/* Group Settings / Edit Info (Owner & Admin only) */}
+          {(currentRole === 'OWNER' || currentRole === 'ADMIN') && (
+            <button
+              onClick={() => setIsEditGroupModalOpen(true)}
+              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 transition-colors"
+              title={t('edit_group_info')}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -1167,6 +1180,22 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         groupName={groupDetail?.group?.name}
         isOpen={isMediaModalOpen}
         onClose={() => setIsMediaModalOpen(false)}
+      />
+
+      <EditGroupModal
+        group={groupDetail?.group}
+        isOpen={isEditGroupModalOpen}
+        onClose={() => setIsEditGroupModalOpen(false)}
+        onGroupUpdated={(updated) => {
+          setGroupDetail(prev => prev ? { ...prev, group: updated } : null);
+          showToast(t('group_update_success') || 'Cập nhật thông tin nhóm thành công!', 'success');
+          loadGroupDetail();
+        }}
+        onGroupDeleted={() => {
+          showToast(t('delete_group_success') || 'Đã xóa nhóm thành công', 'info');
+          onBack();
+        }}
+        isOwner={currentRole === 'OWNER'}
       />
 
       {/* Image Preview Modal */}
