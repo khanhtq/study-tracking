@@ -1,4 +1,4 @@
-name: Backend CI/CD (Azure Container Apps - ACA)
+name: Backend CI/CD
 
 on:
   push:
@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   build-and-test:
-    name: Build & Test (CI)
+    name: CI (Test)
     runs-on: ubuntu-latest
 
     steps:
@@ -41,7 +41,7 @@ jobs:
         run: mvn clean package -DskipTests=false
 
   build-and-push-azure:
-    name: Build, Push to ACR & Update ACA (CD)
+    name: CD (Deploy)
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
