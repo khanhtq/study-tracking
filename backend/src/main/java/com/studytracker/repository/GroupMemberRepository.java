@@ -32,7 +32,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, UUID> 
     @Query("SELECT gm FROM GroupMember gm JOIN FETCH gm.user u WHERE gm.group.id = :groupId AND gm.status = 'ACTIVE' ORDER BY CASE gm.role WHEN 'OWNER' THEN 1 WHEN 'ADMIN' THEN 2 WHEN 'MODERATOR' THEN 3 ELSE 4 END, gm.joinedAt ASC")
     List<GroupMember> findActiveMembersWithUser(@Param("groupId") UUID groupId);
 
-    @Query("SELECT gm FROM GroupMember gm JOIN FETCH gm.user u WHERE gm.group.id = :groupId AND gm.status = 'ACTIVE' AND (LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%'))) ORDER BY gm.joinedAt ASC")
+    @Query("SELECT gm FROM GroupMember gm JOIN FETCH gm.user u WHERE gm.group.id = :groupId AND gm.status = 'ACTIVE' AND (LOWER(u.displayName) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))) ORDER BY gm.joinedAt ASC")
     List<GroupMember> searchActiveMembers(@Param("groupId") UUID groupId, @Param("query") String query);
 
     void deleteByGroupIdAndUserId(UUID groupId, UUID userId);
