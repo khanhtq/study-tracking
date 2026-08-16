@@ -126,20 +126,24 @@ public class DocumentService {
             throw new IllegalArgumentException("File tải lên không được để trống");
         }
 
-        // 1. Check max file size (200 MB limit)
+        // 1. Check max file size (if limit is configured > 0)
         long fileSizeBytes = file.getSize();
-        long maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
-        if (fileSizeBytes > maxFileSizeBytes) {
-            throw new IllegalArgumentException("File vượt quá kích thước cho phép (" + maxFileSizeMb + " MB)");
+        if (maxFileSizeMb > 0) {
+            long maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
+            if (fileSizeBytes > maxFileSizeBytes) {
+                throw new IllegalArgumentException("File vượt quá kích thước cho phép (" + maxFileSizeMb + " MB)");
+            }
         }
 
-        // 2. Check total user storage quota (1 GB = 1000 MB limit)
-        Long currentUsedBytes = documentRepository.sumSizeBytesByUserIdAndIsDeletedFalse(userId);
-        if (currentUsedBytes == null) currentUsedBytes = 0L;
+        // 2. Check total user storage quota (if limit is configured > 0)
+        if (maxUserQuotaMb > 0) {
+            Long currentUsedBytes = documentRepository.sumSizeBytesByUserIdAndIsDeletedFalse(userId);
+            if (currentUsedBytes == null) currentUsedBytes = 0L;
 
-        long maxQuotaBytes = maxUserQuotaMb * 1024 * 1024;
-        if (currentUsedBytes + fileSizeBytes > maxQuotaBytes) {
-            throw new IllegalArgumentException("Dung lượng lưu trữ của bạn đã đầy (Tối đa " + maxUserQuotaMb + " MB)");
+            long maxQuotaBytes = maxUserQuotaMb * 1024 * 1024;
+            if (currentUsedBytes + fileSizeBytes > maxQuotaBytes) {
+                throw new IllegalArgumentException("Dung lượng lưu trữ của bạn đã đầy (Tối đa " + maxUserQuotaMb + " MB)");
+            }
         }
 
         // 3. Parent folder validation
@@ -296,8 +300,8 @@ public class DocumentService {
         Long usedBytes = documentRepository.sumSizeBytesByUserIdAndIsDeletedFalse(userId);
         if (usedBytes == null) usedBytes = 0L;
 
-        long maxBytes = maxUserQuotaMb * 1024 * 1024;
-        long maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
+        long maxBytes = (maxUserQuotaMb > 0) ? (maxUserQuotaMb * 1024 * 1024) : -1L;
+        long maxFileSizeBytes = (maxFileSizeMb > 0) ? (maxFileSizeMb * 1024 * 1024) : -1L;
         double usagePercentage = (maxBytes > 0) ? ((double) usedBytes / maxBytes) * 100.0 : 0.0;
 
         return StorageQuotaDto.builder()
@@ -305,9 +309,9 @@ public class DocumentService {
                 .maxBytes(maxBytes)
                 .usagePercentage(Math.min(100.0, Math.round(usagePercentage * 100.0) / 100.0))
                 .formattedUsed(formatBytes(usedBytes))
-                .formattedMax(formatBytes(maxBytes))
+                .formattedMax(maxBytes > 0 ? formatBytes(maxBytes) : "Không giới hạn")
                 .maxFileSizeBytes(maxFileSizeBytes)
-                .formattedMaxFileSize(formatBytes(maxFileSizeBytes))
+                .formattedMaxFileSize(maxFileSizeBytes > 0 ? formatBytes(maxFileSizeBytes) : "Không giới hạn")
                 .build();
     }
 
