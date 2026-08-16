@@ -66,6 +66,7 @@ jobs:
           images: ${{ secrets.AZURE_REGISTRY_SERVER }}/study-tracking-backend
           tags: |
             type=raw,value=latest
+            type=raw,value=${{ github.sha }}
             type=sha,format=short
 
       - name: Build and push Docker image to ACR
@@ -86,4 +87,4 @@ jobs:
           az containerapp update \
             --resource-group rg-study-tracking-prod \
             --name app-study-tracking-api-prod \
-            --image ${{ secrets.AZURE_REGISTRY_SERVER }}/study-tracking-backend:latest
+            --image ${{ secrets.AZURE_REGISTRY_SERVER }}/study-tracking-backend:${{ github.sha }}
