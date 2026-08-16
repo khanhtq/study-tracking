@@ -378,7 +378,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                         <button
                           onClick={(e) => { e.stopPropagation(); setGroupToEdit(group); }}
                           className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer"
-                          title="Chỉnh sửa thông tin nhóm"
+                          title={t('edit_group_info')}
                         >
                           <Settings className="w-3.5 h-3.5" />
                         </button>
@@ -599,11 +599,11 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
         isOpen={!!groupToEdit}
         onClose={() => setGroupToEdit(null)}
         onGroupUpdated={() => {
-          showToast('Cập nhật thông tin nhóm thành công!', 'success');
+          showToast(t('group_update_success') || 'Cập nhật thông tin nhóm thành công!', 'success');
           loadData();
         }}
         onGroupDeleted={() => {
-          showToast('Đã xóa nhóm thành công', 'info');
+          showToast(t('delete_group_success') || 'Đã xóa nhóm thành công', 'info');
           loadData();
         }}
         isOwner={groupToEdit?.currentUserRole === 'OWNER'}

@@ -56,7 +56,7 @@ export default function EditGroupModal({
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn tệp hình ảnh (PNG, JPG, WebP, ...).');
+      setError(t('image_file_only'));
       return;
     }
 
@@ -69,7 +69,7 @@ export default function EditGroupModal({
       }
     } catch (err) {
       console.error('Lỗi upload avatar nhóm:', err);
-      setError(err.message || 'Lỗi tải ảnh đại diện lên máy chủ.');
+      setError(err.message || t('avatar_upload_error'));
     } finally {
       setUploadingAvatar(false);
     }
@@ -78,7 +78,7 @@ export default function EditGroupModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Tên nhóm không được để trống.');
+      setError(t('group_name_required'));
       return;
     }
 
@@ -102,7 +102,7 @@ export default function EditGroupModal({
       onClose();
     } catch (err) {
       console.error('Lỗi cập nhật nhóm:', err);
-      setError(err.message || 'Lỗi khi cập nhật thông tin nhóm.');
+      setError(err.message || t('group_update_error'));
     } finally {
       setSaving(false);
     }
@@ -118,10 +118,15 @@ export default function EditGroupModal({
       onClose();
     } catch (err) {
       console.error('Lỗi xóa nhóm:', err);
-      setError(err.message || 'Lỗi khi xóa nhóm.');
+      setError(err.message || t('group_delete_error') || 'Error deleting group');
     } finally {
       setDeleting(false);
     }
+  };
+
+  const formatMemberCount = (num) => {
+    const template = t('max_members_unit') || `${num} ${t('members_count')}`;
+    return template.replace('{count}', num.toLocaleString());
   };
 
   if (!isOpen || !group) return null;
@@ -139,11 +144,11 @@ export default function EditGroupModal({
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/40">
             <div className="flex items-center gap-2.5">
               <Settings className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-100">Chỉnh sửa thông tin nhóm</h3>
+              <h3 className="text-sm font-bold text-slate-100">{t('edit_group_info')}</h3>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -179,7 +184,7 @@ export default function EditGroupModal({
                   className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white text-[10px] gap-1"
                 >
                   <Camera className="w-5 h-5" />
-                  <span>Đổi ảnh</span>
+                  <span>{t('change_avatar')}</span>
                 </div>
 
                 {uploadingAvatar && (
@@ -202,9 +207,9 @@ export default function EditGroupModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                 >
-                  Tải ảnh mới
+                  {t('upload_new_photo')}
                 </button>
                 {avatarUrl && (
                   <>
@@ -212,9 +217,9 @@ export default function EditGroupModal({
                     <button
                       type="button"
                       onClick={() => setAvatarUrl('')}
-                      className="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors"
+                      className="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
                     >
-                      Gỡ ảnh
+                      {t('remove_photo')}
                     </button>
                   </>
                 )}
@@ -230,7 +235,7 @@ export default function EditGroupModal({
                 maxLength={100}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="VD: Nhóm Ôn Thi THPT Quốc Gia..."
+                placeholder={t('group_name_placeholder')}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none transition-colors"
               />
             </div>
@@ -243,7 +248,7 @@ export default function EditGroupModal({
                 maxLength={500}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Mô tả mục tiêu học tập, lịch thảo luận của nhóm..."
+                placeholder={t('group_desc_placeholder')}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none resize-none transition-colors"
               />
             </div>
@@ -283,17 +288,17 @@ export default function EditGroupModal({
                 onChange={(e) => setMaxMembers(Number(e.target.value))}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50"
               >
-                <option value={50}>50 thành viên</option>
-                <option value={100}>100 thành viên</option>
-                <option value={200}>200 thành viên</option>
-                <option value={500}>500 thành viên</option>
-                <option value={1000}>1,000 thành viên</option>
-                <option value={2000}>2,000 thành viên</option>
-                <option value={5000}>5,000 thành viên</option>
+                <option value={50}>{formatMemberCount(50)}</option>
+                <option value={100}>{formatMemberCount(100)}</option>
+                <option value={200}>{formatMemberCount(200)}</option>
+                <option value={500}>{formatMemberCount(500)}</option>
+                <option value={1000}>{formatMemberCount(1000)}</option>
+                <option value={2000}>{formatMemberCount(2000)}</option>
+                <option value={5000}>{formatMemberCount(5000)}</option>
               </select>
               {group.memberCount > maxMembers && (
                 <p className="text-[11px] text-amber-400 mt-1">
-                  * Nhóm hiện có {group.memberCount} thành viên. Giới hạn phải lớn hơn hoặc bằng số thành viên hiện tại.
+                  {(t('max_members_warning') || '* Nhóm hiện có {count} thành viên. Giới hạn phải lớn hơn hoặc bằng số thành viên hiện tại.').replace('{count}', group.memberCount)}
                 </p>
               )}
             </div>
@@ -301,37 +306,37 @@ export default function EditGroupModal({
             {/* Danger Zone (Owner only) */}
             {isOwner && (
               <div className="pt-4 border-t border-slate-800/80">
-                <div className="text-xs font-bold text-rose-400 mb-2">Vùng nguy hiểm</div>
+                <div className="text-xs font-bold text-rose-400 mb-2">{t('danger_zone')}</div>
                 {!showDeleteConfirm ? (
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span>Xóa nhóm vĩnh viễn</span>
+                    <span>{t('delete_group_permanent')}</span>
                   </button>
                 ) : (
                   <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/50 space-y-2">
                     <p className="text-xs text-rose-200 font-semibold">
-                      Bạn có chắc chắn muốn xóa nhóm này? Toàn bộ tin nhắn và tài liệu trong nhóm sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                      {t('delete_group_warning')}
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => setShowDeleteConfirm(false)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white bg-slate-800"
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 cursor-pointer"
                       >
-                        Hủy
+                        {t('drive_btn_cancel')}
                       </button>
                       <button
                         type="button"
                         onClick={handleDeleteGroup}
                         disabled={deleting}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors disabled:opacity-50 cursor-pointer"
                       >
                         {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        <span>Xác nhận xóa</span>
+                        <span>{t('confirm_delete')}</span>
                       </button>
                     </div>
                   </div>
@@ -344,14 +349,14 @@ export default function EditGroupModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 {t('drive_btn_cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving || uploadingAvatar || !name.trim()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
               >
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 <span>{t('drive_btn_save')}</span>

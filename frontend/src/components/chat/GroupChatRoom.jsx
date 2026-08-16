@@ -607,7 +607,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
             <button
               onClick={() => setIsEditGroupModalOpen(true)}
               className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 transition-colors"
-              title="Chỉnh sửa thông tin nhóm"
+              title={t('edit_group_info')}
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -1188,11 +1188,11 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         onClose={() => setIsEditGroupModalOpen(false)}
         onGroupUpdated={(updated) => {
           setGroupDetail(prev => prev ? { ...prev, group: updated } : null);
-          showToast('Cập nhật thông tin nhóm thành công!', 'success');
+          showToast(t('group_update_success') || 'Cập nhật thông tin nhóm thành công!', 'success');
           loadGroupDetail();
         }}
         onGroupDeleted={() => {
-          showToast('Đã xóa nhóm thành công', 'info');
+          showToast(t('delete_group_success') || 'Đã xóa nhóm thành công', 'info');
           onBack();
         }}
         isOwner={currentRole === 'OWNER'}
