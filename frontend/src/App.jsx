@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import DocumentDrive from './pages/DocumentDrive';
+import Community from './pages/Community';
 
 import VerifyOtp from './pages/VerifyOtp';
 import ForgotPassword from './pages/ForgotPassword';
@@ -23,9 +24,11 @@ function MainApp() {
   const { user, token, loading, logout, refreshProgress } = useAuth();
   const [view, setView] = useState(() => {
     if (localStorage.getItem('ban_notice')) return 'login';
+    if (window.location.pathname.startsWith('/join/')) return 'community';
     return 'landing';
   });
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
+  const [activeCommunityGroupId, setActiveCommunityGroupId] = useState(null);
   const { t } = useLanguage();
 
   const [paymentResult, setPaymentResult] = useState(() => {
@@ -125,12 +128,18 @@ function MainApp() {
           <Profile onBackToDashboard={() => setView('dashboard')} />
         ) : view === 'drive' ? (
           <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
+        ) : view === 'community' ? (
+          <Community initialGroupId={activeCommunityGroupId} onBackToDashboard={() => { setActiveCommunityGroupId(null); setView('dashboard'); }} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
             onNavigateDrive={() => setView('drive')}
+            onNavigateCommunity={(groupId) => {
+              setActiveCommunityGroupId(typeof groupId === 'string' ? groupId : null);
+              setView('community');
+            }}
           />
         )
       ) : user?.isGuest ? (
@@ -144,12 +153,18 @@ function MainApp() {
           <Profile onBackToDashboard={() => setView('dashboard')} />
         ) : view === 'drive' ? (
           <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
+        ) : view === 'community' ? (
+          <Community initialGroupId={activeCommunityGroupId} onBackToDashboard={() => { setActiveCommunityGroupId(null); setView('dashboard'); }} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
             onNavigateDrive={() => setView('drive')}
+            onNavigateCommunity={(groupId) => {
+              setActiveCommunityGroupId(typeof groupId === 'string' ? groupId : null);
+              setView('community');
+            }}
           />
         )
       ) : (

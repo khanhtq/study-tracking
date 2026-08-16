@@ -62,5 +62,38 @@ backend/
 
 ---
 
+## Quick Start (Local Development)
+
+### 1. Khởi động hạ tầng Docker
+Chạy toàn bộ dịch vụ phụ trợ (PostgreSQL, Redis, Azurite Storage, Mailpit SMTP):
+```bash
+cd backend
+docker compose up -d
+```
+
+| Dịch vụ | Cổng Host | Mục đích |
+| :--- | :--- | :--- |
+| **PostgreSQL 15** | `5432` | Database chính (`study_xp_tracker` / `postgres` / `password`) |
+| **Redis 7** | `6379` | Cache, Leaderboard, Presence |
+| **Azurite** | `10000` | Giả lập Azure Blob Storage offline |
+| **Mailpit Web UI** | `8025` | Giao diện xem email OTP / Password reset offline |
+| **Mailpit SMTP** | `1025` | Cổng gửi thư SMTP nội bộ |
+
+### 2. Nạp biến môi trường Local (PowerShell)
+```powershell
+cd backend
+. .\scripts\environment\set-env-local.ps1
+```
+
+### 3. Chạy Backend Service
+```powershell
+mvn spring-boot:run
+```
+
+Backend sẽ chạy tại: `http://localhost:8080` (WebSocket tại: `ws://localhost:8080/ws`).
+
+---
+
 ## Author & License
 * **Author:** Tran Quoc Khanh
+

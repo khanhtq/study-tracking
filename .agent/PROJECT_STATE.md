@@ -11,12 +11,12 @@
 | **Frontend** | React 19, Vite 8, Tailwind CSS v4, Framer Motion, Lucide React, Recharts, SockJS-client, StompJS | Glassmorphism UI, Responsive UX (Mobile/Tablet/Desktop), Dark/Light theme, 3-language i18n, Real-time WebSocket subscriptions |
 | **Backend** | Java 21, Spring Boot 3.3.1, Spring Security 6 (JWT + OAuth2), Spring Data JPA, Lettuce Redis, STOMP | RESTful APIs, XP/Level calculation, Anti-Cheat validation, Flyway migrations, Redis leaderboard + fallback, WebSocket broker |
 | **Database** | PostgreSQL 15, Redis 7 (Sorted Sets & Cache) | Persistent storage, Flyway version-controlled schema, real-time leaderboard ranking |
-| **Storage** | Azure Blob Storage / Cloudinary / Local Fallback | Study documents and user avatar uploads |
+| **Storage** | Local Storage (`uploads/`) / Azure Blob Storage / Cloudinary | Storage abstraction for study documents, group chat multimedia, avatars, with fallback |
 | **Infrastructure** | Docker, Docker Compose, Terraform, GitHub Actions | Containerization, deployment automation, CI/CD pipelines |
 
 ---
 
-## 2. Database State & Flyway Migrations (Current: `V17`)
+## 2. Database State & Flyway Migrations (Current: `V18`)
 
 | Version | Migration Script | Description & Table Changes |
 | :--- | :--- | :--- |
@@ -37,8 +37,9 @@
 | **V15** | `V15__create_countdown_and_preset_tables.sql` | Created `system_preset_exams` & `countdown_events` with initial Vietnam exam seeds (THPT QG, DGNL) |
 | **V16** | `V16__add_community_events_and_tracker_counts.sql` | Added `created_by_user_id`, `is_community_event`, `tracker_count` to preset exams |
 | **V17** | `V17__add_community_events_and_tracker_counts.sql` | Schema consistency check for community exam sharing & tracker counter sync |
+| **V18** | `V18__create_community_chat_tables.sql` | Created Community & Group Real-time Chat subsystem: `chat_groups`, `group_members`, `group_join_requests`, `group_invites`, `group_messages`, `message_attachments`, `message_reactions` |
 
-> **Next Flyway Migration to use**: `V18__<description>.sql`. **Never alter `V1` - `V17`**.
+> **Next Flyway Migration to use**: `V19__<description>.sql`. **Never alter `V1` - `V18`**.
 
 ---
 
@@ -55,6 +56,11 @@
 | **LeaderboardController** | `/api/leaderboard` | `/daily`, `/weekly`, `/monthly`, `/all-time` (Redis sorted sets with PostgreSQL fallback) |
 | **FriendshipController** | `/api/friends` | `/list`, `/requests`, `/send/{id}`, `/accept/{id}`, `/reject/{id}`, `/unfriend/{id}` |
 | **MessageController** | `/api/messages` | `/conversations`, `/{friendId}` (paginated direct messages) |
+| **GroupController** | `/api/v1/chat/groups` | `/`, `/{id}`, `/my-groups`, `/popular`, `/search`, `/{id}/join`, `/{id}/leave` |
+| **GroupMemberController** | `/api/v1/chat/groups/{groupId}/members` | `/`, `/{userId}/role`, `/{userId}/kick`, `/{userId}/mute`, `/{userId}/unmute`, `/requests`, `/requests/{reqId}/approve`, `/requests/{reqId}/reject` |
+| **GroupInviteController** | `/api/v1/chat` | `/groups/{groupId}/invites` (create, list, revoke), `/invites/{code}` (preview), `/invites/{code}/join` |
+| **ChatMediaController** | `/api/v1/chat/groups/{groupId}` | `/attachments` (POST upload, GET list all media), `/share-document` (share from Drive), `/save-document/{attachmentId}` (1-Click save to personal library) |
+| **GroupChatStompController** | `/app` & `/topic` | STOMP handlers for group messages, reactions, pins, typing indicators, and system broadcasts |
 | **PaymentController** | `/api/payments` | `/packages`, `/create-order`, `/callback` (MoMo / VNPay simulation & validation) |
 | **AdminController** | `/api/admin` | `/users`, `/ban/{id}`, `/unban/{id}`, `/stats`, `/suspicious-activity` |
 | **HealthController** | `/api/health` | Service health checks |
@@ -71,21 +77,32 @@
   - Smart Focus Timer (Stopwatch, Pomodoro 25/5 & custom intervals).
   - Study Calendar & Heatmap (GitHub-style activity contributions).
   - Countdown Widget & Floating Mini-Badge (Pinned exam/event tracking).
+  - Trending Study Groups Widget (`TrendingGroupsWidget.jsx`).
   - Dashboard Customizer (Widget reordering and visibility toggles).
   - Real-time Leaderboard preview and Online Friends bar.
+- `Community.jsx`: Community Study Groups Hub (Explore trending groups, Search, My Groups, Create group, Direct Room transition).
 - `DocumentDrive.jsx`: Cloud storage drive with folder navigation, drag-and-drop file upload, search, favorites, trash bin, and preview.
 - `Profile.jsx`: User profile, XP level progression, stats, badges, account settings, and sound/theme toggles.
 - `AdminDashboard.jsx`: User administration, ban management, and system metrics.
 
 ### 4.2. Key Modals & Components (`frontend/src/components/`)
 - `StudyTimer.jsx`: Focus timer supporting Pomodoro & Stopwatch with audio chimes and XP bonus calculation.
-- `CameraPresenceTracker.jsx` & `utils/presenceDetector.js`: TensorFlow/MediaPipe webcam face detection; pauses timer on 5min continuous absence and deducts inactive XP.
+- `TrendingGroupsWidget.jsx`: Dashboard widget for exploring trending study groups, quick join, and instant chat access.
 - `CountdownModal.jsx`, `CountdownWidget.jsx`, `FloatingCountdownBadge.jsx`: Multi-event countdown tracker with system presets, community sharing, auto-expiry, and widget pinning.
-- `DashboardCustomizerModal.jsx`: Customizes widget visibility and dashboard layout.
-- `ChatModal.jsx` & `FriendsModal.jsx`: Real-time instant messaging and friend management via STOMP WebSocket.
+- `DashboardCustomizerModal.jsx`: Customizes widget visibility (XP bar, timer, manual log, online users, trending groups, countdown, history).
+- `ChatModal.jsx` & `FriendsModal.jsx`: Direct peer messaging and friend management via STOMP WebSocket.
 - `UploadProgressPopup.jsx` & `AvatarUploader.jsx`: File upload visualizer with chunked/direct progress.
 
-### 4.3. Contexts (`frontend/src/context/`)
+### 4.3. Community & Chat Sub-components (`frontend/src/components/chat/`)
+- `GroupChatRoom.jsx`: Full-screen real-time group chat room with STOMP messaging, message search, pinboard, @mentions autocomplete, inline reply bubbles, emoji reactions, drag-and-drop & clipboard paste file attachments, mute banner alert, and responsive pixel-perfect inputs.
+- `GroupMediaModal.jsx`: Shared multimedia & documents browser tab with category filtering (All, Media, Documents, Audio), search, direct download, image lightbox, and 1-Click Save to personal Drive.
+- `GroupMembersModal.jsx`: Member list management, moderation tools (mute/unmute with countdown, role promotion, kick), and join request approval queue.
+- `GroupInviteModal.jsx`: Invite link generator with usage count and expiry management.
+- `ShareDocumentModal.jsx`: Select and share study documents directly from user's personal drive into group chat.
+- `ChatToast.jsx`: Glassmorphic floating toast alert for smooth, non-intrusive notifications.
+- `ConfirmModal.jsx`: Modern glassmorphic action confirmation modal with loading feedback.
+
+### 4.4. Contexts (`frontend/src/context/`)
 - `AuthContext.jsx`: Authentication state, user profile, token persistence, and logout flow.
 - `LanguageContext.jsx`: Centralized i18n supporting **`en`** (English), **`vi`** (Vietnamese), and **`zh`** (Chinese).
 - `ThemeContext.jsx`: Dark and Light mode state and root class binding.
@@ -101,11 +118,18 @@
 - Presence Auto-pause: If user is absent for $\ge 5$ minutes continuously, timer pauses and inactive time is deducted from total study duration.
 - Anti-Cheat Max Limit: Single session capped at a maximum of 12 hours ($43,200\text{ seconds}$). Sessions exceeding this are clipped or rejected.
 
-### 5.2. Multi-Language Standard
-- All keys must exist in `LanguageContext.jsx` under `translations.en`, `translations.vi`, and `translations.zh`.
-- Access using `t('section.key')` or `t('key')`.
+### 5.2. Community Chat & Moderation Rules
+- Membership Roles: `OWNER` > `ADMIN` > `MODERATOR` > `MEMBER`.
+- Member Mute: Muted members retain group access and history reading but are blocked from sending messages, reactions, and uploading files until `muted_until` expires.
+- 1-Click Drive Save: Attachments shared in chat can be cloned directly into the recipient's personal `StudyDocument` storage with zero re-upload.
+- Database JSON Mapping: `message_attachments.metadata` column is PostgreSQL `JSONB` and must be mapped using `@JdbcTypeCode(SqlTypes.JSON)`.
+- Storage Provider: Automatically defaults to `local` (`backend/uploads/`) during local development and `azure` (Azure Blob Storage) on production profile (`prod`).
 
 ### 5.3. Real-Time WebSocket Topics
-- Chat Direct Messages: `/topic/messages.{userId}` or `/user/queue/messages`
+- Direct Messages: `/topic/messages.{userId}` or `/user/queue/messages`
+- Group Messages: `/topic/group.{groupId}.messages`
+- Group Reactions: `/topic/group.{groupId}.reactions`
+- Group Pinned: `/topic/group.{groupId}.pinned`
+- Group Typing: `/topic/group.{groupId}.typing`
 - Friend Status & Online Presence: `/topic/presence`
 - Live XP / Leaderboard Updates: `/topic/leaderboard`

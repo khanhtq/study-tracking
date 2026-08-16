@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, SlidersHorizontal, Eye, EyeOff, RotateCcw, Sparkles, Clock, FilePlus, Users, Calendar, History } from 'lucide-react';
+import { X, SlidersHorizontal, Eye, EyeOff, RotateCcw, Sparkles, Clock, FilePlus, Users, Calendar, History, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
 export const WIDGET_CONFIGS = [
@@ -37,6 +37,14 @@ export const WIDGET_CONFIGS = [
     borderColor: 'border-blue-500/30',
   },
   {
+    id: 'trendingGroups',
+    nameKey: 'widget_trendingGroups_name',
+    descKey: 'widget_trendingGroups_desc',
+    icon: MessageSquare,
+    color: 'from-amber-500 to-rose-600',
+    borderColor: 'border-amber-500/30',
+  },
+  {
     id: 'countdown',
     nameKey: 'widget_countdown_name',
     descKey: 'widget_countdown_desc',
@@ -59,6 +67,7 @@ export const DEFAULT_WIDGET_VISIBILITY = {
   studyTimer: true,
   manualSession: true,
   onlineUsers: true,
+  trendingGroups: true,
   countdown: true,
   sessionHistory: true,
 };

@@ -882,4 +882,199 @@ export const countdownApi = {
   },
 };
 
+/**
+ * Community Group Chat API Endpoints
+ */
+export const communityChatApi = {
+  // Groups Management
+  getMyGroups: () => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall('/v1/chat/groups/my');
+  },
+  getPopularGroups: (page = 0, size = 20) => {
+    return apiCall(`/v1/chat/groups/popular?page=${page}&size=${size}`);
+  },
+  searchGroups: (query = '', page = 0, size = 20) => {
+    return apiCall(`/v1/chat/groups/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`);
+  },
+  createGroup: (data) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để tạo nhóm.'));
+    return apiCall('/v1/chat/groups', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  updateGroup: (groupId, data) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  deleteGroup: (groupId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}`, {
+      method: 'DELETE',
+    });
+  },
+  getGroupDetail: (groupId) => {
+    return apiCall(`/v1/chat/groups/${groupId}`);
+  },
+  joinGroup: (groupId, data = {}) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để tham gia nhóm.'));
+    return apiCall(`/v1/chat/groups/${groupId}/join`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  leaveGroup: (groupId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/leave`, {
+      method: 'POST',
+    });
+  },
+  getPendingJoinRequests: (groupId) => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall(`/v1/chat/groups/${groupId}/join-requests`);
+  },
+  reviewJoinRequest: (groupId, requestId, approved) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/join-requests/${requestId}?approved=${approved}`, {
+      method: 'PUT',
+    });
+  },
+  inviteFriends: (groupId, friendIds) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/invite-friends`, {
+      method: 'POST',
+      body: JSON.stringify({ friendIds }),
+    });
+  },
+  getMembers: (groupId, page = 0, size = 50) => {
+    return apiCall(`/v1/chat/groups/${groupId}/members?page=${page}&size=${size}`);
+  },
+  kickMember: (groupId, userId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+  muteMember: (groupId, userId, durationMinutes = 60) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/members/${userId}/mute`, {
+      method: 'POST',
+      body: JSON.stringify({ durationMinutes }),
+    });
+  },
+  unmuteMember: (groupId, userId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/members/${userId}/unmute`, {
+      method: 'POST',
+    });
+  },
+  updateMemberRole: (groupId, userId, role) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/members/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  },
+  createInviteLink: (groupId, data = {}) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/invites`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  getInviteLinks: (groupId) => {
+    if (isGuestMode()) return Promise.resolve([]);
+    return apiCall(`/v1/chat/groups/${groupId}/invites`);
+  },
+  revokeInviteLink: (groupId, inviteId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/invites/${inviteId}`, {
+      method: 'DELETE',
+    });
+  },
+  previewInvite: (code) => {
+    return apiCall(`/v1/chat/invites/${code}`);
+  },
+  joinViaInvite: (code) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/invites/${code}/join`, {
+      method: 'POST',
+    });
+  },
+
+  // Messages, Reactions, Pinned & Media
+  getMessages: (groupId, before = null, limit = 30) => {
+    const query = before ? `?before=${encodeURIComponent(before)}&limit=${limit}` : `?limit=${limit}`;
+    return apiCall(`/v1/chat/groups/${groupId}/messages${query}`);
+  },
+  sendMessage: (groupId, data) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập để gửi tin nhắn.'));
+    return apiCall(`/v1/chat/groups/${groupId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  searchMessages: (groupId, query, limit = 20) => {
+    return apiCall(`/v1/chat/groups/${groupId}/messages/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+  },
+  getPinnedMessages: (groupId) => {
+    return apiCall(`/v1/chat/groups/${groupId}/messages/pinned`);
+  },
+  editMessage: (groupId, messageId, newContent) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/messages/${messageId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ messageId, newContent }),
+    });
+  },
+  deleteMessage: (groupId, messageId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/messages/${messageId}`, {
+      method: 'DELETE',
+    });
+  },
+  toggleReaction: (groupId, messageId, emoji) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/messages/${messageId}/reactions?emoji=${encodeURIComponent(emoji)}`, {
+      method: 'POST',
+    });
+  },
+  togglePinMessage: (groupId, messageId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/messages/${messageId}/pin`, {
+      method: 'POST',
+    });
+  },
+  uploadChatFile: (groupId, file) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiCall(`/v1/chat/groups/${groupId}/attachments`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  shareStudyDocument: (groupId, documentId, caption) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/share-document`, {
+      method: 'POST',
+      body: JSON.stringify({ documentId, caption }),
+    });
+  },
+  saveSharedDocumentToMyLibrary: (groupId, attachmentId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/save-document/${attachmentId}`, {
+      method: 'POST',
+    });
+  },
+  getGroupAttachments: (groupId, type = null) => {
+    const query = type ? `?type=${encodeURIComponent(type)}` : '';
+    return apiCall(`/v1/chat/groups/${groupId}/attachments${query}`);
+  },
+};
+
 

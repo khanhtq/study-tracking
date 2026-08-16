@@ -3,3 +3,5 @@ app:
     cookie:
       same-site: None
       secure: true
+  storage:
+    provider: ${STORAGE_PROVIDER:azure}
