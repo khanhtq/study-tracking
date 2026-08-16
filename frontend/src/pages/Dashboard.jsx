@@ -68,7 +68,7 @@ const getFullAvatarUrl = (url) => {
   return `${backendOrigin}${cleanUrl}`;
 };
 
-export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavigateProfile, onNavigateDrive }) {
+export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavigateProfile, onNavigateDrive, onNavigateCommunity }) {
   const { user, token, progress, refreshProgress, activeSession } = useAuth();
   const { t } = useLanguage();
   const [sessions, setSessions] = useState([]);
@@ -524,6 +524,15 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
             >
               <FolderOpen className="w-4 h-4 text-sky-400" />
               <span className="hidden lg:inline">{t('nav_drive')}</span>
+            </button>
+
+            <button
+              onClick={onNavigateCommunity}
+              className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 rounded-2xl px-3 py-1.5 text-slate-100 hover:text-indigo-400 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md"
+              title={t('nav_community_title')}
+            >
+              <Users className="w-4 h-4 text-indigo-400" />
+              <span className="hidden lg:inline">{t('nav_community')}</span>
             </button>
 
             <button

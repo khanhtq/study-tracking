@@ -17,14 +17,18 @@ const getWebSocketUrl = () => {
 let stompClient = null;
 const messageListeners = new Set();
 
+export const getStompClient = () => stompClient;
+
 export const initWebSocket = (userId) => {
   if (!userId) return null;
   if (stompClient && stompClient.active) return stompClient;
 
   try {
     const wsUrl = getWebSocketUrl();
+    const token = localStorage.getItem('token');
     const client = new Client({
       brokerURL: wsUrl,
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -70,6 +74,99 @@ export const subscribeToMessages = (listener) => {
   return () => {
     messageListeners.delete(listener);
   };
+};
+
+export const subscribeToGroup = (groupId, callbacks = {}) => {
+  if (!stompClient || !stompClient.active || !groupId) {
+    return () => {};
+  }
+
+  const subs = [];
+
+  try {
+    if (callbacks.onMessage) {
+      const subMsg = stompClient.subscribe(`/topic/group.${groupId}.messages`, (msg) => {
+        try {
+          const payload = JSON.parse(msg.body);
+          callbacks.onMessage(payload);
+        } catch (e) {
+          console.warn('Lỗi parse message body:', e);
+        }
+      });
+      subs.push(subMsg);
+    }
+
+    if (callbacks.onReaction) {
+      const subReact = stompClient.subscribe(`/topic/group.${groupId}.reactions`, (msg) => {
+        try {
+          const payload = JSON.parse(msg.body);
+          callbacks.onReaction(payload);
+        } catch (e) {}
+      });
+      subs.push(subReact);
+    }
+
+    if (callbacks.onPinned) {
+      const subPin = stompClient.subscribe(`/topic/group.${groupId}.pinned`, (msg) => {
+        try {
+          const payload = JSON.parse(msg.body);
+          callbacks.onPinned(payload);
+        } catch (e) {}
+      });
+      subs.push(subPin);
+    }
+
+    if (callbacks.onTyping) {
+      const subTyping = stompClient.subscribe(`/topic/group.${groupId}.typing`, (msg) => {
+        try {
+          const payload = JSON.parse(msg.body);
+          callbacks.onTyping(payload);
+        } catch (e) {}
+      });
+      subs.push(subTyping);
+    }
+  } catch (err) {
+    console.warn('Lỗi đăng ký STOMP nhóm:', err);
+  }
+
+  return () => {
+    subs.forEach(s => {
+      try { s.unsubscribe(); } catch (e) {}
+    });
+  };
+};
+
+export const publishGroupMessage = (groupId, payload) => {
+  if (stompClient && stompClient.active) {
+    stompClient.publish({
+      destination: `/app/group/${groupId}/send`,
+      body: JSON.stringify(payload),
+    });
+    return true;
+  }
+  return false;
+};
+
+export const publishGroupReaction = (groupId, messageId, emoji) => {
+  if (stompClient && stompClient.active) {
+    stompClient.publish({
+      destination: `/app/group/${groupId}/react`,
+      body: JSON.stringify({ messageId, emoji }),
+    });
+    return true;
+  }
+  return false;
+};
+
+export const publishGroupTyping = (groupId, isTyping) => {
+  if (stompClient && stompClient.active) {
+    stompClient.publish({
+      destination: `/app/group/${groupId}/typing`,
+      body: JSON.stringify({ isTyping }),
+    });
+    return true;
+  }
+  return false;
 };
 
 export const disconnectWebSocket = () => {
