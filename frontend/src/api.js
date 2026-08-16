@@ -242,7 +242,8 @@ export const apiCall = async (endpoint, options = {}, isRetry = false) => {
 };
 
 
-const isGuestMode = () => localStorage.getItem('isGuest') === 'true';
+const isGuestMode = () => localStorage.getItem('isGuest') === 'true' || !localStorage.getItem('token');
+
 
 const getGuestProgress = () => {
   const saved = localStorage.getItem('guest_progress');

@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/countdowns")
@@ -26,7 +25,6 @@ public class CountdownController {
             @RequestParam(required = false) String search) {
         return ResponseEntity.ok(countdownService.getAllPresets(search));
     }
-
 
     @GetMapping
     public ResponseEntity<List<CountdownDto>> getUserCountdowns(@AuthenticationPrincipal User user) {
@@ -43,22 +41,22 @@ public class CountdownController {
     @PutMapping("/{id}")
     public ResponseEntity<CountdownDto> updateCountdown(
             @AuthenticationPrincipal User user,
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody CreateCountdownRequest request) {
         return ResponseEntity.ok(countdownService.updateCountdown(user.getId(), id, request));
     }
 
-    @PatchMapping("/{id}/pin")
+    @RequestMapping(value = "/{id}/pin", method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<CountdownDto> pinCountdown(
             @AuthenticationPrincipal User user,
-            @PathVariable UUID id) {
+            @PathVariable String id) {
         return ResponseEntity.ok(countdownService.pinCountdown(user.getId(), id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCountdown(
             @AuthenticationPrincipal User user,
-            @PathVariable UUID id) {
+            @PathVariable String id) {
         countdownService.deleteCountdown(user.getId(), id);
         return ResponseEntity.noContent().build();
     }

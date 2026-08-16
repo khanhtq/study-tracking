@@ -15,4 +15,3 @@ SET tracker_count = COALESCE((
     FROM countdown_events ce 
     WHERE ce.preset_exam_code = spe.exam_code
 ), 0);
-
