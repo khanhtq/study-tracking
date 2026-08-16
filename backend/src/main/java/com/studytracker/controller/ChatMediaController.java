@@ -55,4 +55,13 @@ public class ChatMediaController {
             @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(chatMediaService.saveSharedDocumentToMyLibrary(groupId, currentUser, attachmentId));
     }
+
+    @Operation(summary = "Lấy danh sách tất cả multimedia và tài liệu được chia sẻ trong nhóm chat")
+    @GetMapping("/attachments")
+    public ResponseEntity<java.util.List<MessageAttachmentDto>> getGroupAttachments(
+            @PathVariable("groupId") UUID groupId,
+            @RequestParam(value = "type", required = false) String type,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(chatMediaService.getGroupAttachments(groupId, currentUser, type));
+    }
 }

@@ -5,10 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import GroupChatRoom from '../components/chat/GroupChatRoom';
 import PublicProfileModal from '../components/PublicProfileModal';
 import ChatToast from '../components/chat/ChatToast';
+import ConfirmModal from '../components/chat/ConfirmModal';
 import SEO from '../components/SEO';
 import {
   Users, Search, Plus, Compass, MessageSquare, Shield,
-  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2
+  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,7 +20,7 @@ const getFullAvatarUrl = (url) => {
   return `${backendOrigin}${url.startsWith('/') ? url : `/${url}`}`;
 };
 
-export default function Community({ onBackToDashboard }) {
+export default function Community({ onBackToDashboard, initialGroupId = null }) {
   const { t } = useLanguage();
   const { user: currentUser } = useAuth();
 
@@ -28,9 +29,18 @@ export default function Community({ onBackToDashboard }) {
   const [myGroups, setMyGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeGroupId, setActiveGroupId] = useState(null);
+  const validInitialId = typeof initialGroupId === 'string' && initialGroupId.trim() ? initialGroupId.trim() : null;
+  const [activeGroupId, setActiveGroupId] = useState(validInitialId);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (typeof initialGroupId === 'string' && initialGroupId.trim()) {
+      setActiveGroupId(initialGroupId.trim());
+    } else {
+      setActiveGroupId(null);
+    }
+  }, [initialGroupId]);
 
   // Create Group Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,6 +51,7 @@ export default function Community({ onBackToDashboard }) {
   const [newGroupMaxMembers, setNewGroupMaxMembers] = useState(1000);
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [createError, setCreateError] = useState(null);
+  const [groupToDelete, setGroupToDelete] = useState(null);
 
   // Invite link preview
   const [inviteCodeToJoin, setInviteCodeToJoin] = useState(() => {
@@ -150,6 +161,21 @@ export default function Community({ onBackToDashboard }) {
       }
     } catch (err) {
       showToast(err.message || 'Không thể tham gia nhóm.', 'error');
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!groupToDelete) return;
+    try {
+      await communityChatApi.deleteGroup(groupToDelete.id);
+      showToast(t('delete_group_success'), 'success');
+      setGroupToDelete(null);
+      if (activeGroupId === groupToDelete.id) {
+        setActiveGroupId(null);
+      }
+      loadData();
+    } catch (err) {
+      showToast(err?.response?.data?.message || err.message || 'Error', 'error');
     }
   };
 
@@ -345,27 +371,38 @@ export default function Community({ onBackToDashboard }) {
                       </span>
                     </div>
 
-                    {isMember ? (
-                      <button
-                        onClick={() => setActiveGroupId(group.id)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Vào Chat</span>
-                      </button>
-                    ) : hasPending ? (
-                      <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
-                        {t('pending_approval')}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleJoinGroup(group)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
-                      >
-                        <span>{t('join_group_btn')}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {isMember && group.currentUserRole === 'OWNER' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setGroupToDelete(group); }}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                          title={t('delete_group')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {isMember ? (
+                        <button
+                          onClick={() => setActiveGroupId(group.id)}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>Vào Chat</span>
+                        </button>
+                      ) : hasPending ? (
+                        <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+                          {t('pending_approval')}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleJoinGroup(group)}
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                        >
+                          <span>{t('join_group_btn')}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -406,7 +443,7 @@ export default function Community({ onBackToDashboard }) {
                   <input
                     type="text"
                     required
-                    placeholder="VD: Nhóm Ôn Thi THPT Quốc Gia 2026..."
+                    placeholder={t('enter_group_name_placeholder')}
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none"
@@ -417,7 +454,7 @@ export default function Community({ onBackToDashboard }) {
                   <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('group_desc')}</label>
                   <textarea
                     rows={3}
-                    placeholder="Mô tả mục tiêu học tập, quy định của nhóm..."
+                    placeholder={t('enter_group_desc_placeholder')}
                     value={newGroupDesc}
                     onChange={(e) => setNewGroupDesc(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none resize-none"
@@ -457,11 +494,11 @@ export default function Community({ onBackToDashboard }) {
                     onChange={(e) => setNewGroupMaxMembers(Number(e.target.value))}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
                   >
-                    <option value={50}>50 thành viên</option>
-                    <option value={100}>100 thành viên</option>
-                    <option value={500}>500 thành viên</option>
-                    <option value={1000}>1,000 thành viên</option>
-                    <option value={5000}>5,000 thành viên</option>
+                    <option value={50}>50 {t('members_count')}</option>
+                    <option value={100}>100 {t('members_count')}</option>
+                    <option value={500}>500 {t('members_count')}</option>
+                    <option value={1000}>1,000 {t('members_count')}</option>
+                    <option value={5000}>5,000 {t('members_count')}</option>
                   </select>
                 </div>
 
@@ -544,6 +581,17 @@ export default function Community({ onBackToDashboard }) {
           onClose={() => setSelectedProfileUserId(null)}
         />
       )}
+
+      {/* Delete Group Confirm Modal */}
+      <ConfirmModal
+        isOpen={!!groupToDelete}
+        title={t('delete_group')}
+        message={t('delete_group_confirm')}
+        confirmText={t('delete_group')}
+        type="danger"
+        onConfirm={handleDeleteGroup}
+        onCancel={() => setGroupToDelete(null)}
+      />
 
       {/* Floating Chat Toast Notification */}
       <ChatToast toast={toast} onClose={() => setToast(null)} />

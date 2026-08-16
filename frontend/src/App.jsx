@@ -28,6 +28,7 @@ function MainApp() {
     return 'landing';
   });
   const [pendingVerifyEmail, setPendingVerifyEmail] = useState('');
+  const [activeCommunityGroupId, setActiveCommunityGroupId] = useState(null);
   const { t } = useLanguage();
 
   const [paymentResult, setPaymentResult] = useState(() => {
@@ -128,14 +129,17 @@ function MainApp() {
         ) : view === 'drive' ? (
           <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
         ) : view === 'community' ? (
-          <Community onBackToDashboard={() => setView('dashboard')} />
+          <Community initialGroupId={activeCommunityGroupId} onBackToDashboard={() => { setActiveCommunityGroupId(null); setView('dashboard'); }} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
             onNavigateDrive={() => setView('drive')}
-            onNavigateCommunity={() => setView('community')}
+            onNavigateCommunity={(groupId) => {
+              setActiveCommunityGroupId(typeof groupId === 'string' ? groupId : null);
+              setView('community');
+            }}
           />
         )
       ) : user?.isGuest ? (
@@ -150,14 +154,17 @@ function MainApp() {
         ) : view === 'drive' ? (
           <DocumentDrive onBackToDashboard={() => setView('dashboard')} />
         ) : view === 'community' ? (
-          <Community onBackToDashboard={() => setView('dashboard')} />
+          <Community initialGroupId={activeCommunityGroupId} onBackToDashboard={() => { setActiveCommunityGroupId(null); setView('dashboard'); }} />
         ) : (
           <Dashboard 
             onNavigateAdmin={() => setView('admin')} 
             onNavigateRegister={() => setView('register')}
             onNavigateProfile={() => setView('profile')}
             onNavigateDrive={() => setView('drive')}
-            onNavigateCommunity={() => setView('community')}
+            onNavigateCommunity={(groupId) => {
+              setActiveCommunityGroupId(typeof groupId === 'string' ? groupId : null);
+              setView('community');
+            }}
           />
         )
       ) : (

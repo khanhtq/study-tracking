@@ -1,5 +1,6 @@
 package com.studytracker.service.storage;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,11 +17,22 @@ import java.nio.file.StandardCopyOption;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "app.storage.provider", havingValue = "local")
+@ConditionalOnProperty(name = "app.storage.provider", havingValue = "local", matchIfMissing = true)
 public class LocalDocumentStorageProvider implements DocumentStorageProvider {
 
     @Value("${app.storage.upload-dir:uploads}")
     private String uploadDir;
+
+    @PostConstruct
+    public void init() {
+        try {
+            Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
+            log.info("Initialized Local Storage Directory at: {}", uploadPath);
+        } catch (Exception e) {
+            log.warn("Could not create base upload directory: {}", e.getMessage());
+        }
+    }
 
     @Override
     public String upload(MultipartFile file, String targetPath) {
@@ -40,6 +52,7 @@ public class LocalDocumentStorageProvider implements DocumentStorageProvider {
     public String generateDownloadUrl(String targetPath, String originalFilename, int expiryMinutes) {
         if (targetPath == null || targetPath.isEmpty()) return null;
         String cleanPath = targetPath.startsWith("/") ? targetPath.substring(1) : targetPath;
+        cleanPath = cleanPath.replace('\\', '/');
         return "/uploads/" + cleanPath;
     }
 

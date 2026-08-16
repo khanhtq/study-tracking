@@ -1071,6 +1071,10 @@ export const communityChatApi = {
       method: 'POST',
     });
   },
+  getGroupAttachments: (groupId, type = null) => {
+    const query = type ? `?type=${encodeURIComponent(type)}` : '';
+    return apiCall(`/v1/chat/groups/${groupId}/attachments${query}`);
+  },
 };
 
 

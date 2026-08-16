@@ -22,4 +22,8 @@ public class MessageAttachmentDto {
     private String mimeType;
     private AttachmentType attachmentType;
     private String metadata;
+    private UUID messageId;
+    private String senderName;
+    private String senderAvatarUrl;
+    private java.time.Instant createdAt;
 }

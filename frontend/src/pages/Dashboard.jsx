@@ -13,6 +13,7 @@ import PublicProfileModal from '../components/PublicProfileModal';
 import FriendsModal from '../components/FriendsModal';
 import ChatModal from '../components/ChatModal';
 import CountdownWidget from '../components/CountdownWidget';
+import TrendingGroupsWidget from '../components/TrendingGroupsWidget';
 import FloatingCountdownBadge from '../components/FloatingCountdownBadge';
 import CountdownModal from '../components/CountdownModal';
 import DashboardCustomizerModal, { DEFAULT_WIDGET_VISIBILITY } from '../components/DashboardCustomizerModal';
@@ -527,7 +528,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
             </button>
 
             <button
-              onClick={onNavigateCommunity}
+              onClick={() => onNavigateCommunity && onNavigateCommunity()}
               className="relative flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 rounded-2xl px-3 py-1.5 text-slate-100 hover:text-indigo-400 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md"
               title={t('nav_community_title')}
             >
@@ -666,8 +667,8 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
               </div>
             )}
 
-            {/* Right Column: Countdown Widget & History */}
-            {(widgetVisibility.countdown || widgetVisibility.sessionHistory) && (
+            {/* Right Column: Countdown Widget, Trending Groups & History */}
+            {(widgetVisibility.countdown || widgetVisibility.trendingGroups || widgetVisibility.sessionHistory) && (
               <div className={`space-y-8 ${
                 !(widgetVisibility.studyTimer || widgetVisibility.manualSession || widgetVisibility.onlineUsers)
                   ? 'lg:col-span-3'
@@ -682,6 +683,15 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                       onOpenManage={() => setIsCountdownModalOpen(true)}
                       onSelectEvent={(event) => handleSetActiveCountdown(event)}
                       onPinEvent={handlePinCountdown}
+                    />
+                  </motion.div>
+                )}
+
+                {widgetVisibility.trendingGroups && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <TrendingGroupsWidget
+                      onNavigateCommunity={onNavigateCommunity}
+                      onOpenGroup={(groupId) => onNavigateCommunity && onNavigateCommunity(groupId)}
                     />
                   </motion.div>
                 )}

@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "app.storage.provider", havingValue = "azure", matchIfMissing = true)
+@ConditionalOnProperty(name = "app.storage.provider", havingValue = "azure")
 public class AzureBlobDocumentStorageProvider implements DocumentStorageProvider {
 
     @Value("${app.storage.azure.connection-string:}")

@@ -3,6 +3,8 @@ package com.studytracker.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -51,7 +53,8 @@ public class MessageAttachment {
     @Builder.Default
     private AttachmentType attachmentType = AttachmentType.DOCUMENT;
 
-    @Column(columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
     private String metadata;
 
     @CreationTimestamp

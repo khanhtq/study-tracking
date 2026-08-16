@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import ShareDocumentModal from './ShareDocumentModal';
 import GroupMembersModal from './GroupMembersModal';
 import GroupInviteModal from './GroupInviteModal';
+import GroupMediaModal from './GroupMediaModal';
 import ChatToast from './ChatToast';
 import ConfirmModal from './ConfirmModal';
 import {
@@ -61,6 +62,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   // UI Modals & Popovers
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isShareDocOpen, setIsShareDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -283,12 +285,14 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         const att = await communityChatApi.uploadChatFile(groupId, file);
         setPendingAttachments((prev) => [...prev, att]);
       }
-      showToast('Đã đính kèm tệp thành công!', 'success');
     } catch (err) {
       console.error('Lỗi tải tệp lên:', err);
-      showToast(err.message || 'Lỗi tải tệp lên', 'error');
+      showToast(err.message || 'Lỗi tải tệp lên máy chủ', 'error', 'Tải tệp thất bại');
     } finally {
       setUploadingFiles(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -576,6 +580,16 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               <Link2 className="w-4 h-4" />
             </button>
           )}
+
+          {/* Multimedia & Files Gallery */}
+          <button
+            onClick={() => setIsMediaModalOpen(true)}
+            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1.5"
+            title="Kho ảnh, video & tài liệu nhóm"
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span className="hidden md:inline text-xs font-semibold">Tệp & Media</span>
+          </button>
 
           {/* Members list & Moderation */}
           <button
@@ -1079,7 +1093,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isMuted || uploadingFiles}
-            className={`p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`h-[42px] w-[42px] flex items-center justify-center flex-shrink-0 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
               isMuted ? 'opacity-40 cursor-not-allowed' : ''
             }`}
             title={isMuted ? 'Bạn đang bị tắt quyền chat' : 'Đính kèm tệp / ảnh'}
@@ -1088,7 +1102,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           </button>
 
           {/* Textarea */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative flex items-center">
             <textarea
               ref={textareaRef}
               value={inputText}
@@ -1102,7 +1116,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               }}
               placeholder={isMuted ? 'Bạn đang bị tắt quyền gửi tin nhắn trong nhóm này...' : t('chat_input_placeholder')}
               rows={1}
-              className={`w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3.5 py-2.5 text-[13.5px] sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none resize-none max-h-32 transition-colors ${
+              className={`w-full min-h-[42px] max-h-32 bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3.5 py-[9px] text-[13.5px] sm:text-sm leading-snug text-slate-200 placeholder-slate-500 focus:outline-none resize-none transition-colors ${
                 isMuted ? 'bg-slate-950/40 text-slate-500 border-rose-500/20 cursor-not-allowed' : ''
               }`}
             />
@@ -1112,7 +1126,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           <button
             onClick={handleSendMessage}
             disabled={isMuted || (!inputText.trim() && pendingAttachments.length === 0) || uploadingFiles}
-            className={`p-2.5 rounded-xl transition-all shadow-md cursor-pointer disabled:cursor-not-allowed ${
+            className={`h-[42px] w-[42px] flex items-center justify-center flex-shrink-0 rounded-xl transition-all shadow-md cursor-pointer disabled:cursor-not-allowed ${
               isMuted
                 ? 'bg-slate-800 text-slate-500 opacity-40 shadow-none'
                 : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 disabled:opacity-40'
@@ -1146,6 +1160,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         groupId={groupId}
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
+      />
+
+      <GroupMediaModal
+        groupId={groupId}
+        groupName={groupDetail?.group?.name}
+        isOpen={isMediaModalOpen}
+        onClose={() => setIsMediaModalOpen(false)}
       />
 
       {/* Image Preview Modal */}

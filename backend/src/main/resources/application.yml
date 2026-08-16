@@ -71,7 +71,7 @@ app:
       same-site: ${APP_AUTH_COOKIE_SAME_SITE:Lax}
       secure: ${APP_AUTH_COOKIE_SECURE:false}
   storage:
-    provider: ${STORAGE_PROVIDER:azure} # azure | local | cloudinary
+    provider: ${STORAGE_PROVIDER:local} # local | azure | cloudinary
     upload-dir: ${UPLOAD_DIR:uploads}
     max-user-quota-mb: ${MAX_USER_QUOTA_MB:-1} # -1 = unlimited
     max-file-size-mb: ${MAX_FILE_SIZE_MB:-1} # -1 = unlimited

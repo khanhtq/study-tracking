@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -195,5 +197,50 @@ public class ChatMediaService {
             }
         }
         return AttachmentType.DOCUMENT;
+    }
+
+    @Transactional(readOnly = true)
+    public List<MessageAttachmentDto> getGroupAttachments(UUID groupId, User currentUser, String filterType) {
+        groupService.verifyGroupMember(groupId, currentUser.getId());
+
+        List<MessageAttachment> attachments;
+        if (filterType == null || filterType.isBlank() || "ALL".equalsIgnoreCase(filterType)) {
+            attachments = messageAttachmentRepository.findActiveAttachmentsByGroupId(groupId);
+        } else if ("MEDIA".equalsIgnoreCase(filterType)) {
+            attachments = messageAttachmentRepository.findActiveAttachmentsByGroupIdAndTypes(groupId, List.of(AttachmentType.IMAGE, AttachmentType.VIDEO));
+        } else if ("DOCUMENTS".equalsIgnoreCase(filterType) || "FILES".equalsIgnoreCase(filterType)) {
+            attachments = messageAttachmentRepository.findActiveAttachmentsByGroupIdAndTypes(groupId, List.of(AttachmentType.DOCUMENT, AttachmentType.STUDY_DOCUMENT));
+        } else if ("AUDIO".equalsIgnoreCase(filterType)) {
+            attachments = messageAttachmentRepository.findActiveAttachmentsByGroupIdAndType(groupId, AttachmentType.AUDIO);
+        } else {
+            try {
+                AttachmentType type = AttachmentType.valueOf(filterType.toUpperCase());
+                attachments = messageAttachmentRepository.findActiveAttachmentsByGroupIdAndType(groupId, type);
+            } catch (IllegalArgumentException e) {
+                attachments = messageAttachmentRepository.findActiveAttachmentsByGroupId(groupId);
+            }
+        }
+
+        return attachments.stream()
+                .map(this::mapToAttachmentDto)
+                .collect(Collectors.toList());
+    }
+
+    public MessageAttachmentDto mapToAttachmentDto(MessageAttachment a) {
+        return MessageAttachmentDto.builder()
+                .id(a.getId())
+                .studyDocumentId(a.getStudyDocument() != null ? a.getStudyDocument().getId() : null)
+                .fileUrl(a.getFileUrl())
+                .thumbnailUrl(a.getThumbnailUrl())
+                .fileName(a.getFileName())
+                .fileSize(a.getFileSize())
+                .mimeType(a.getMimeType())
+                .attachmentType(a.getAttachmentType())
+                .metadata(a.getMetadata())
+                .messageId(a.getMessage() != null ? a.getMessage().getId() : null)
+                .senderName(a.getMessage() != null && a.getMessage().getSender() != null ? a.getMessage().getSender().getDisplayName() : "Unknown")
+                .senderAvatarUrl(a.getMessage() != null && a.getMessage().getSender() != null ? a.getMessage().getSender().getAvatarUrl() : null)
+                .createdAt(a.getCreatedAt())
+                .build();
     }
 }

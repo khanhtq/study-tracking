@@ -127,9 +127,13 @@ public class GroupService {
             throw new SecurityException("Chỉ chủ nhóm hoặc Quản trị viên hệ thống mới có quyền xóa nhóm");
         }
 
+        group.setDeletedAt(Instant.now());
+        group.setDeletedBy(currentUser);
+        group.setIsArchived(true);
+        chatGroupRepository.save(group);
+
         groupRankingService.removeGroup(groupId);
-        chatGroupRepository.delete(group);
-        log.info("Nhóm [{}] ({}) đã bị xóa bởi [{}]", group.getName(), groupId, currentUser.getUsername());
+        log.info("Nhóm [{}] ({}) đã bị xóa mềm bởi [{}]", group.getName(), groupId, currentUser.getUsername());
     }
 
     @Transactional(readOnly = true)
@@ -643,8 +647,12 @@ public class GroupService {
     // ==================== HELPER METHODS & MAPPERS ====================
 
     public ChatGroup getGroupEntity(UUID groupId) {
-        return chatGroupRepository.findById(groupId)
+        ChatGroup group = chatGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy nhóm với ID: " + groupId));
+        if (group.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Nhóm này đã bị xóa");
+        }
+        return group;
     }
 
     public GroupMember getActiveMember(UUID groupId, UUID userId) {
