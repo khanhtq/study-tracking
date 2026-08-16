@@ -116,38 +116,112 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
     }
   }, []);
 
-  // Countdown state
+  // Countdown state - Initialized synchronously from localStorage for 0ms flicker-free reload
   const [countdownPresets, setCountdownPresets] = useState(DEFAULT_GUEST_PRESETS);
-  const [userCountdowns, setUserCountdowns] = useState([]);
-  const [activeCountdown, setActiveCountdown] = useState(DEFAULT_GUEST_PRESETS[0]);
+  const [userCountdowns, setUserCountdowns] = useState(() => {
+    try {
+      const saved = localStorage.getItem('guest_countdowns');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [activeCountdown, setActiveCountdown] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_countdown_data');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [isCountdownModalOpen, setIsCountdownModalOpen] = useState(false);
 
+  // Helper to update active countdown and save selection to localStorage
+  const handleSetActiveCountdown = (event) => {
+    setActiveCountdown(event);
+    if (event) {
+      const key = event.id || event.presetExamCode || event.title;
+      localStorage.setItem('active_countdown_key', key);
+      localStorage.setItem('active_countdown_data', JSON.stringify(event));
+    } else {
+      localStorage.removeItem('active_countdown_key');
+      localStorage.removeItem('active_countdown_data');
+    }
+  };
+
   const fetchCountdowns = useCallback(async () => {
+    let presets = DEFAULT_GUEST_PRESETS;
     try {
-      const presets = await countdownApi.getPresets();
-      if (presets && presets.length > 0) {
-        setCountdownPresets(presets);
+      const resPresets = await countdownApi.getPresets();
+      if (resPresets && resPresets.length > 0) {
+        presets = resPresets;
+        setCountdownPresets(resPresets);
       }
     } catch (e) {
       console.warn('Using default countdown presets');
     }
 
-    if (!user?.isGuest) {
+    const isGuestUser = Boolean(user?.isGuest) || !localStorage.getItem('token');
+
+    const nowMs = Date.now();
+    let events = [];
+    if (!isGuestUser) {
       try {
-        const events = await countdownApi.getEvents();
+        const rawEvents = await countdownApi.getEvents();
+        events = (rawEvents || []).filter(e => new Date(e.targetDate).getTime() > nowMs);
         setUserCountdowns(events);
-        const pinned = events.find(e => e.isPinned);
-        if (pinned) {
-          setActiveCountdown(pinned);
-        } else if (events.length > 0) {
-          setActiveCountdown(events[0]);
-        } else {
-          setActiveCountdown(DEFAULT_GUEST_PRESETS[0]);
-        }
       } catch (e) {
         console.error('Failed to load user countdowns', e);
       }
+    } else {
+      try {
+        const savedGuest = localStorage.getItem('guest_countdowns');
+        if (savedGuest) {
+          const parsed = JSON.parse(savedGuest);
+          events = (parsed || []).filter(e => new Date(e.targetDate).getTime() > nowMs);
+        } else {
+          // Initialize guest user with the first valid future default preset
+          const initialPreset = presets.find(p => new Date(p.targetDate).getTime() > nowMs) || presets[0] || DEFAULT_GUEST_PRESETS[0];
+          const defaultInitialEvent = {
+            id: `guest_${initialPreset.examCode}`,
+            presetExamCode: initialPreset.examCode,
+            title: initialPreset.title,
+            targetDate: initialPreset.targetDate,
+            category: initialPreset.category || 'exam',
+            color: initialPreset.color || 'indigo',
+            isOfficialDate: Boolean(initialPreset.isOfficialDate),
+            isPinned: true,
+            emailNotify: false
+          };
+          events = [defaultInitialEvent];
+          localStorage.setItem('guest_countdowns', JSON.stringify(events));
+        }
+        setUserCountdowns(events);
+      } catch (e) {
+        console.error('Failed to load guest countdowns', e);
+      }
     }
+
+    // Determine active countdown from non-expired events
+    let matchedActive = null;
+    const savedActiveKey = localStorage.getItem('active_countdown_key');
+
+    if (savedActiveKey && events.length > 0) {
+      const cleanKey = savedActiveKey.startsWith('preset_') ? savedActiveKey.replace('preset_', '') : savedActiveKey;
+      matchedActive = events.find(e => 
+        e.id === savedActiveKey || 
+        e.presetExamCode === savedActiveKey || 
+        e.presetExamCode === cleanKey || 
+        e.title === savedActiveKey
+      );
+    }
+
+    if (!matchedActive && events.length > 0) {
+      const pinned = events.find(e => e.isPinned);
+      matchedActive = pinned || events[0];
+    }
+
+    handleSetActiveCountdown(matchedActive);
   }, [user]);
 
   useEffect(() => {
@@ -155,23 +229,72 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
   }, [fetchCountdowns]);
 
   const handleSaveCountdown = async (payload) => {
+    const isGuestUser = Boolean(user?.isGuest) || !localStorage.getItem('token');
     const tempId = `temp_${Date.now()}`;
+    
+    // Auto-pin if user has no events yet, or if explicitly requested
+    const shouldPin = payload.isPinned === true || userCountdowns.length === 0;
+
     const newEvent = {
       id: tempId,
-      ...payload,
-      isPinned: true
+      presetExamCode: payload.presetExamCode || null,
+      title: payload.title,
+      targetDate: payload.targetDate,
+      category: payload.category || 'custom',
+      color: payload.color || 'indigo',
+      note: payload.note || '',
+      emailNotify: payload.emailNotify ?? true,
+      isPinned: shouldPin,
+      isOfficialDate: Boolean(payload.isOfficialDate)
     };
 
-    // Optimistic UI update - Instant 0ms feedback
-    setUserCountdowns(prev => [newEvent, ...prev.filter(e => e.presetExamCode !== payload.presetExamCode)]);
-    setActiveCountdown(newEvent);
+    // Filter existing duplicate matching preset/title without removing unrelated events
+    const filterExisting = (list) => list.filter(e => {
+      if (payload.presetExamCode && e.presetExamCode) {
+        return e.presetExamCode !== payload.presetExamCode;
+      }
+      return e.id !== tempId && e.title !== payload.title;
+    });
 
-    if (user?.isGuest) return;
+    const filtered = filterExisting(userCountdowns);
+    const updatedEvents = shouldPin
+      ? [newEvent, ...filtered.map(e => ({ ...e, isPinned: false }))]
+      : [newEvent, ...filtered];
+
+    setUserCountdowns(updatedEvents);
+    if (shouldPin || !activeCountdown) {
+      handleSetActiveCountdown(newEvent);
+    }
+
+    if (isGuestUser) {
+      try {
+        localStorage.setItem('guest_countdowns', JSON.stringify(updatedEvents));
+      } catch (e) {
+        console.error('Failed to save guest countdowns', e);
+      }
+      return;
+    }
 
     try {
-      const savedEvent = await countdownApi.createEvent(payload);
-      setUserCountdowns(prev => prev.map(e => e.id === tempId ? savedEvent : e));
-      setActiveCountdown(savedEvent);
+      const savedEvent = await countdownApi.createEvent({
+        presetExamCode: payload.presetExamCode || null,
+        title: payload.title,
+        targetDate: payload.targetDate,
+        category: payload.category || 'custom',
+        color: payload.color || 'indigo',
+        note: payload.note || '',
+        emailNotify: payload.emailNotify ?? true,
+        isPinned: shouldPin,
+        isCommunityEvent: payload.isCommunityEvent
+      });
+      setUserCountdowns(prev => {
+        const updated = prev.map(e => e.id === tempId ? savedEvent : (shouldPin ? { ...e, isPinned: false } : e));
+        return updated;
+      });
+      if (shouldPin || !activeCountdown) {
+        handleSetActiveCountdown(savedEvent);
+      }
+      fetchCountdowns();
     } catch (err) {
       console.error('Save countdown failed:', err);
       setUserCountdowns(prev => prev.filter(e => e.id !== tempId));
@@ -181,38 +304,75 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
   const handleDeleteCountdown = async (id) => {
     const targetToDelete = userCountdowns.find(e => e.id === id || e.presetExamCode === id);
     const targetId = targetToDelete ? targetToDelete.id : id;
+    const isGuestUser = Boolean(user?.isGuest) || !localStorage.getItem('token');
 
-    // Optimistic UI update - Instant 0ms feedback
-    const updatedEvents = userCountdowns.filter(e => e.id !== targetId && e.presetExamCode !== id);
+    const remaining = userCountdowns.filter(e => e.id !== targetId && e.presetExamCode !== id && e.title !== id);
+    
+    // If deleted event was pinned, auto-pin the first remaining event
+    let updatedEvents = remaining;
+    if (targetToDelete?.isPinned && remaining.length > 0) {
+      updatedEvents = remaining.map((e, idx) => ({ ...e, isPinned: idx === 0 }));
+    }
     setUserCountdowns(updatedEvents);
 
-    if (activeCountdown?.id === targetId || activeCountdown?.presetExamCode === id) {
-      setActiveCountdown(updatedEvents.length > 0 ? updatedEvents[0] : (countdownPresets[0] || DEFAULT_GUEST_PRESETS[0]));
+    const nextActive = updatedEvents.find(e => e.isPinned) || (updatedEvents.length > 0 ? updatedEvents[0] : null);
+    handleSetActiveCountdown(nextActive);
+
+    if (isGuestUser) {
+      try {
+        localStorage.setItem('guest_countdowns', JSON.stringify(updatedEvents));
+      } catch (e) {
+        console.error('Failed to update guest countdowns after delete', e);
+      }
+      return;
     }
 
-    if (user?.isGuest || !targetId || targetId.startsWith('temp_') || targetId.startsWith('preset_')) return;
+    if (!targetId || targetId.startsWith('temp_') || targetId.startsWith('guest_') || targetId.startsWith('preset_')) return;
 
     try {
       await countdownApi.deleteEvent(targetId);
+      if (targetToDelete?.isPinned && updatedEvents.length > 0) {
+        await countdownApi.pinEvent(updatedEvents[0].id);
+      }
+      fetchCountdowns();
     } catch (err) {
       console.error('Delete countdown failed:', err);
+      // Rollback optimistic delete
       if (targetToDelete) {
-        setUserCountdowns(prev => [targetToDelete, ...prev]);
+        setUserCountdowns(userCountdowns);
+        handleSetActiveCountdown(activeCountdown);
       }
+      alert(err.message || 'Không thể xóa sự kiện lúc này.');
     }
   };
 
   const handlePinCountdown = async (id) => {
-    const target = userCountdowns.find(e => e.id === id);
-    if (target) {
-      setUserCountdowns(prev => prev.map(e => ({ ...e, isPinned: e.id === id })));
-      setActiveCountdown({ ...target, isPinned: true });
+    const target = userCountdowns.find(e => e.id === id || e.presetExamCode === id);
+    if (!target) return;
+
+    const targetId = target.id;
+    const updatedEvents = userCountdowns.map(e => ({
+      ...e,
+      isPinned: e.id === targetId || (e.presetExamCode && e.presetExamCode === id)
+    }));
+    setUserCountdowns(updatedEvents);
+    handleSetActiveCountdown({ ...target, isPinned: true });
+
+    const isGuestUser = Boolean(user?.isGuest) || !localStorage.getItem('token');
+    if (isGuestUser) {
+      try {
+        localStorage.setItem('guest_countdowns', JSON.stringify(updatedEvents));
+      } catch (e) {
+        console.error('Failed to save guest countdown pin', e);
+      }
+      return;
     }
 
-    if (user?.isGuest) return;
+    if (!targetId || targetId.startsWith('temp_') || targetId.startsWith('guest_') || targetId.startsWith('preset_')) return;
 
     try {
-      await countdownApi.pinEvent(id);
+      await countdownApi.pinEvent(targetId);
+      fetchCountdowns();
     } catch (err) {
       console.error('Pin countdown failed:', err);
     }
@@ -511,7 +671,8 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
                       presets={countdownPresets}
                       events={userCountdowns}
                       onOpenManage={() => setIsCountdownModalOpen(true)}
-                      onSelectEvent={(event) => setActiveCountdown(event)}
+                      onSelectEvent={(event) => handleSetActiveCountdown(event)}
+                      onPinEvent={handlePinCountdown}
                     />
                   </motion.div>
                 )}
