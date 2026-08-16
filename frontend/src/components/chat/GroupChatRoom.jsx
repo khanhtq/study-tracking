@@ -6,22 +6,25 @@ import { useAuth } from '../../context/AuthContext';
 import ShareDocumentModal from './ShareDocumentModal';
 import GroupMembersModal from './GroupMembersModal';
 import GroupInviteModal from './GroupInviteModal';
+import ChatToast from './ChatToast';
+import ConfirmModal from './ConfirmModal';
 import {
   ArrowLeft, Search, Pin, Users, Link2, FileText, Send, Paperclip,
   Smile, CornerDownRight, X, Edit2, Trash2, ChevronDown, Check,
-  Download, Loader2, Play, Image as ImageIcon, Volume2, ShieldCheck,
+  Download, Loader2, Play, Image as ImageIcon, Volume2, VolumeX, ShieldCheck,
   Shield, Crown, Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const STANDARD_REACTIONS = ['👍', '❤️', '🔥', '💡', '👏', '🎉'];
+const STANDARD_REACTIONS = ['👍', '❤️', '😆', '😭', '😡', '🎉'];
 
-const getFullAvatarUrl = (url) => {
+const getFullMediaUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   const backendOrigin = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8080';
   return `${backendOrigin}${url.startsWith('/') ? url : `/${url}`}`;
 };
+const getFullAvatarUrl = getFullMediaUrl;
 
 export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const { t } = useLanguage();
@@ -65,6 +68,11 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showPinnedDropdown, setShowPinnedDropdown] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+
+  // Floating Toast & Confirmation Modal
+  const [toast, setToast] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({ isOpen: false });
+  const showToast = (message, type = 'success', title = null) => setToast({ message, type, title });
 
   // Floating New Message Banner & Auto-scroll
   const [unreadCount, setUnreadCount] = useState(0);
@@ -124,6 +132,17 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           }
           return [...prev, msg];
         });
+
+        if (msg.messageType === 'SYSTEM') {
+          loadGroupDetail();
+          if (msg.content && currentUser?.displayName && msg.content.includes(currentUser.displayName)) {
+            if (msg.content.includes('tắt quyền chat')) {
+              showToast('Bạn vừa bị tắt quyền gửi tin nhắn trong nhóm này.', 'warning', 'Thông báo tắt chat');
+            } else if (msg.content.includes('mở lại quyền chat')) {
+              showToast('Bạn đã được mở lại quyền gửi tin nhắn trong nhóm!', 'success', 'Thông báo mở chat');
+            }
+          }
+        }
 
         if (isAtBottom) {
           setTimeout(scrollToBottom, 50);
@@ -218,6 +237,10 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   // ==================== 3. GỬI TIN NHẮN, DÁN ẢNH (CTRL+V) & KÉO THẢ (DRAG & DROP) ====================
 
   const handleSendMessage = async () => {
+    if (isMuted) {
+      showToast('Bạn đang bị tắt quyền chat trong nhóm này.', 'warning', 'Tắt quyền chat');
+      return;
+    }
     if ((!inputText.trim() && pendingAttachments.length === 0) || uploadingFiles) return;
 
     const payload = {
@@ -260,8 +283,10 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         const att = await communityChatApi.uploadChatFile(groupId, file);
         setPendingAttachments((prev) => [...prev, att]);
       }
+      showToast('Đã đính kèm tệp thành công!', 'success');
     } catch (err) {
       console.error('Lỗi tải tệp lên:', err);
+      showToast(err.message || 'Lỗi tải tệp lên', 'error');
     } finally {
       setUploadingFiles(false);
     }
@@ -361,12 +386,26 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
     }
   };
 
-  const handleDeleteMessage = async (msgId) => {
-    try {
-      await communityChatApi.deleteMessage(groupId, msgId);
-    } catch (err) {
-      console.error('Lỗi xóa tin nhắn:', err);
-    }
+  const handleDeleteMessage = (msgId) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Xóa tin nhắn',
+      message: 'Bạn có chắc chắn muốn xóa tin nhắn này khỏi cuộc trò chuyện? Hành động này không thể hoàn tác.',
+      confirmText: 'Xóa tin nhắn',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+          await communityChatApi.deleteMessage(groupId, msgId);
+          showToast('Đã xóa tin nhắn', 'info');
+        } catch (err) {
+          showToast(err.message || 'Không thể xóa tin nhắn', 'error');
+        } finally {
+          setConfirmConfig({ isOpen: false });
+        }
+      },
+      onCancel: () => setConfirmConfig({ isOpen: false })
+    });
   };
 
   const handleToggleReaction = async (msgId, emoji) => {
@@ -375,19 +414,21 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
   const handleTogglePin = async (msgId) => {
     try {
+      const isPinned = pinnedMessages.some(p => p.messageId === msgId);
       await communityChatApi.togglePinMessage(groupId, msgId);
       await loadGroupDetail();
+      showToast(isPinned ? 'Đã bỏ ghim tin nhắn' : 'Đã ghim tin nhắn lên đầu nhóm', 'info');
     } catch (err) {
-      console.error('Lỗi ghim tin nhắn:', err);
+      showToast(err.message || 'Lỗi khi ghim tin nhắn', 'error');
     }
   };
 
   const handleSaveToDrive = async (attachmentId) => {
     try {
       await communityChatApi.saveSharedDocumentToMyLibrary(groupId, attachmentId);
-      alert(t('saved_to_drive_success'));
+      showToast(t('saved_to_drive_success') || 'Đã lưu tài liệu vào kho cá nhân thành công!', 'success');
     } catch (err) {
-      console.error('Lỗi lưu tài liệu vào kho:', err);
+      showToast(err.message || 'Lỗi lưu tài liệu vào kho', 'error');
     }
   };
 
@@ -404,13 +445,28 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const handleShareStudyDoc = async (docId, caption) => {
     try {
       await communityChatApi.shareStudyDocument(groupId, docId, caption);
+      showToast('Đã chia sẻ tài liệu vào nhóm chat!', 'success');
     } catch (err) {
       console.error('Lỗi chia sẻ tài liệu:', err);
+      showToast(err.message || 'Lỗi khi chia sẻ tài liệu', 'error');
     }
   };
 
   const currentRole = groupDetail?.group?.currentUserRole;
+  const currentStatus = groupDetail?.group?.currentUserStatus;
+  const currentUserMutedUntil = groupDetail?.group?.currentUserMutedUntil;
+  const isMuted = currentStatus === 'MUTED';
   const isModOrAbove = currentRole === 'OWNER' || currentRole === 'ADMIN' || currentRole === 'MODERATOR';
+
+  const formatMutedUntil = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
+    } catch {
+      return null;
+    }
+  };
 
   return (
     <div
@@ -629,7 +685,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               if (isSystem) {
                 return (
                   <div key={msg.id} className="flex justify-center my-2">
-                    <span className="text-[11px] text-slate-400 bg-slate-900/60 px-3 py-1 rounded-full border border-slate-800">
+                    <span className="text-xs text-slate-300 bg-slate-900/80 px-3.5 py-1.5 rounded-full border border-slate-800 shadow-sm">
                       {msg.content}
                     </span>
                   </div>
@@ -663,9 +719,9 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   </div>
 
                   {/* Message Bubble Container */}
-                  <div className={`flex flex-col max-w-[80%] sm:max-w-md ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col max-w-[85%] sm:max-w-lg ${isMe ? 'items-end' : 'items-start'}`}>
                     {/* Header info (Name & Time) */}
-                    <div className="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-slate-400">
+                    <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-slate-400">
                       <span
                         onClick={() => msg.sender?.id && onSelectUser && onSelectUser(msg.sender.id)}
                         className="font-semibold text-slate-300 hover:text-indigo-400 cursor-pointer transition-colors"
@@ -674,13 +730,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                       </span>
                       <span>•</span>
                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {msg.isPinned && <Pin className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />}
+                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-400 fill-amber-400" />}
                     </div>
 
                     {/* Reply To Reference Bubble */}
                     {msg.replyTo && (
-                      <div className="flex items-center gap-1 text-[11px] text-slate-400 bg-slate-900/80 border-l-2 border-indigo-500 px-2 py-1 rounded mb-1 max-w-full truncate">
-                        <CornerDownRight className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+                      <div className="flex items-center gap-1 text-xs text-slate-400 bg-slate-900/80 border-l-2 border-indigo-500 px-2.5 py-1 rounded mb-1 max-w-full truncate">
+                        <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                         <span className="font-semibold text-slate-300">{msg.replyTo.senderDisplayName}:</span>
                         <span className="truncate">{msg.replyTo.content}</span>
                       </div>
@@ -688,7 +744,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
                     {/* Main Bubble */}
                     <div
-                      className={`relative p-3 rounded-2xl text-xs leading-relaxed ${
+                      className={`relative p-3 sm:p-3.5 rounded-2xl text-[13.5px] sm:text-sm leading-relaxed ${
                         isMe
                           ? 'bg-indigo-600 text-white rounded-tr-none'
                           : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
@@ -700,19 +756,19 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-400"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-400"
                             rows={2}
                           />
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setEditingMessage(null)}
-                              className="text-[10px] text-slate-300 hover:text-white"
+                              className="text-xs text-slate-300 hover:text-white"
                             >
                               {t('drive_btn_cancel')}
                             </button>
                             <button
                               onClick={handleSaveEdit}
-                              className="px-2.5 py-1 bg-white text-indigo-900 rounded font-bold text-[10px]"
+                              className="px-3 py-1 bg-white text-indigo-900 rounded-lg font-bold text-xs"
                             >
                               {t('drive_btn_save')}
                             </button>
@@ -723,7 +779,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           <div className="whitespace-pre-wrap break-words">
                             {msg.content}
                             {msg.isEdited && (
-                              <span className="text-[10px] opacity-60 ml-1.5 italic">
+                              <span className="text-[11px] opacity-60 ml-1.5 italic">
                                 {t('edited_tag')}
                               </span>
                             )}
@@ -737,9 +793,9 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                   return (
                                     <div key={att.id} className="rounded-xl overflow-hidden border border-white/10 max-h-60">
                                       <img
-                                        src={att.fileUrl}
+                                        src={getFullMediaUrl(att.fileUrl)}
                                         alt={att.fileName}
-                                        onClick={() => setPreviewImage(att.fileUrl)}
+                                        onClick={() => setPreviewImage(getFullMediaUrl(att.fileUrl))}
                                         className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
                                       />
                                     </div>
@@ -748,14 +804,14 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 if (att.attachmentType === 'VIDEO') {
                                   return (
                                     <video key={att.id} controls className="rounded-xl max-h-60 w-full bg-black">
-                                      <source src={att.fileUrl} type={att.mimeType} />
+                                      <source src={getFullMediaUrl(att.fileUrl)} type={att.mimeType} />
                                     </video>
                                   );
                                 }
                                 if (att.attachmentType === 'AUDIO') {
                                   return (
                                     <audio key={att.id} controls className="w-full mt-1">
-                                      <source src={att.fileUrl} type={att.mimeType} />
+                                      <source src={getFullMediaUrl(att.fileUrl)} type={att.mimeType} />
                                     </audio>
                                   );
                                 }
@@ -778,7 +834,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
                                     <div className="flex items-center gap-1 flex-shrink-0">
                                       <a
-                                        href={att.fileUrl}
+                                        href={getFullMediaUrl(att.fileUrl)}
                                         target="_blank"
                                         rel="noreferrer"
                                         download
@@ -802,6 +858,85 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           )}
                         </>
                       )}
+
+                      {/* Floating Message Action Toolbar on Hover (Anchored at the bottom edge of the bubble) */}
+                      {!msg.isDeleted && editingMessage?.id !== msg.id && (
+                        <div
+                          className={`absolute -bottom-3.5 ${
+                            isMe ? 'right-2' : 'left-2'
+                          } opacity-0 group-hover:opacity-100 transition-all duration-150 flex items-center gap-0.5 bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-full px-2 py-0.5 shadow-xl z-20 pointer-events-none group-hover:pointer-events-auto`}
+                        >
+                          {/* Standard Reactions Picker */}
+                          {STANDARD_REACTIONS.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleReaction(msg.id, emoji);
+                              }}
+                              className="hover:scale-125 transition-transform text-xs p-1 leading-none"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+
+                          <div className="w-[1px] h-3 bg-slate-700 mx-0.5" />
+
+                          {/* Reply */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReplyingTo(msg);
+                            }}
+                            className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
+                            title={t('reply')}
+                          >
+                            <CornerDownRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Edit (if author) */}
+                          {isMe && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEdit(msg);
+                              }}
+                              className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                              title={t('edit')}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Pin/Unpin (if mod/admin) */}
+                          {isModOrAbove && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTogglePin(msg.id);
+                              }}
+                              className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                              title={msg.isPinned ? t('unpin') : t('pin')}
+                            >
+                              <Pin className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {/* Delete */}
+                          {(isMe || isModOrAbove) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMessage(msg.id);
+                              }}
+                              className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                              title={t('delete')}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Reactions Pill Display */}
@@ -824,70 +959,6 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                       </div>
                     )}
                   </div>
-
-                  {/* Message Action Toolbar on Hover */}
-                  {!msg.isDeleted && (
-                    <div
-                      className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl px-1.5 py-1 shadow-lg self-center ${
-                        isMe ? 'mr-1' : 'ml-1'
-                      }`}
-                    >
-                      {/* Standard Reactions Picker */}
-                      {STANDARD_REACTIONS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleToggleReaction(msg.id, emoji)}
-                          className="hover:scale-125 transition-transform text-xs p-1"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-
-                      <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
-
-                      {/* Reply */}
-                      <button
-                        onClick={() => setReplyingTo(msg)}
-                        className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
-                        title={t('reply')}
-                      >
-                        <CornerDownRight className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Edit (if author) */}
-                      {isMe && (
-                        <button
-                          onClick={() => handleStartEdit(msg)}
-                          className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
-                          title={t('edit')}
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {/* Pin/Unpin (if mod/admin) */}
-                      {isModOrAbove && (
-                        <button
-                          onClick={() => handleTogglePin(msg.id)}
-                          className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
-                          title={msg.isPinned ? t('unpin') : t('pin')}
-                        >
-                          <Pin className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {/* Delete */}
-                      {(isMe || isModOrAbove) && (
-                        <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
-                          title={t('delete')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -921,6 +992,24 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
       {/* ==================== INPUT AREA & CONTROLS ==================== */}
       <div className="p-3 border-t border-slate-800 bg-slate-900/60 backdrop-blur-md relative">
+        {/* Muted Warning Banner */}
+        {isMuted && (
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 mb-2.5 bg-rose-950/40 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <VolumeX className="w-4 h-4 text-rose-400 flex-shrink-0 animate-pulse" />
+              <div className="truncate">
+                <span className="font-bold text-rose-200">Bạn đang bị tắt quyền chat</span>
+                <span className="text-slate-400 ml-1.5 truncate">
+                  {currentUserMutedUntil ? `(đến ${formatMutedUntil(currentUserMutedUntil)})` : ''} - Bạn chỉ có thể đọc tin nhắn và xem tài liệu
+                </span>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex-shrink-0">
+              Bị Mute
+            </span>
+          </div>
+        )}
+
         {/* Reply preview banner */}
         {replyingTo && (
           <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs">
@@ -989,9 +1078,11 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingFiles}
-            className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-50"
-            title="Đính kèm tệp / ảnh"
+            disabled={isMuted || uploadingFiles}
+            className={`p-2.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              isMuted ? 'opacity-40 cursor-not-allowed' : ''
+            }`}
+            title={isMuted ? 'Bạn đang bị tắt quyền chat' : 'Đính kèm tệp / ảnh'}
           >
             {uploadingFiles ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> : <Paperclip className="w-4 h-4" />}
           </button>
@@ -1001,6 +1092,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
             <textarea
               ref={textareaRef}
               value={inputText}
+              disabled={isMuted}
               onChange={handleInputChange}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -1008,20 +1100,26 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   handleSendMessage();
                 }
               }}
-              placeholder={t('chat_input_placeholder')}
+              placeholder={isMuted ? 'Bạn đang bị tắt quyền gửi tin nhắn trong nhóm này...' : t('chat_input_placeholder')}
               rows={1}
-              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none resize-none max-h-32 transition-colors"
+              className={`w-full bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3.5 py-2.5 text-[13.5px] sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none resize-none max-h-32 transition-colors ${
+                isMuted ? 'bg-slate-950/40 text-slate-500 border-rose-500/20 cursor-not-allowed' : ''
+              }`}
             />
           </div>
 
           {/* Send Button */}
           <button
             onClick={handleSendMessage}
-            disabled={(!inputText.trim() && pendingAttachments.length === 0) || uploadingFiles}
-            className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/20 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-            title={t('send')}
+            disabled={isMuted || (!inputText.trim() && pendingAttachments.length === 0) || uploadingFiles}
+            className={`p-2.5 rounded-xl transition-all shadow-md cursor-pointer disabled:cursor-not-allowed ${
+              isMuted
+                ? 'bg-slate-800 text-slate-500 opacity-40 shadow-none'
+                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 disabled:opacity-40'
+            }`}
+            title={isMuted ? 'Bạn đang bị tắt quyền chat' : t('send')}
           >
-            <Send className="w-4 h-4" />
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Send className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -1059,6 +1157,22 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] rounded-2xl shadow-2xl object-contain" />
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        type={confirmConfig.type}
+        isLoading={confirmConfig.isLoading}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig({ isOpen: false })}
+      />
+
+      {/* Floating Chat Toast Notification */}
+      <ChatToast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

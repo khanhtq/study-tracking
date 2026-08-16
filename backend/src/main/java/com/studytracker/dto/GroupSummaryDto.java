@@ -32,6 +32,7 @@ public class GroupSummaryDto {
     private UserSummaryDto owner;
     private GroupRole currentUserRole;
     private GroupMemberStatus currentUserStatus;
+    private Instant currentUserMutedUntil;
     private Boolean isMember;
     private Boolean hasPendingRequest;
     private Instant createdAt;

@@ -3,6 +3,10 @@ target/
 *.class
 
 set-env.ps1
+set-env-local.ps1
+scripts/environment/set-env.ps1
+scripts/environment/set-env-local.ps1
+!scripts/environment/*.example.*
 
 # Log files
 *.log

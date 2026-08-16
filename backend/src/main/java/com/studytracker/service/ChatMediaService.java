@@ -51,10 +51,11 @@ public class ChatMediaService {
         // Upload trực tiếp lên Azure Blob Storage qua provider
         storageProvider.upload(file, targetPath);
 
-        // Sinh SAS Download URL an toàn
+        // Sinh SAS Download URL an toàn (hoặc /uploads/ URL cho local)
         String sasUrl = storageProvider.generateDownloadUrl(targetPath, originalFilename, 0);
         if (sasUrl == null || sasUrl.isEmpty()) {
-            sasUrl = "/api/documents/stream?path=" + targetPath;
+            String cleanPath = targetPath.startsWith("/") ? targetPath.substring(1) : targetPath;
+            sasUrl = "/uploads/" + cleanPath;
         }
 
         String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";

@@ -30,6 +30,8 @@ public class GroupService {
     private final GroupPinnedMessageRepository groupPinnedMessageRepository;
     private final UserRepository userRepository;
     private final GroupRankingService groupRankingService;
+    private final GroupMessageRepository groupMessageRepository;
+    private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
@@ -135,7 +137,7 @@ public class GroupService {
         ChatGroup group = getGroupEntity(groupId);
         Optional<GroupMember> memberOpt = currentUser != null ? groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId()) : Optional.empty();
 
-        if (group.getPrivacy() == GroupPrivacy.PRIVATE && (memberOpt.isEmpty() || memberOpt.get().getStatus() != GroupMemberStatus.ACTIVE)) {
+        if (group.getPrivacy() == GroupPrivacy.PRIVATE && (memberOpt.isEmpty() || memberOpt.get().getStatus() == GroupMemberStatus.BANNED)) {
             throw new SecurityException("Đây là nhóm riêng tư, bạn cần là thành viên để xem thông tin chi tiết");
         }
 
@@ -192,7 +194,7 @@ public class GroupService {
             if (existingMember.get().getStatus() == GroupMemberStatus.BANNED) {
                 throw new SecurityException("Bạn đã bị cấm tham gia nhóm này");
             }
-            if (existingMember.get().getStatus() == GroupMemberStatus.ACTIVE) {
+            if (existingMember.get().getStatus() == GroupMemberStatus.ACTIVE || existingMember.get().getStatus() == GroupMemberStatus.MUTED) {
                 throw new IllegalArgumentException("Bạn đã là thành viên của nhóm này");
             }
         }
@@ -244,7 +246,7 @@ public class GroupService {
                 .orElseThrow(() -> new IllegalArgumentException("Bạn không phải là thành viên của nhóm này"));
 
         if (member.getRole() == GroupRole.OWNER) {
-            long otherMembers = groupMemberRepository.countByGroupIdAndStatus(groupId, GroupMemberStatus.ACTIVE);
+            long otherMembers = groupMemberRepository.countByGroupIdAndStatusIn(groupId, List.of(GroupMemberStatus.ACTIVE, GroupMemberStatus.MUTED));
             if (otherMembers > 1) {
                 throw new IllegalArgumentException("Bạn là chủ nhóm, vui lòng chuyển quyền chủ nhóm cho thành viên khác trước khi rời nhóm");
             } else {
@@ -352,7 +354,7 @@ public class GroupService {
         getGroupEntity(groupId);
         verifyGroupMember(groupId, currentUser.getId());
 
-        Page<GroupMember> members = groupMemberRepository.findByGroupIdAndStatusOrderByJoinedAtAsc(groupId, GroupMemberStatus.ACTIVE, pageable);
+        Page<GroupMember> members = groupMemberRepository.findByGroupIdAndStatusInOrderByJoinedAtAsc(groupId, List.of(GroupMemberStatus.ACTIVE, GroupMemberStatus.MUTED), pageable);
         return members.map(this::mapToMemberDto);
     }
 
@@ -384,7 +386,7 @@ public class GroupService {
 
     @Transactional
     public void muteMember(UUID groupId, UUID targetUserId, MuteMemberRequest request, User currentUser) {
-        getGroupEntity(groupId);
+        ChatGroup group = getGroupEntity(groupId);
         GroupMember currentMember = getActiveMember(groupId, currentUser.getId());
         GroupMember targetMember = getActiveMember(groupId, targetUserId);
 
@@ -401,12 +403,42 @@ public class GroupService {
         targetMember.setMutedUntil(Instant.now().plus(duration, ChronoUnit.MINUTES));
         groupMemberRepository.save(targetMember);
 
+        // Gửi tin nhắn SYSTEM cảnh báo vào nhóm
+        String targetName = targetMember.getUser().getDisplayName() != null ? targetMember.getUser().getDisplayName() : targetMember.getUser().getUsername();
+        GroupMessage systemMsg = GroupMessage.builder()
+                .group(group)
+                .sender(currentUser)
+                .messageType(GroupMessageType.SYSTEM)
+                .content("🔔 Thành viên [" + targetName + "] đã bị tắt quyền chat trong " + duration + " phút.")
+                .hasMentions(false)
+                .isEdited(false)
+                .isDeleted(false)
+                .isPinned(false)
+                .build();
+        GroupMessage saved = groupMessageRepository.save(systemMsg);
+
+        GroupMessageDto dto = GroupMessageDto.builder()
+                .id(saved.getId())
+                .groupId(group.getId())
+                .sender(mapToUserSummaryDto(currentUser))
+                .messageType(GroupMessageType.SYSTEM)
+                .content(saved.getContent())
+                .hasMentions(false)
+                .isEdited(false)
+                .isDeleted(false)
+                .isPinned(false)
+                .reactions(Collections.emptyList())
+                .attachments(Collections.emptyList())
+                .createdAt(saved.getCreatedAt())
+                .build();
+        messagingTemplate.convertAndSend("/topic/group." + groupId + ".messages", dto);
+
         log.info("Người dùng [{}] đã bị tắt chat trong nhóm [{}] trong {} phút bởi [{}]", targetUserId, groupId, duration, currentUser.getUsername());
     }
 
     @Transactional
     public void unmuteMember(UUID groupId, UUID targetUserId, User currentUser) {
-        getGroupEntity(groupId);
+        ChatGroup group = getGroupEntity(groupId);
         GroupMember currentMember = getActiveMember(groupId, currentUser.getId());
         GroupMember targetMember = getActiveMember(groupId, targetUserId);
 
@@ -417,6 +449,36 @@ public class GroupService {
         targetMember.setStatus(GroupMemberStatus.ACTIVE);
         targetMember.setMutedUntil(null);
         groupMemberRepository.save(targetMember);
+
+        // Gửi tin nhắn SYSTEM mở lại chat vào nhóm
+        String targetName = targetMember.getUser().getDisplayName() != null ? targetMember.getUser().getDisplayName() : targetMember.getUser().getUsername();
+        GroupMessage systemMsg = GroupMessage.builder()
+                .group(group)
+                .sender(currentUser)
+                .messageType(GroupMessageType.SYSTEM)
+                .content("🔔 Thành viên [" + targetName + "] đã được mở lại quyền chat.")
+                .hasMentions(false)
+                .isEdited(false)
+                .isDeleted(false)
+                .isPinned(false)
+                .build();
+        GroupMessage saved = groupMessageRepository.save(systemMsg);
+
+        GroupMessageDto dto = GroupMessageDto.builder()
+                .id(saved.getId())
+                .groupId(group.getId())
+                .sender(mapToUserSummaryDto(currentUser))
+                .messageType(GroupMessageType.SYSTEM)
+                .content(saved.getContent())
+                .hasMentions(false)
+                .isEdited(false)
+                .isDeleted(false)
+                .isPinned(false)
+                .reactions(Collections.emptyList())
+                .attachments(Collections.emptyList())
+                .createdAt(saved.getCreatedAt())
+                .build();
+        messagingTemplate.convertAndSend("/topic/group." + groupId + ".messages", dto);
     }
 
     @Transactional
@@ -517,7 +579,7 @@ public class GroupService {
         boolean hasPendingRequest = false;
         if (currentUser != null) {
             Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(group.getId(), currentUser.getId());
-            isAlreadyMember = memberOpt.isPresent() && memberOpt.get().getStatus() == GroupMemberStatus.ACTIVE;
+            isAlreadyMember = memberOpt.isPresent() && memberOpt.get().getStatus() != GroupMemberStatus.BANNED;
 
             hasPendingRequest = groupJoinRequestRepository.existsByGroupIdAndUserIdAndStatus(group.getId(), currentUser.getId(), JoinRequestStatus.PENDING);
         }
@@ -545,8 +607,13 @@ public class GroupService {
         ChatGroup group = link.getGroup();
 
         Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(group.getId(), currentUser.getId());
-        if (memberOpt.isPresent() && memberOpt.get().getStatus() == GroupMemberStatus.ACTIVE) {
-            return mapToSummaryDto(group, currentUser);
+        if (memberOpt.isPresent()) {
+            if (memberOpt.get().getStatus() == GroupMemberStatus.BANNED) {
+                throw new SecurityException("Bạn đã bị cấm tham gia nhóm này");
+            }
+            if (memberOpt.get().getStatus() == GroupMemberStatus.ACTIVE || memberOpt.get().getStatus() == GroupMemberStatus.MUTED) {
+                return mapToSummaryDto(group, currentUser);
+            }
         }
 
         if (group.getMaxMembers() != null && group.getMemberCount() >= group.getMaxMembers()) {
@@ -586,7 +653,8 @@ public class GroupService {
     }
 
     public void verifyGroupMember(UUID groupId, UUID userId) {
-        if (!groupMemberRepository.existsByGroupIdAndUserIdAndStatus(groupId, userId, GroupMemberStatus.ACTIVE)) {
+        Optional<GroupMember> memberOpt = groupMemberRepository.findByGroupIdAndUserId(groupId, userId);
+        if (memberOpt.isEmpty() || memberOpt.get().getStatus() == GroupMemberStatus.BANNED) {
             throw new SecurityException("Bạn không phải là thành viên hợp lệ của nhóm này");
         }
     }
@@ -624,6 +692,7 @@ public class GroupService {
     public GroupSummaryDto mapToSummaryDto(ChatGroup group, User currentUser) {
         GroupRole currentRole = null;
         GroupMemberStatus currentStatus = null;
+        Instant mutedUntil = null;
         boolean isMember = false;
         boolean hasPendingRequest = false;
 
@@ -632,7 +701,8 @@ public class GroupService {
             if (memberOpt.isPresent()) {
                 currentRole = memberOpt.get().getRole();
                 currentStatus = memberOpt.get().getStatus();
-                isMember = (currentStatus == GroupMemberStatus.ACTIVE);
+                mutedUntil = memberOpt.get().getMutedUntil();
+                isMember = (currentStatus == GroupMemberStatus.ACTIVE || currentStatus == GroupMemberStatus.MUTED);
             } else {
                 hasPendingRequest = groupJoinRequestRepository.existsByGroupIdAndUserIdAndStatus(group.getId(), currentUser.getId(), JoinRequestStatus.PENDING);
             }
@@ -654,6 +724,7 @@ public class GroupService {
                 .owner(mapToUserSummaryDto(group.getOwner()))
                 .currentUserRole(currentRole)
                 .currentUserStatus(currentStatus)
+                .currentUserMutedUntil(mutedUntil)
                 .isMember(isMember)
                 .hasPendingRequest(hasPendingRequest)
                 .createdAt(group.getCreatedAt())

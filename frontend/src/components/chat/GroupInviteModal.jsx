@@ -3,6 +3,8 @@ import { communityChatApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
 import { X, Link2, Copy, Check, Plus, Trash2, Clock, ShieldCheck, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ChatToast from './ChatToast';
+import ConfirmModal from './ConfirmModal';
 
 export default function GroupInviteModal({ groupId, isOpen, onClose }) {
   const { t } = useLanguage();
@@ -12,6 +14,10 @@ export default function GroupInviteModal({ groupId, isOpen, onClose }) {
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [maxUses, setMaxUses] = useState(50);
   const [copiedId, setCopiedId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({ isOpen: false });
+
+  const showToast = (message, type = 'success', title = null) => setToast({ message, type, title });
 
   useEffect(() => {
     if (isOpen && groupId) {
@@ -40,20 +46,35 @@ export default function GroupInviteModal({ groupId, isOpen, onClose }) {
       };
       await communityChatApi.createInviteLink(groupId, payload);
       await loadInvites();
+      showToast('Đã tạo link mời tham gia nhóm mới thành công!', 'success');
     } catch (err) {
-      console.error('Lỗi tạo link mời:', err);
+      showToast(err.message || 'Lỗi tạo link mời', 'error');
     } finally {
       setCreating(false);
     }
   };
 
-  const handleRevoke = async (inviteId) => {
-    try {
-      await communityChatApi.revokeInviteLink(groupId, inviteId);
-      setInvites(prev => prev.filter(i => i.id !== inviteId));
-    } catch (err) {
-      console.error('Lỗi thu hồi link mời:', err);
-    }
+  const handleRevoke = (inviteId) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Thu hồi link mời',
+      message: 'Bạn có chắc chắn muốn thu hồi link mời này? Những người chưa tham gia sẽ không thể dùng link này nữa.',
+      confirmText: 'Thu hồi link',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+          await communityChatApi.revokeInviteLink(groupId, inviteId);
+          setInvites(prev => prev.filter(i => i.id !== inviteId));
+          showToast('Đã thu hồi link mời', 'info');
+        } catch (err) {
+          showToast(err.message || 'Lỗi thu hồi link mời', 'error');
+        } finally {
+          setConfirmConfig({ isOpen: false });
+        }
+      },
+      onCancel: () => setConfirmConfig({ isOpen: false })
+    });
   };
 
   const handleCopyLink = (invite) => {
@@ -61,6 +82,7 @@ export default function GroupInviteModal({ groupId, isOpen, onClose }) {
     const url = `${origin}/join/${invite.code}`;
     navigator.clipboard.writeText(url);
     setCopiedId(invite.id);
+    showToast('Đã sao chép link mời vào bộ nhớ tạm!', 'success');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -191,6 +213,22 @@ export default function GroupInviteModal({ groupId, isOpen, onClose }) {
           </div>
         </motion.div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        type={confirmConfig.type}
+        isLoading={confirmConfig.isLoading}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig({ isOpen: false })}
+      />
+
+      {/* Floating Chat Toast Notification */}
+      <ChatToast toast={toast} onClose={() => setToast(null)} />
     </AnimatePresence>
   );
 }

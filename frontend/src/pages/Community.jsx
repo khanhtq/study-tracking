@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import GroupChatRoom from '../components/chat/GroupChatRoom';
 import PublicProfileModal from '../components/PublicProfileModal';
+import ChatToast from '../components/chat/ChatToast';
 import SEO from '../components/SEO';
 import {
   Users, Search, Plus, Compass, MessageSquare, Shield,
@@ -29,6 +30,7 @@ export default function Community({ onBackToDashboard }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Create Group Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -80,6 +82,10 @@ export default function Community({ onBackToDashboard }) {
     }
   }, [inviteCodeToJoin]);
 
+  const showToast = (message, type = 'success', title = null) => {
+    setToast({ message, type, title });
+  };
+
   const handleJoinViaInvite = async () => {
     if (!inviteCodeToJoin) return;
     try {
@@ -89,11 +95,12 @@ export default function Community({ onBackToDashboard }) {
       setInviteCodeToJoin(null);
       window.history.replaceState({}, document.title, window.location.pathname);
       await loadData();
+      showToast('Tham gia nhóm thành công!', 'success');
       if (joined?.id) {
         setActiveGroupId(joined.id);
       }
     } catch (err) {
-      alert(err.message || 'Không thể tham gia nhóm qua link mời này.');
+      showToast(err.message || 'Không thể tham gia nhóm qua link mời này.', 'error');
     } finally {
       setJoiningInvite(false);
     }
@@ -120,6 +127,7 @@ export default function Community({ onBackToDashboard }) {
       setNewGroupName('');
       setNewGroupDesc('');
       await loadData();
+      showToast('Đã tạo nhóm học tập mới thành công!', 'success');
       if (created?.id) {
         setActiveGroupId(created.id);
       }
@@ -135,12 +143,13 @@ export default function Community({ onBackToDashboard }) {
       await communityChatApi.joinGroup(group.id, {});
       await loadData();
       if (group.joinPolicy === 'OPEN') {
+        showToast('Đã tham gia nhóm thành công!', 'success');
         setActiveGroupId(group.id);
       } else {
-        alert('Đã gửi yêu cầu tham gia. Vui lòng chờ Ban quản trị phê duyệt!');
+        showToast('Đã gửi yêu cầu tham gia. Vui lòng chờ Ban quản trị phê duyệt!', 'info', 'Đã gửi yêu cầu');
       }
     } catch (err) {
-      alert(err.message || 'Không thể tham gia nhóm.');
+      showToast(err.message || 'Không thể tham gia nhóm.', 'error');
     }
   };
 
@@ -535,6 +544,9 @@ export default function Community({ onBackToDashboard }) {
           onClose={() => setSelectedProfileUserId(null)}
         />
       )}
+
+      {/* Floating Chat Toast Notification */}
+      <ChatToast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

@@ -46,6 +46,12 @@ public class GroupServiceTest {
     @Mock
     private GroupRankingService groupRankingService;
 
+    @Mock
+    private GroupMessageRepository groupMessageRepository;
+
+    @Mock
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     @InjectMocks
     private GroupService groupService;
 

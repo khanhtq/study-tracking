@@ -38,8 +38,9 @@ public class LocalDocumentStorageProvider implements DocumentStorageProvider {
 
     @Override
     public String generateDownloadUrl(String targetPath, String originalFilename, int expiryMinutes) {
-        // Local storage does not generate external SAS URL; returns null to trigger server streaming download
-        return null;
+        if (targetPath == null || targetPath.isEmpty()) return null;
+        String cleanPath = targetPath.startsWith("/") ? targetPath.substring(1) : targetPath;
+        return "/uploads/" + cleanPath;
     }
 
     @Override

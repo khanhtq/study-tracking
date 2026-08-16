@@ -4,6 +4,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { X, Users, UserPlus, Shield, ShieldCheck, Crown, VolumeX, Volume2, UserMinus, Check, Clock, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ChatToast from './ChatToast';
+import ConfirmModal from './ConfirmModal';
 
 const getFullAvatarUrl = (url) => {
   if (!url) return null;
@@ -22,6 +24,10 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
   const [selectedFriendIds, setSelectedFriendIds] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [confirmConfig, setConfirmConfig] = useState({ isOpen: false });
+
+  const showToast = (message, type = 'success', title = null) => setToast({ message, type, title });
 
   const isModOrAbove = currentRole === 'OWNER' || currentRole === 'ADMIN' || currentRole === 'MODERATOR';
   const isOwner = currentRole === 'OWNER';
@@ -64,44 +70,90 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
     } catch (err) {}
   };
 
-  const handleKick = async (targetUserId) => {
-    try {
-      setActionLoadingId(targetUserId);
-      await communityChatApi.kickMember(groupId, targetUserId);
-      setMembers(prev => prev.filter(m => m.user.id !== targetUserId));
-    } catch (err) {
-      console.error('Lỗi kick thành viên:', err);
-    } finally {
-      setActionLoadingId(null);
-    }
+  const handleKick = (targetUserId, memberName) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Xóa thành viên khỏi nhóm',
+      message: `Bạn có chắc chắn muốn xóa "${memberName || 'thành viên này'}" khỏi nhóm không?`,
+      confirmText: 'Xóa khỏi nhóm',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          setActionLoadingId(targetUserId);
+          setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+          await communityChatApi.kickMember(groupId, targetUserId);
+          setMembers(prev => prev.filter(m => m.user.id !== targetUserId));
+          showToast(`Đã xóa ${memberName || 'thành viên'} khỏi nhóm`, 'info');
+        } catch (err) {
+          showToast(err.message || 'Lỗi khi xóa thành viên', 'error');
+        } finally {
+          setActionLoadingId(null);
+          setConfirmConfig({ isOpen: false });
+        }
+      },
+      onCancel: () => setConfirmConfig({ isOpen: false })
+    });
   };
 
-  const handleMuteToggle = async (member) => {
-    try {
-      setActionLoadingId(member.user.id);
-      if (member.status === 'MUTED') {
-        await communityChatApi.unmuteMember(groupId, member.user.id);
-      } else {
-        await communityChatApi.muteMember(groupId, member.user.id, 1440); // Mute 24h
-      }
-      await loadMembers();
-    } catch (err) {
-      console.error('Lỗi mute/unmute:', err);
-    } finally {
-      setActionLoadingId(null);
-    }
+  const handleMuteToggle = (member) => {
+    const isMuted = member.status === 'MUTED';
+    const memberName = member.user?.displayName || 'thành viên';
+
+    setConfirmConfig({
+      isOpen: true,
+      title: isMuted ? 'Bật lại quyền chat' : 'Tắt quyền chat (Mute)',
+      message: isMuted
+        ? `Bật lại quyền nhắn tin trong nhóm cho "${memberName}"?`
+        : `Tắt quyền nhắn tin trong nhóm của "${memberName}" trong vòng 24 giờ?`,
+      confirmText: isMuted ? 'Bật lại chat' : 'Tắt chat (24h)',
+      type: isMuted ? 'info' : 'warning',
+      onConfirm: async () => {
+        try {
+          setActionLoadingId(member.user.id);
+          setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+          if (isMuted) {
+            await communityChatApi.unmuteMember(groupId, member.user.id);
+            showToast(`Đã bật lại quyền chat cho ${memberName}`, 'success');
+          } else {
+            await communityChatApi.muteMember(groupId, member.user.id, 1440); // Mute 24h
+            showToast(`Đã tắt chat ${memberName} trong 24 giờ`, 'warning');
+          }
+          await loadMembers();
+        } catch (err) {
+          showToast(err.message || 'Lỗi xử lý quyền chat', 'error');
+        } finally {
+          setActionLoadingId(null);
+          setConfirmConfig({ isOpen: false });
+        }
+      },
+      onCancel: () => setConfirmConfig({ isOpen: false })
+    });
   };
 
-  const handleRoleChange = async (targetUserId, newRole) => {
-    try {
-      setActionLoadingId(targetUserId);
-      await communityChatApi.updateMemberRole(groupId, targetUserId, newRole);
-      await loadMembers();
-    } catch (err) {
-      console.error('Lỗi đổi vai trò:', err);
-    } finally {
-      setActionLoadingId(null);
-    }
+  const handleRoleChange = (targetUserId, newRole, memberName) => {
+    const roleLabels = { OWNER: 'Chủ nhóm', ADMIN: 'Quản trị viên', MODERATOR: 'Kiểm duyệt viên', MEMBER: 'Thành viên' };
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Thay đổi vai trò',
+      message: `Bạn có chắc chắn muốn thay đổi vai trò của "${memberName || 'thành viên'}" thành "${roleLabels[newRole] || newRole}" không?`,
+      confirmText: 'Đổi vai trò',
+      type: 'info',
+      onConfirm: async () => {
+        try {
+          setActionLoadingId(targetUserId);
+          setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+          await communityChatApi.updateMemberRole(groupId, targetUserId, newRole);
+          await loadMembers();
+          showToast(`Đã cập nhật vai trò của ${memberName || 'thành viên'} thành ${roleLabels[newRole] || newRole}`, 'success');
+        } catch (err) {
+          showToast(err.message || 'Lỗi đổi vai trò', 'error');
+        } finally {
+          setActionLoadingId(null);
+          setConfirmConfig({ isOpen: false });
+        }
+      },
+      onCancel: () => setConfirmConfig({ isOpen: false })
+    });
   };
 
   const handleReviewRequest = async (requestId, approved) => {
@@ -109,11 +161,12 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
       setActionLoadingId(requestId);
       await communityChatApi.reviewJoinRequest(groupId, requestId, approved);
       setRequests(prev => prev.filter(r => r.id !== requestId));
+      showToast(approved ? 'Đã duyệt thành viên vào nhóm' : 'Đã từ chối yêu cầu tham gia', approved ? 'success' : 'info');
       if (approved) {
         await loadMembers();
       }
     } catch (err) {
-      console.error('Lỗi duyệt yêu cầu:', err);
+      showToast(err.message || 'Lỗi duyệt yêu cầu', 'error');
     } finally {
       setActionLoadingId(null);
     }
@@ -124,11 +177,13 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
     try {
       setLoading(true);
       await communityChatApi.inviteFriends(groupId, selectedFriendIds);
+      const count = selectedFriendIds.length;
       setSelectedFriendIds([]);
       setActiveTab('members');
       await loadMembers();
+      showToast(`Đã gửi lời mời tham gia nhóm đến ${count} bạn bè!`, 'success');
     } catch (err) {
-      console.error('Lỗi mời bạn bè:', err);
+      showToast(err.message || 'Lỗi mời bạn bè', 'error');
     } finally {
       setLoading(false);
     }
@@ -286,7 +341,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                         {isOwner && (
                           <select
                             value={m.role}
-                            onChange={(e) => handleRoleChange(m.user.id, e.target.value)}
+                            onChange={(e) => handleRoleChange(m.user.id, e.target.value, m.user.displayName)}
                             className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-indigo-500"
                           >
                             <option value="MEMBER">{t('role_member')}</option>
@@ -308,7 +363,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                           {m.status === 'MUTED' ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
                         </button>
                         <button
-                          onClick={() => handleKick(m.user.id)}
+                          onClick={() => handleKick(m.user.id, m.user.displayName)}
                           disabled={actionLoadingId === m.user.id}
                           className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
                           title={t('kick_member')}
@@ -452,6 +507,22 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
           </div>
         </motion.div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        type={confirmConfig.type}
+        isLoading={confirmConfig.isLoading}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig({ isOpen: false })}
+      />
+
+      {/* Floating Chat Toast Notification */}
+      <ChatToast toast={toast} onClose={() => setToast(null)} />
     </AnimatePresence>
   );
 }
