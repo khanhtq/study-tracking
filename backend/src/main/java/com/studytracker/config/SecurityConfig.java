@@ -47,7 +47,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
-                        .requestMatchers("/api/auth/**", "/api/health", "/api/leaderboard/top", "/error", "/uploads/**", "/ws/**", "/api/payment/vnpay/return", "/api/payment/packages", "/api/countdowns/presets", "/api/v1/chat/invites/*").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/health", "/api/leaderboard/top", "/error", "/uploads/**", "/ws/**", "/api/payment/vnpay/return", "/api/payment/packages", "/api/countdowns/presets").permitAll()
+                        .requestMatchers("/api/v1/chat/groups/popular", "/api/v1/chat/groups/search", "/api/v1/chat/invites/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-resources/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated()
