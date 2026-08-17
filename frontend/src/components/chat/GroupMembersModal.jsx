@@ -199,35 +199,35 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/40">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
             <div className="flex items-center gap-2.5">
-              <Users className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-100">{t('group_members_list')}</h3>
+              <Users className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('group_members_list')}</h3>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+              className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center gap-2 px-5 py-2.5 border-b border-slate-800 bg-slate-950/20 text-xs font-semibold">
+          <div className="flex items-center gap-2 px-5 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 text-xs font-semibold">
             <button
               onClick={() => setActiveTab('members')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 'members'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               {t('group_members_list')} ({members.length})
@@ -236,15 +236,15 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
             {isModOrAbove && (
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`relative px-3 py-1.5 rounded-xl transition-all ${
+                className={`relative px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                   activeTab === 'requests'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40 font-bold shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {t('group_join_requests')}
                 {requests.length > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.2 bg-amber-500 text-slate-950 text-[10px] font-extrabold rounded-full">
+                  <span className="ml-1.5 px-1.5 py-0.2 bg-amber-500 text-white dark:text-slate-950 text-[10px] font-extrabold rounded-full">
                     {requests.length}
                   </span>
                 )}
@@ -253,10 +253,10 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
 
             <button
               onClick={() => setActiveTab('invite')}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 'invite'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40 font-bold shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               {t('invite_friends')}
@@ -279,13 +279,13 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                 return (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-slate-700 transition-all"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/90 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-xs"
                   >
                     <div
                       onClick={() => onSelectUser && onSelectUser(m.user.id)}
                       className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0"
                     >
-                      <div className="relative w-8 h-8 rounded-full overflow-hidden bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-300 border border-slate-700">
+                      <div className="relative w-8 h-8 rounded-full overflow-hidden bg-indigo-600/20 dark:bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
                         {m.user.avatarUrl ? (
                           <img
                             src={getFullAvatarUrl(m.user.avatarUrl)}
@@ -302,34 +302,34 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                       </div>
                       <div className="truncate">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400 transition-colors truncate">
+                          <span className="text-xs font-semibold text-slate-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                             {m.user.displayName}
                           </span>
                           {m.role === 'OWNER' && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
                               <Crown className="w-2.5 h-2.5" />
                               {t('role_owner')}
                             </span>
                           )}
                           {m.role === 'ADMIN' && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-500/20">
                               <ShieldCheck className="w-2.5 h-2.5" />
                               {t('role_admin')}
                             </span>
                           )}
                           {m.role === 'MODERATOR' && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                            <span className="flex items-center gap-0.5 text-[10px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-200 dark:border-cyan-500/20">
                               <Shield className="w-2.5 h-2.5" />
                               {t('role_moderator')}
                             </span>
                           )}
                           {m.status === 'MUTED' && (
-                            <span className="text-[10px] text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">
+                            <span className="text-[10px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-500/20">
                               {t('mute_member')}
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
                           {m.user.selectedTitle || `Lv.${m.user.currentLevel || 1}`}
                         </div>
                       </div>
@@ -342,7 +342,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                           <select
                             value={m.role}
                             onChange={(e) => handleRoleChange(m.user.id, e.target.value, m.user.displayName)}
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-indigo-500"
+                            className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-lg px-2 py-1 text-[11px] text-slate-800 dark:text-slate-300 focus:outline-none focus:border-indigo-500"
                           >
                             <option value="MEMBER">{t('role_member')}</option>
                             <option value="MODERATOR">{t('role_moderator')}</option>
@@ -353,10 +353,10 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                         <button
                           onClick={() => handleMuteToggle(m)}
                           disabled={actionLoadingId === m.user.id}
-                          className={`p-1.5 rounded-lg transition-colors ${
+                          className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                             m.status === 'MUTED'
-                              ? 'text-emerald-400 hover:bg-emerald-500/10'
-                              : 'text-amber-400 hover:bg-amber-500/10'
+                              ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'
+                              : 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10'
                           }`}
                           title={m.status === 'MUTED' ? t('unmute_member') : t('mute_member')}
                         >
@@ -365,7 +365,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                         <button
                           onClick={() => handleKick(m.user.id, m.user.displayName)}
                           disabled={actionLoadingId === m.user.id}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
                           title={t('kick_member')}
                         >
                           <UserMinus className="w-3.5 h-3.5" />
@@ -377,20 +377,20 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
               })
             ) : activeTab === 'requests' ? (
               requests.length === 0 ? (
-                <div className="text-center text-xs text-slate-500 py-12">
+                <div className="text-center text-xs text-slate-500 dark:text-slate-400 py-12">
                   Không có yêu cầu tham gia nào đang chờ duyệt.
                 </div>
               ) : (
                 requests.map((req) => (
                   <div
                     key={req.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950/40 border border-slate-800"
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/90 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 shadow-xs"
                   >
                     <div
                       onClick={() => onSelectUser && onSelectUser(req.user.id)}
                       className="flex items-center gap-3 cursor-pointer group"
                     >
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-300">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/20 dark:bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                         {req.user.avatarUrl ? (
                           <img
                             src={getFullAvatarUrl(req.user.avatarUrl)}
@@ -406,11 +406,11 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                         )}
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400 transition-colors">
+                        <div className="text-xs font-semibold text-slate-900 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                           {req.user.displayName}
                         </div>
                         {req.requestMessage && (
-                          <div className="text-[11px] text-slate-400 italic">"{req.requestMessage}"</div>
+                          <div className="text-[11px] text-slate-600 dark:text-slate-400 italic">"{req.requestMessage}"</div>
                         )}
                       </div>
                     </div>
@@ -419,14 +419,14 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                       <button
                         onClick={() => handleReviewRequest(req.id, true)}
                         disabled={actionLoadingId === req.id}
-                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                       >
                         {t('approve')}
                       </button>
                       <button
                         onClick={() => handleReviewRequest(req.id, false)}
                         disabled={actionLoadingId === req.id}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs font-semibold transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
                       >
                         {t('reject')}
                       </button>
@@ -437,9 +437,9 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
             ) : (
               // Invite friends tab
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-slate-400">{t('select_friends_to_invite')}</div>
+                <div className="text-xs font-semibold text-slate-500 dark:text-slate-400">{t('select_friends_to_invite')}</div>
                 {friends.length === 0 ? (
-                  <div className="text-center text-xs text-slate-500 py-10">
+                  <div className="text-center text-xs text-slate-500 dark:text-slate-400 py-10">
                     Bạn chưa có bạn bè trong danh sách để mời.
                   </div>
                 ) : (
@@ -454,14 +454,14 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                           onClick={() => !isAlreadyMember && toggleSelectFriend(f.friendId)}
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
                             isAlreadyMember
-                              ? 'opacity-50 cursor-not-allowed bg-slate-950/20 border-slate-900'
+                              ? 'opacity-50 cursor-not-allowed bg-slate-100/50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-900'
                               : isSelected
-                              ? 'bg-indigo-600/10 border-indigo-500/50 cursor-pointer'
-                              : 'bg-slate-950/40 border-slate-800 hover:border-slate-700 cursor-pointer'
+                              ? 'bg-indigo-50 dark:bg-indigo-600/10 border-indigo-300 dark:border-indigo-500/50 cursor-pointer shadow-xs'
+                              : 'bg-slate-50/90 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer shadow-xs'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-300">
+                            <div className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/20 dark:bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
                               {f.avatarUrl ? (
                                 <img src={getFullAvatarUrl(f.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
                               ) : (
@@ -469,19 +469,19 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                               )}
                             </div>
                             <div>
-                              <div className="text-xs font-semibold text-slate-200">{f.displayName}</div>
-                              <div className="text-[10px] text-slate-500">Lv.{f.level || 1}</div>
+                              <div className="text-xs font-semibold text-slate-900 dark:text-slate-200">{f.displayName}</div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">Lv.{f.level || 1}</div>
                             </div>
                           </div>
 
                           <div>
                             {isAlreadyMember ? (
-                              <span className="text-[10px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded">
                                 {t('joined_badge')}
                               </span>
                             ) : (
                               <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${
-                                isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-700 bg-slate-950'
+                                isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950'
                               }`}>
                                 {isSelected && <Check className="w-3.5 h-3.5" />}
                               </div>
@@ -496,7 +496,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                 {selectedFriendIds.length > 0 && (
                   <button
                     onClick={handleInviteFriends}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
                   >
                     <UserPlus className="w-4 h-4" />
                     <span>Mời ({selectedFriendIds.length}) bạn bè vào nhóm</span>

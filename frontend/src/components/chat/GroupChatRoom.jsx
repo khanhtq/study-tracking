@@ -480,7 +480,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onPaste={handlePaste}
-      className="relative flex flex-col h-[calc(100vh-4rem)] max-w-7xl mx-auto bg-slate-950 border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl"
+      className="relative flex flex-col h-[calc(100vh-4rem)] max-w-7xl mx-auto bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl"
     >
       {/* Dropzone Backdrop Overlay */}
       <AnimatePresence>
@@ -498,18 +498,18 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       </AnimatePresence>
 
       {/* ==================== HEADER ==================== */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md z-10">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
             title="Quay lại danh sách nhóm"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
 
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-sm font-bold text-indigo-300 overflow-hidden">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600/20 dark:bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-sm font-bold text-indigo-600 dark:text-indigo-300 overflow-hidden shadow-xs">
               {groupDetail?.group?.avatarUrl ? (
                 <img src={getFullAvatarUrl(groupDetail.group.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -518,20 +518,20 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-100 truncate max-w-[200px] sm:max-w-md">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate max-w-[200px] sm:max-w-md">
                   {groupDetail?.group?.name || 'Đang tải...'}
                 </h2>
                 {groupDetail?.group?.privacy === 'PUBLIC' ? (
-                  <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-500/20 font-medium">
                     {t('privacy_public')}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-500/20 font-medium">
                     {t('privacy_private')}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {groupDetail?.group?.memberCount || 0} {t('members_count')}
               </p>
             </div>
@@ -544,11 +544,11 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {pinnedMessages.length > 0 && (
             <button
               onClick={() => setShowPinnedDropdown(!showPinnedDropdown)}
-              className="relative p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-amber-400 hover:text-amber-300 transition-colors"
+              className="relative p-2 rounded-xl bg-amber-50 dark:bg-slate-800/60 hover:bg-amber-100 dark:hover:bg-slate-800 border border-amber-200 dark:border-slate-700/50 text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer"
               title={t('pinned_messages')}
             >
               <Pin className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-slate-950 text-[10px] font-extrabold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 text-white dark:text-slate-950 text-[10px] font-extrabold rounded-full flex items-center justify-center">
                 {pinnedMessages.length}
               </span>
             </button>
@@ -557,7 +557,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {/* Search messages */}
           <button
             onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer"
             title={t('search_messages')}
           >
             <Search className="w-4 h-4" />
@@ -566,7 +566,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {/* Share from Drive */}
           <button
             onClick={() => setIsShareDocOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 transition-colors hidden sm:flex"
+            className="p-2 rounded-xl bg-indigo-50 dark:bg-slate-800/60 hover:bg-indigo-100 dark:hover:bg-slate-800 border border-indigo-200 dark:border-slate-700/50 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors hidden sm:flex cursor-pointer"
             title={t('share_document_from_drive')}
           >
             <FileText className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {isModOrAbove && (
             <button
               onClick={() => setIsInviteModalOpen(true)}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="p-2 rounded-xl bg-cyan-50 dark:bg-slate-800/60 hover:bg-cyan-100 dark:hover:bg-slate-800 border border-cyan-200 dark:border-slate-700/50 text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors cursor-pointer"
               title={t('invite_link')}
             >
               <Link2 className="w-4 h-4" />
@@ -586,7 +586,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {/* Multimedia & Files Gallery */}
           <button
             onClick={() => setIsMediaModalOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-pink-400 hover:text-pink-300 transition-colors flex items-center gap-1.5"
+            className="p-2 rounded-xl bg-pink-50 dark:bg-slate-800/60 hover:bg-pink-100 dark:hover:bg-slate-800 border border-pink-200 dark:border-slate-700/50 text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Kho ảnh, video & tài liệu nhóm"
           >
             <ImageIcon className="w-4 h-4" />
@@ -596,7 +596,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {/* Members list & Moderation */}
           <button
             onClick={() => setIsMembersModalOpen(true)}
-            className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title={t('group_members_list')}
           >
             <Users className="w-4 h-4" />
@@ -606,7 +606,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {(currentRole === 'OWNER' || currentRole === 'ADMIN') && (
             <button
               onClick={() => setIsEditGroupModalOpen(true)}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-indigo-400 hover:text-indigo-300 transition-colors"
+              className="p-2 rounded-xl bg-indigo-50 dark:bg-slate-800/60 hover:bg-indigo-100 dark:hover:bg-slate-800 border border-indigo-200 dark:border-slate-700/50 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer"
               title={t('edit_group_info')}
             >
               <Settings className="w-4 h-4" />
@@ -617,26 +617,26 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
       {/* Pinned Messages Drawer / Banner */}
       {showPinnedDropdown && pinnedMessages.length > 0 && (
-        <div className="bg-slate-900 border-b border-slate-800 p-3 max-h-48 overflow-y-auto space-y-2 z-20 shadow-lg">
-          <div className="flex items-center justify-between text-xs font-bold text-amber-400 mb-1">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 max-h-48 overflow-y-auto space-y-2 z-20 shadow-lg">
+          <div className="flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400 mb-1">
             <span className="flex items-center gap-1.5">
               <Pin className="w-3.5 h-3.5" />
               {t('pinned_messages')} ({pinnedMessages.length})
             </span>
-            <button onClick={() => setShowPinnedDropdown(false)} className="text-slate-400 hover:text-slate-200">
+            <button onClick={() => setShowPinnedDropdown(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
           {pinnedMessages.map((pm) => (
-            <div key={pm.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-950/60 border border-slate-800 text-xs">
+            <div key={pm.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-xs shadow-xs">
               <div className="truncate pr-2">
-                <span className="font-semibold text-slate-300 mr-2">{pm.sender?.displayName}:</span>
-                <span className="text-slate-400">{pm.messageContent}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-300 mr-2">{pm.sender?.displayName}:</span>
+                <span className="text-slate-600 dark:text-slate-400">{pm.messageContent}</span>
               </div>
               {isModOrAbove && (
                 <button
                   onClick={() => handleTogglePin(pm.messageId)}
-                  className="text-slate-500 hover:text-rose-400 flex-shrink-0"
+                  className="text-slate-400 hover:text-rose-500 flex-shrink-0 cursor-pointer"
                   title={t('unpin')}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -649,7 +649,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
       {/* In-room Search Bar Popover */}
       {isSearchOpen && (
-        <div className="bg-slate-900 border-b border-slate-800 p-3 space-y-2 z-20">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 space-y-2 z-20 shadow-md">
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -657,15 +657,15 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearchMessages()}
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
             />
             <button
               onClick={handleSearchMessages}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold"
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold cursor-pointer"
             >
               {t('search_messages').split(' ')[0]}
             </button>
-            <button onClick={() => { setIsSearchOpen(false); setSearchResults([]); }} className="text-slate-400 hover:text-slate-200">
+            <button onClick={() => { setIsSearchOpen(false); setSearchResults([]); }} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -673,9 +673,9 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           {searchResults.length > 0 && (
             <div className="max-h-40 overflow-y-auto space-y-1.5 pt-1">
               {searchResults.map((sm) => (
-                <div key={sm.id} className="p-2 rounded-lg bg-slate-950/40 border border-slate-800 text-xs">
-                  <span className="font-semibold text-indigo-300 mr-2">{sm.sender?.displayName}:</span>
-                  <span className="text-slate-300">{sm.content}</span>
+                <div key={sm.id} className="p-2 rounded-lg bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 text-xs">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-300 mr-2">{sm.sender?.displayName}:</span>
+                  <span className="text-slate-800 dark:text-slate-300">{sm.content}</span>
                 </div>
               ))}
             </div>
@@ -687,14 +687,14 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-100/50 dark:bg-slate-950"
       >
         {loadingMessages ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 text-xs">
+          <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 dark:text-slate-400 text-xs">
             <p>{t('no_messages_yet')}</p>
           </div>
         ) : (
@@ -712,7 +712,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               if (isSystem) {
                 return (
                   <div key={msg.id} className="flex justify-center my-2">
-                    <span className="text-xs text-slate-300 bg-slate-900/80 px-3.5 py-1.5 rounded-full border border-slate-800 shadow-sm">
+                    <span className="text-xs text-slate-700 dark:text-slate-300 bg-white/90 dark:bg-slate-900/80 px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-xs">
                       {msg.content}
                     </span>
                   </div>
@@ -727,7 +727,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   {/* Sender Avatar */}
                   <div
                     onClick={() => msg.sender?.id && onSelectUser && onSelectUser(msg.sender.id)}
-                    className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-300 border border-slate-800 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all mt-1"
+                    className="w-8 h-8 rounded-full overflow-hidden bg-indigo-600/20 dark:bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300 border border-slate-200 dark:border-slate-800 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all mt-1 shadow-xs"
                     title="Bấm để xem hồ sơ cá nhân"
                   >
                     {msg.sender?.avatarUrl ? (
@@ -748,23 +748,23 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   {/* Message Bubble Container */}
                   <div className={`flex flex-col max-w-[85%] sm:max-w-lg ${isMe ? 'items-end' : 'items-start'}`}>
                     {/* Header info (Name & Time) */}
-                    <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-slate-400">
+                    <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-slate-500 dark:text-slate-400">
                       <span
                         onClick={() => msg.sender?.id && onSelectUser && onSelectUser(msg.sender.id)}
-                        className="font-semibold text-slate-300 hover:text-indigo-400 cursor-pointer transition-colors"
+                        className="font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
                       >
                         {msg.sender?.displayName}
                       </span>
                       <span>•</span>
                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-400 fill-amber-400" />}
+                      {msg.isPinned && <Pin className="w-3 h-3 text-amber-500 fill-amber-500" />}
                     </div>
 
                     {/* Reply To Reference Bubble */}
                     {msg.replyTo && (
-                      <div className="flex items-center gap-1 text-xs text-slate-400 bg-slate-900/80 border-l-2 border-indigo-500 px-2.5 py-1 rounded mb-1 max-w-full truncate">
-                        <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                        <span className="font-semibold text-slate-300">{msg.replyTo.senderDisplayName}:</span>
+                      <div className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/80 border-l-2 border-indigo-500 px-2.5 py-1 rounded mb-1 max-w-full truncate">
+                        <CornerDownRight className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
+                        <span className="font-semibold text-slate-800 dark:text-slate-300">{msg.replyTo.senderDisplayName}:</span>
                         <span className="truncate">{msg.replyTo.content}</span>
                       </div>
                     )}
@@ -773,8 +773,8 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                     <div
                       className={`relative p-3 sm:p-3.5 rounded-2xl text-[13.5px] sm:text-sm leading-relaxed ${
                         isMe
-                          ? 'bg-indigo-600 text-white rounded-tr-none'
-                          : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+                          ? 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
+                          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none shadow-xs'
                       }`}
                     >
                       {/* Editing state */}
@@ -783,19 +783,19 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-400"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-indigo-400"
                             rows={2}
                           />
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => setEditingMessage(null)}
-                              className="text-xs text-slate-300 hover:text-white"
+                              className="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium cursor-pointer"
                             >
                               {t('drive_btn_cancel')}
                             </button>
                             <button
                               onClick={handleSaveEdit}
-                              className="px-3 py-1 bg-white text-indigo-900 rounded-lg font-bold text-xs"
+                              className="px-3 py-1 bg-indigo-600 dark:bg-white text-white dark:text-indigo-900 rounded-lg font-bold text-xs shadow-sm cursor-pointer"
                             >
                               {t('drive_btn_save')}
                             </button>
@@ -818,7 +818,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                               {msg.attachments.map((att) => {
                                 if (att.attachmentType === 'IMAGE') {
                                   return (
-                                    <div key={att.id} className="rounded-xl overflow-hidden border border-white/10 max-h-60">
+                                    <div key={att.id} className="rounded-xl overflow-hidden border border-slate-200/40 dark:border-white/10 max-h-60 shadow-xs">
                                       <img
                                         src={getFullMediaUrl(att.fileUrl)}
                                         alt={att.fileName}
@@ -847,12 +847,18 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 return (
                                   <div
                                     key={att.id}
-                                    className="flex items-center justify-between p-2.5 rounded-xl bg-black/20 border border-white/10 gap-2"
+                                    className={`flex items-center justify-between p-2.5 rounded-xl border gap-2 ${
+                                      isMe
+                                        ? 'bg-indigo-700/50 border-indigo-400/30 text-white'
+                                        : 'bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200'
+                                    }`}
                                   >
                                     <div className="flex items-center gap-2 overflow-hidden">
-                                      <FileText className="w-4 h-4 text-indigo-300 flex-shrink-0" />
+                                      <FileText className={`w-4 h-4 flex-shrink-0 ${isMe ? 'text-indigo-200' : 'text-indigo-600 dark:text-indigo-300'}`} />
                                       <div className="truncate">
-                                        <div className="text-[11px] font-semibold truncate">{att.fileName}</div>
+                                        <div className={`text-[11px] font-semibold truncate ${isMe ? 'text-white' : 'text-slate-900 dark:text-slate-100'}`}>
+                                          {att.fileName}
+                                        </div>
                                         <div className="text-[9px] opacity-70">
                                           {(att.fileSize / 1024).toFixed(1)} KB
                                         </div>
@@ -865,14 +871,22 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                         target="_blank"
                                         rel="noreferrer"
                                         download
-                                        className="p-1 rounded hover:bg-white/10 text-white transition-colors"
+                                        className={`p-1 rounded transition-colors ${
+                                          isMe
+                                            ? 'hover:bg-white/10 text-white'
+                                            : 'hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
+                                        }`}
                                         title={t('drive_download')}
                                       >
                                         <Download className="w-3.5 h-3.5" />
                                       </a>
                                       <button
                                         onClick={() => handleSaveToDrive(att.id)}
-                                        className="p-1 rounded hover:bg-white/10 text-amber-300 transition-colors"
+                                        className={`p-1 rounded transition-colors cursor-pointer ${
+                                          isMe
+                                            ? 'text-amber-300 hover:bg-white/10'
+                                            : 'text-amber-500 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-white/10'
+                                        }`}
                                         title={t('save_to_drive')}
                                       >
                                         <Pin className="w-3.5 h-3.5" />
@@ -891,7 +905,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                         <div
                           className={`absolute -bottom-3.5 ${
                             isMe ? 'right-2' : 'left-2'
-                          } opacity-0 group-hover:opacity-100 transition-all duration-150 flex items-center gap-0.5 bg-slate-900/95 backdrop-blur-md border border-slate-700/90 rounded-full px-2 py-0.5 shadow-xl z-20 pointer-events-none group-hover:pointer-events-auto`}
+                          } opacity-0 group-hover:opacity-100 transition-all duration-150 flex items-center gap-0.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/90 text-slate-600 dark:text-slate-400 rounded-full px-2 py-0.5 shadow-xl z-20 pointer-events-none group-hover:pointer-events-auto`}
                         >
                           {/* Standard Reactions Picker */}
                           {STANDARD_REACTIONS.map((emoji) => (
@@ -901,13 +915,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 e.stopPropagation();
                                 handleToggleReaction(msg.id, emoji);
                               }}
-                              className="hover:scale-125 transition-transform text-xs p-1 leading-none"
+                              className="hover:scale-125 transition-transform text-xs p-1 leading-none cursor-pointer"
                             >
                               {emoji}
                             </button>
                           ))}
 
-                          <div className="w-[1px] h-3 bg-slate-700 mx-0.5" />
+                          <div className="w-[1px] h-3 bg-slate-200 dark:bg-slate-700 mx-0.5" />
 
                           {/* Reply */}
                           <button
@@ -915,7 +929,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                               e.stopPropagation();
                               setReplyingTo(msg);
                             }}
-                            className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
+                            className="p-1 text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors cursor-pointer"
                             title={t('reply')}
                           >
                             <CornerDownRight className="w-3.5 h-3.5" />
@@ -928,7 +942,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 e.stopPropagation();
                                 handleStartEdit(msg);
                               }}
-                              className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                              className="p-1 text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 transition-colors cursor-pointer"
                               title={t('edit')}
                             >
                               <Edit2 className="w-3.5 h-3.5" />
@@ -942,7 +956,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 e.stopPropagation();
                                 handleTogglePin(msg.id);
                               }}
-                              className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                              className="p-1 text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 transition-colors cursor-pointer"
                               title={msg.isPinned ? t('unpin') : t('pin')}
                             >
                               <Pin className="w-3.5 h-3.5" />
@@ -956,7 +970,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                                 e.stopPropagation();
                                 handleDeleteMessage(msg.id);
                               }}
-                              className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                              className="p-1 text-slate-500 hover:text-rose-500 dark:text-slate-400 dark:hover:text-rose-400 transition-colors cursor-pointer"
                               title={t('delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -973,10 +987,10 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           <button
                             key={r.emoji}
                             onClick={() => handleToggleReaction(msg.id, r.emoji)}
-                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-all ${
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border transition-all cursor-pointer shadow-xs ${
                               r.hasReacted
-                                ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300'
-                                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                                ? 'bg-indigo-50 dark:bg-indigo-600/30 border-indigo-300 dark:border-indigo-500 text-indigo-600 dark:text-indigo-300 font-bold'
+                                : 'bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                           >
                             <span>{r.emoji}</span>
@@ -1012,26 +1026,26 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
       {/* Typing Indicator */}
       {typingUsers.size > 0 && (
-        <div className="px-4 py-1 text-[11px] text-indigo-400 italic bg-slate-950/80">
+        <div className="px-4 py-1 text-[11px] text-indigo-600 dark:text-indigo-400 italic bg-white/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-900">
           {Array.from(typingUsers.values()).map((u) => u.displayName).join(', ')} đang nhập...
         </div>
       )}
 
       {/* ==================== INPUT AREA & CONTROLS ==================== */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/60 backdrop-blur-md relative">
+      <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 backdrop-blur-md relative">
         {/* Muted Warning Banner */}
         {isMuted && (
-          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 mb-2.5 bg-rose-950/40 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 mb-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-500/30 rounded-xl text-xs text-rose-600 dark:text-rose-300">
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <VolumeX className="w-4 h-4 text-rose-400 flex-shrink-0 animate-pulse" />
+              <VolumeX className="w-4 h-4 text-rose-500 dark:text-rose-400 flex-shrink-0 animate-pulse" />
               <div className="truncate">
-                <span className="font-bold text-rose-200">Bạn đang bị tắt quyền chat</span>
-                <span className="text-slate-400 ml-1.5 truncate">
+                <span className="font-bold text-rose-700 dark:text-rose-200">Bạn đang bị tắt quyền chat</span>
+                <span className="text-slate-500 dark:text-slate-400 ml-1.5 truncate">
                   {currentUserMutedUntil ? `(đến ${formatMutedUntil(currentUserMutedUntil)})` : ''} - Bạn chỉ có thể đọc tin nhắn và xem tài liệu
                 </span>
               </div>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30 flex-shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 flex-shrink-0">
               Bị Mute
             </span>
           </div>
@@ -1039,14 +1053,14 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
         {/* Reply preview banner */}
         {replyingTo && (
-          <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs">
+          <div className="flex items-center justify-between px-3 py-1.5 mb-2 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
             <div className="flex items-center gap-2 truncate">
-              <CornerDownRight className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-              <span className="text-slate-400">{t('reply')}</span>
-              <span className="font-semibold text-slate-200 truncate">{replyingTo.sender?.displayName}:</span>
-              <span className="text-slate-400 truncate">{replyingTo.content}</span>
+              <CornerDownRight className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
+              <span className="text-slate-500 dark:text-slate-400">{t('reply')}</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-200 truncate">{replyingTo.sender?.displayName}:</span>
+              <span className="text-slate-600 dark:text-slate-400 truncate">{replyingTo.content}</span>
             </div>
-            <button onClick={() => setReplyingTo(null)} className="text-slate-500 hover:text-slate-300">
+            <button onClick={() => setReplyingTo(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -1056,12 +1070,12 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
         {pendingAttachments.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-2">
             {pendingAttachments.map((att, idx) => (
-              <div key={idx} className="relative flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-2.5 py-1.5 rounded-xl text-xs text-slate-300 flex-shrink-0">
-                <FileText className="w-3.5 h-3.5 text-indigo-400" />
+              <div key={idx} className="relative flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-2.5 py-1.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 flex-shrink-0 shadow-xs">
+                <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
                 <span className="truncate max-w-[120px]">{att.fileName}</span>
                 <button
                   onClick={() => setPendingAttachments((prev) => prev.filter((_, i) => i !== idx))}
-                  className="text-slate-500 hover:text-rose-400 ml-1"
+                  className="text-slate-400 hover:text-rose-500 ml-1 cursor-pointer"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -1072,15 +1086,15 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
         {/* @Mention Autocomplete Popover */}
         {mentionQuery !== null && mentionSuggestions.length > 0 && (
-          <div className="absolute bottom-full left-4 mb-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-30">
-            <div className="p-2 text-[10px] font-bold text-slate-400 border-b border-slate-800">Gợi ý tag thành viên</div>
+          <div className="absolute bottom-full left-4 mb-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl overflow-hidden z-30">
+            <div className="p-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">Gợi ý tag thành viên</div>
             {mentionSuggestions.map((m) => (
               <div
                 key={m.id}
                 onClick={() => handleSelectMention(m)}
-                className="flex items-center gap-2 p-2 hover:bg-indigo-600/20 cursor-pointer transition-colors text-xs text-slate-200"
+                className="flex items-center gap-2 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-600/20 cursor-pointer transition-colors text-xs text-slate-900 dark:text-slate-200"
               >
-                <div className="w-5 h-5 rounded-full overflow-hidden bg-indigo-600/40 flex items-center justify-center text-[10px]">
+                <div className="w-5 h-5 rounded-full overflow-hidden bg-indigo-600/20 dark:bg-indigo-600/40 flex items-center justify-center text-[10px] font-bold text-indigo-600 dark:text-indigo-300">
                   {m.user.avatarUrl ? (
                     <img src={getFullAvatarUrl(m.user.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -1106,7 +1120,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isMuted || uploadingFiles}
-            className={`h-[42px] w-[42px] flex items-center justify-center flex-shrink-0 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`h-[42px] w-[42px] flex items-center justify-center flex-shrink-0 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-xs cursor-pointer ${
               isMuted ? 'opacity-40 cursor-not-allowed' : ''
             }`}
             title={isMuted ? 'Bạn đang bị tắt quyền chat' : 'Đính kèm tệp / ảnh'}
@@ -1129,8 +1143,8 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               }}
               placeholder={isMuted ? 'Bạn đang bị tắt quyền gửi tin nhắn trong nhóm này...' : t('chat_input_placeholder')}
               rows={1}
-              className={`w-full min-h-[42px] max-h-32 bg-slate-950 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3.5 py-[9px] text-[13.5px] sm:text-sm leading-snug text-slate-200 placeholder-slate-500 focus:outline-none resize-none transition-colors ${
-                isMuted ? 'bg-slate-950/40 text-slate-500 border-rose-500/20 cursor-not-allowed' : ''
+              className={`w-full min-h-[42px] max-h-32 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500/50 rounded-xl px-3.5 py-[9px] text-[13.5px] sm:text-sm leading-snug text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none resize-none transition-colors shadow-inner ${
+                isMuted ? 'bg-slate-100 dark:bg-slate-950/40 text-slate-400 dark:text-slate-500 border-rose-500/20 cursor-not-allowed' : ''
               }`}
             />
           </div>
@@ -1141,7 +1155,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
             disabled={isMuted || (!inputText.trim() && pendingAttachments.length === 0) || uploadingFiles}
             className={`h-[42px] w-[42px] flex items-center justify-center flex-shrink-0 rounded-xl transition-all shadow-md cursor-pointer disabled:cursor-not-allowed ${
               isMuted
-                ? 'bg-slate-800 text-slate-500 opacity-40 shadow-none'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 opacity-40 shadow-none'
                 : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 disabled:opacity-40'
             }`}
             title={isMuted ? 'Bạn đang bị tắt quyền chat' : t('send')}
