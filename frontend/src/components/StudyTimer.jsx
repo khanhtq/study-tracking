@@ -314,7 +314,7 @@ function StudyTimer({ onStopResult }) {
                 cx="120"
                 cy="120"
                 r={circleRadius}
-                className="stroke-slate-800/50"
+                className="stroke-slate-200 dark:stroke-slate-800/50"
                 strokeWidth="8"
                 fill="transparent"
               />
@@ -364,7 +364,7 @@ function StudyTimer({ onStopResult }) {
             </div>
           ) : (
             <div className="flex flex-col items-center z-10">
-              <span className="font-mono-timer text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-indigo-200 tracking-tight tabular-nums">
+              <span className="font-mono-timer text-5xl font-black text-slate-100 tracking-tight tabular-nums">
                 {formatTime(displaySeconds)}
               </span>
               <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase mt-2">

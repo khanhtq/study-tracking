@@ -235,17 +235,17 @@ function StudyCalendar({ sessions }) {
     
     switch (level) {
       case 0:
-        return `${common} bg-[#ebedf0] border border-[#e1e4e8] dark:bg-[#161b22] dark:border-[#1b212a] hover:bg-[#d0d3d6] dark:hover:bg-[#222831]`;
+        return `${common} bg-[#E5E7EB] border border-[#D1D5DB] dark:bg-[#161b22] dark:border-[#1b212a] hover:bg-[#D1D5DB] dark:hover:bg-[#222831]`;
       case 1:
-        return `${common} bg-[#9be9a8] border border-[#8cd998] dark:bg-[#0e4429] dark:border-[#0c3d25] hover:bg-[#8ade98] dark:hover:bg-[#125434]`;
+        return `${common} bg-[#86efac] border border-[#4ade80] dark:bg-[#0e4429] dark:border-[#0c3d25] hover:bg-[#4ade80] dark:hover:bg-[#125434]`;
       case 2:
-        return `${common} bg-[#40c463] border border-[#3ab35a] dark:bg-[#006d32] dark:border-[#00622d] hover:bg-[#37b859] dark:hover:bg-[#00813c]`;
+        return `${common} bg-[#22c55e] border border-[#16a34a] dark:bg-[#006d32] dark:border-[#00622d] hover:bg-[#16a34a] dark:hover:bg-[#00813c]`;
       case 3:
-        return `${common} bg-[#30a14e] border border-[#2b9146] dark:bg-[#26a641] dark:border-[#22953a] hover:bg-[#2a9146] dark:hover:bg-[#2cbd4b]`;
+        return `${common} bg-[#15803d] border border-[#166534] dark:bg-[#26a641] dark:border-[#22953a] hover:bg-[#166534] dark:hover:bg-[#2cbd4b]`;
       case 4:
-        return `${common} bg-[#216e39] border border-[#1d6333] dark:bg-[#39d353] dark:border-[#33be4b] hover:bg-[#1c5d30] dark:hover:bg-[#51e069]`;
+        return `${common} bg-[#14532d] border border-[#052e16] dark:bg-[#39d353] dark:border-[#33be4b] hover:bg-[#052e16] dark:hover:bg-[#51e069]`;
       default:
-        return `${common} bg-[#ebedf0] border border-[#e1e4e8] dark:bg-[#161b22] dark:border-[#1b212a]`;
+        return `${common} bg-[#E5E7EB] border border-[#D1D5DB] dark:bg-[#161b22] dark:border-[#1b212a]`;
     }
   };
 
@@ -405,11 +405,11 @@ function StudyCalendar({ sessions }) {
         <span>{t('hover_tip')}</span>
         <div className="flex items-center gap-1">
           <span>{t('legend_less')}</span>
-          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#ebedf0] border border-[#e1e4e8] dark:bg-[#161b22] dark:border-[#1b212a]" />
-          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#9be9a8] border border-[#8cd998] dark:bg-[#0e4429] dark:border-[#0c3d25]" />
-          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#40c463] border border-[#3ab35a] dark:bg-[#006d32] dark:border-[#00622d]" />
-          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#30a14e] border border-[#2b9146] dark:bg-[#26a641] dark:border-[#22953a]" />
-          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#216e39] border border-[#1d6333] dark:bg-[#39d353] dark:border-[#33be4b]" />
+          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#E5E7EB] border border-[#D1D5DB] dark:bg-[#161b22] dark:border-[#1b212a]" />
+          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#86efac] border border-[#4ade80] dark:bg-[#0e4429] dark:border-[#0c3d25]" />
+          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#22c55e] border border-[#16a34a] dark:bg-[#006d32] dark:border-[#00622d]" />
+          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#15803d] border border-[#166534] dark:bg-[#26a641] dark:border-[#22953a]" />
+          <div className="w-[11px] h-[11px] rounded-[2px] bg-[#14532d] border border-[#052e16] dark:bg-[#39d353] dark:border-[#33be4b]" />
           <span>{t('legend_more')}</span>
         </div>
       </div>
@@ -418,12 +418,12 @@ function StudyCalendar({ sessions }) {
       <div className="grid grid-cols-3 gap-4 pt-4">
         {/* Total Days */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900/60 border border-slate-800/50 flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4 text-indigo-400" />
+          <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/50 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">{t('total_active_days')}</span>
-            <span className="text-sm font-bold text-slate-200">{totalActiveDays} {t('days')}</span>
+            <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">{t('total_active_days')}</span>
+            <span className="text-sm font-bold text-slate-100">{totalActiveDays} {t('days')}</span>
           </div>
         </div>
 
@@ -431,37 +431,37 @@ function StudyCalendar({ sessions }) {
         {selectedYear === 'lastYear' || selectedYear === new Date().getFullYear().toString() ? (
           /* Current Streak */
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900/60 border border-slate-800/50 flex items-center justify-center shrink-0">
-              <Flame className="w-4 h-4 text-orange-400 fill-orange-400/10 animate-pulse" />
+            <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/50 flex items-center justify-center shrink-0">
+              <Flame className="w-4 h-4 text-orange-500 fill-orange-500/20 animate-pulse" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">{t('current_streak')}</span>
-              <span className="text-sm font-bold text-slate-200">{currentStreak} {t('days')}</span>
+              <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">{t('current_streak')}</span>
+              <span className="text-sm font-bold text-slate-100">{currentStreak} {t('days')}</span>
             </div>
           </div>
         ) : (
           /* Total Duration */
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-900/60 border border-slate-800/50 flex items-center justify-center shrink-0">
-              <Flame className="w-4 h-4 text-orange-400 fill-orange-400/10" />
+            <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/50 flex items-center justify-center shrink-0">
+              <Flame className="w-4 h-4 text-orange-500 fill-orange-500/20" />
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">{t('total_duration')}</span>
-              <span className="text-sm font-bold text-slate-200">{formatTotalDuration(totalDurationSeconds)}</span>
+              <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">{t('total_duration')}</span>
+              <span className="text-sm font-bold text-slate-100">{formatTotalDuration(totalDurationSeconds)}</span>
             </div>
           </div>
         )}
 
         {/* Third Stat Card (Longest Streak) */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900/60 border border-slate-800/50 flex items-center justify-center shrink-0">
-            <Trophy className="w-4 h-4 text-amber-400" />
+          <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/50 flex items-center justify-center shrink-0">
+            <Trophy className="w-4 h-4 text-amber-500" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">
+            <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">
               {selectedYear === 'lastYear' || selectedYear === new Date().getFullYear().toString() ? t('longest_streak') : t('longest_streak_year')}
             </span>
-            <span className="text-sm font-bold text-slate-200">{longestStreak} {t('days')}</span>
+            <span className="text-sm font-bold text-slate-100">{longestStreak} {t('days')}</span>
           </div>
         </div>
       </div>

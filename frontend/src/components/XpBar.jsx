@@ -67,19 +67,19 @@ function XpBar({ currentLevel, currentXp, xpRequiredForNextLevel, totalXp }) {
 
           <div>
             <h3 className="text-xl font-bold text-slate-100 flex items-center gap-1.5">
-              {t('study_progress')} <Sparkles className="w-4 h-4 text-indigo-400" />
+              {t('study_progress')} <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             </h3>
             <p className="text-sm text-slate-400 flex items-center gap-1">
               <Trophy className="w-3.5 h-3.5 text-yellow-500" />
-              {t('total_xp')}: <span className="font-semibold text-slate-200">{totalXp.toLocaleString()} XP</span>
+              {t('total_xp')}: <span className="font-bold text-slate-100">{totalXp.toLocaleString()} XP</span>
             </p>
           </div>
         </div>
 
         {/* Numeric Progress */}
         <div className="text-left md:text-right shrink-0">
-          <div className="font-mono-timer text-2xl font-black text-indigo-200 leading-none">
-            {displayedXp.toLocaleString()} <span className="text-slate-500 text-sm font-medium">/ {displayedXpRequired.toLocaleString()} XP</span>
+          <div className="font-mono-timer text-2xl font-black text-indigo-600 dark:text-indigo-200 leading-none">
+            {displayedXp.toLocaleString()} <span className="text-slate-500 text-sm font-semibold">/ {displayedXpRequired.toLocaleString()} XP</span>
           </div>
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
             {t('level')} {displayedLevel} ({widthPercent.toFixed(1)}%)
@@ -88,7 +88,7 @@ function XpBar({ currentLevel, currentXp, xpRequiredForNextLevel, totalXp }) {
       </div>
 
       {/* The XP Bar */}
-      <div className="relative w-full h-5 bg-slate-900/80 rounded-full border border-slate-800/80 overflow-hidden p-0.5">
+      <div className="relative w-full h-5 bg-[#E5E7EB] dark:bg-slate-900/80 rounded-full border border-[#D1D5DB] dark:border-slate-800/80 overflow-hidden p-0.5">
         {/* Animated grid overlay for game aesthetic */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:10px_100%] pointer-events-none z-10" />
 

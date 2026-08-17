@@ -93,7 +93,7 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
   return (
     <div 
       onClick={() => onSelectUser && onSelectUser(user.userId)}
-      className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/40 border border-slate-800/40 hover:border-indigo-500/40 hover:bg-slate-800/50 transition-all gap-3 cursor-pointer group"
+      className="flex items-center justify-between p-3 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/40 border border-[#E5E7EB] dark:border-slate-800/40 hover:border-indigo-500/40 hover:bg-white dark:hover:bg-slate-800/50 transition-all gap-3 cursor-pointer group"
     >
       <div className="flex items-center gap-3 min-w-0">
         {/* Avatar with status indicator */}
@@ -119,16 +119,16 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
         </div>
 
         <div className="min-w-0">
-          <span className="font-semibold text-sm text-slate-200 group-hover:text-indigo-300 transition-colors flex items-center gap-1.5 truncate">
+          <span className="font-bold text-sm text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors flex items-center gap-1.5 truncate">
             <span className="truncate">{user.displayName}</span>
             {user.isPremium && (
-              <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 shrink-0" title="VIP Premium" />
+              <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" title="VIP Premium" />
             )}
             {liveLevel && (
               <span className={`shrink-0 px-1.5 py-0.5 rounded-lg font-extrabold text-[10px] border transition-all ${
                 isLevelBoosted
-                  ? 'bg-gradient-to-r from-amber-500/20 to-emerald-500/20 text-amber-300 border-amber-500/40 animate-pulse shadow-sm shadow-amber-500/20'
-                  : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                  ? 'bg-gradient-to-r from-amber-500/20 to-emerald-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40 animate-pulse shadow-sm shadow-amber-500/20'
+                  : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border border-indigo-500/30'
               }`}>
                 {t('level_short')} {liveLevel} {isLevelBoosted && '⚡'}
               </span>
@@ -136,8 +136,8 @@ function OnlineUserRow({ user, onSelectUser, onOpenChat }) {
           </span>
           {user.isStudying ? (
             <div className="flex flex-col gap-0.5 mt-0.5 min-w-0">
-              <span className="text-[11px] text-indigo-300 font-medium flex items-center gap-1 truncate">
-                <BookOpen className="w-3 h-3 text-indigo-400 shrink-0" />
+              <span className="text-[11px] text-indigo-700 dark:text-indigo-300 font-medium flex items-center gap-1 truncate">
+                <BookOpen className="w-3 h-3 text-indigo-600 dark:text-indigo-400 shrink-0" />
                 <span className="truncate">{t('studying_subject')}: {user.currentSubject || t('timer_placeholder')}</span>
               </span>
               {user.actionDetail && (

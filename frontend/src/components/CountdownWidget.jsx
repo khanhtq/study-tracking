@@ -308,56 +308,56 @@ export default function CountdownWidget({
       <div className="mt-3 flex items-center gap-2 text-xs text-slate-400 relative z-10 flex-wrap">
         <span className="truncate">{formattedDate}</span>
         {activeCountdown.isOfficialDate ? (
-          <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
-            <CheckCircle2 className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             {t('countdown_official_badge')}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 text-[11px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
-            <RefreshCw className="w-3 h-3 animate-spin-slow" />
+          <span className="inline-flex items-center gap-1 text-[11px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">
+            <RefreshCw className="w-3 h-3 animate-spin-slow text-amber-600 dark:text-amber-400" />
             {t('countdown_estimated_badge')}
           </span>
         )}
-        <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium shrink-0">
-          <Users className="w-3 h-3 text-indigo-400" />
+        <span className="inline-flex items-center gap-1 text-[11px] bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-semibold shrink-0">
+          <Users className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
           {displayTrackerCount} {t('countdown_trackers_count_suffix')}
         </span>
       </div>
 
       {/* Main Countdown Digit Grid */}
       <div className="my-6 grid grid-cols-4 gap-2 text-center relative z-10">
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 shadow-inner">
-          <div className="text-2xl sm:text-3xl font-extrabold text-indigo-400 font-mono tracking-tight">
+        <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 shadow-inner">
+          <div className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 font-mono tracking-tight">
             {String(timeLeft.days).padStart(2, '0')}
           </div>
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
             {t('countdown_days')}
           </div>
         </div>
 
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 shadow-inner">
+        <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 shadow-inner">
           <div className="text-2xl sm:text-3xl font-extrabold text-slate-100 font-mono tracking-tight">
             {String(timeLeft.hours).padStart(2, '0')}
           </div>
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
             {t('countdown_hours')}
           </div>
         </div>
 
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 shadow-inner">
+        <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 shadow-inner">
           <div className="text-2xl sm:text-3xl font-extrabold text-slate-100 font-mono tracking-tight">
             {String(timeLeft.minutes).padStart(2, '0')}
           </div>
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
             {t('countdown_minutes')}
           </div>
         </div>
 
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 shadow-inner">
-          <div className="text-2xl sm:text-3xl font-extrabold text-rose-400 font-mono tracking-tight">
+        <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3 shadow-inner">
+          <div className="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 font-mono tracking-tight">
             {String(timeLeft.seconds).padStart(2, '0')}
           </div>
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-1">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">
             {t('countdown_seconds')}
           </div>
         </div>

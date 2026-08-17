@@ -158,12 +158,12 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                     <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} unit="m" />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff', 
-                        borderColor: theme === 'dark' ? '#334155' : '#cbd5e1', 
+                        backgroundColor: theme === 'dark' ? '#0f172a' : '#F4F4F5', 
+                        borderColor: theme === 'dark' ? '#334155' : '#D1D5DB', 
                         borderRadius: '12px',
-                        color: theme === 'dark' ? '#f1f5f9' : '#0f172a'
+                        color: theme === 'dark' ? '#f1f5f9' : '#1F2937'
                       }}
-                      labelStyle={{ color: theme === 'dark' ? '#94a3b8' : '#475569', fontWeight: 'bold' }}
+                      labelStyle={{ color: theme === 'dark' ? '#94a3b8' : '#4B5563', fontWeight: 'bold' }}
                     />
                     <Bar dataKey={t('chart_minutes_label')} fill="url(#colorMinutes)" radius={[4, 4, 0, 0]} />
                     <defs>
@@ -259,7 +259,7 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                 className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
                   filterType === 'ALL'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                    : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {t('filter_all')}
@@ -270,7 +270,7 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                 className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
                   filterType === 'TODAY'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                    : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {t('filter_today')}
@@ -281,7 +281,7 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                 className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
                   filterType === 'LAST_7D'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                    : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {t('filter_7d')}
@@ -292,7 +292,7 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
                 className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
                   filterType === 'LAST_30D'
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                    : 'bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    : 'bg-slate-100 dark:bg-slate-900/60 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 {t('filter_30d')}
@@ -340,39 +340,39 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
             {filteredSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/40 border border-slate-800/60 hover:border-slate-700/50 transition-colors"
+                className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/40 border border-[#E5E7EB] dark:border-slate-800/60 hover:border-slate-300 dark:hover:border-slate-700/50 transition-colors"
               >
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="font-bold text-slate-200 truncate">
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="font-bold text-slate-100 text-sm truncate">
                       {session.subject || t('timer_placeholder')}
                     </span>
                     
                     {session.studyMethod && METHOD_CONFIG[session.studyMethod] && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1">
                         <span>{METHOD_CONFIG[session.studyMethod].icon}</span>
                         <span>{t(METHOD_CONFIG[session.studyMethod].labelKey)}</span>
                       </span>
                     )}
 
                     {session.isCompleted && (
-                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1">
                         <span>🎉 +15% XP</span>
                       </span>
                     )}
 
                     <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                       session.source === 'TIMER' 
-                        ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/20' 
-                        : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                        ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30' 
+                        : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
                     }`}>
                       {session.source === 'TIMER' ? t('source_timer') : t('source_manual')}
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-3 text-xs text-slate-300">
+                    <span className="flex items-center gap-1 font-semibold text-slate-200">
+                      <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       {formatDuration(session.durationSeconds)}
                     </span>
                     <span>•</span>
@@ -382,12 +382,12 @@ function SessionHistoryList({ sessions, isGuest, onNavigateRegister }) {
 
                 <div className="shrink-0 text-right">
                   {session.xpEarned !== null ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-300 font-extrabold text-sm border border-indigo-500/20">
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-extrabold text-sm border border-indigo-500/30">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       +{session.xpEarned} XP
                     </span>
                   ) : (
-                    <span className="text-xs text-indigo-400 font-semibold animate-pulse">
+                    <span className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold animate-pulse">
                       {t('timer_counting')}
                     </span>
                   )}

@@ -4,6 +4,13 @@ This document defines the strict rules, architectural standards, and coding conv
 
 ---
 
+## 0. Meta-Rule: Mandatory Rule Review & Execution Awareness - STRICTLY ENFORCED
+
+- **RULE RE-READ ON EVERY RUN**: In **EVERY single turn, prompt, or execution**, the Agent **MUST review, internalize, and strictly abide by all rules** defined in this document before proposing or executing any action.
+- **ZERO EXCUSES FOR FORGETTING**: Guidelines regarding Git push restrictions, feature branching, 3-language i18n, Flyway migrations, server-side anti-cheat calculations, comprehensive test writing, and project state synchronization apply unconditionally across all turns.
+
+---
+
 ## 1. Project Overview & Tech Stack
 
 - **Frontend**: React 19, Vite 8, Tailwind CSS v4, Framer Motion, Lucide React, Recharts, SockJS-client, StompJS.
@@ -45,11 +52,11 @@ This document defines the strict rules, architectural standards, and coding conv
 ### 3.2. Database Management & Flyway Migrations - MANDATORY
 - Any database schema change (adding tables, altering columns, adding indexes or foreign keys) **MUST** be implemented via a new sequential Flyway migration file:
   `backend/src/main/resources/db/migration/V<NextVersion>__<description>.sql`
-- **STRICTLY PROHIBITED**: Modifying or deleting existing committed migration files (such as `V1__` through `V17__`), as this breaks Flyway schema history checksums in production.
+- **STRICTLY PROHIBITED**: Modifying or deleting existing committed migration files (such as `V1__` through `V19__`), as this breaks Flyway schema history checksums in production.
 
 ### 3.3. Security & Authorization
 - Retrieve current authenticated user details using `@AuthenticationPrincipal UserPrincipal currentUser` or `SecurityContextHolder`.
-- **Resource Ownership Check**: Always verify that the target resource (StudyDocument, Event, Session, Task, etc.) belongs to `currentUser.getId()` or that the user holds `ROLE_ADMIN` before performing update or delete actions.
+- **Resource Ownership Check**: Always verify that the target resource (StudyDocument, Event, Session, Task, ChatGroup, etc.) belongs to `currentUser.getId()` or that the user holds `ROLE_ADMIN` before performing update or delete actions.
 - Never expose sensitive information (password hashes, secret keys) in API responses.
 
 ### 3.4. Gamification & Anti-Cheat Logic
@@ -87,7 +94,7 @@ This document defines the strict rules, architectural standards, and coding conv
 
 ## 5. Feature Development Lifecycle & Workflow - MANDATORY
 
-Every time a new feature, improvement, or bug fix is requested, the Agent **MUST** follow this structured 5-step workflow:
+Every time a new feature, improvement, refactoring, or bug fix is executed, the Agent **MUST** follow this structured 5-step workflow:
 
 ```mermaid
 graph LR
@@ -98,12 +105,12 @@ graph LR
 ```
 
 ### Step 1: Scan & Context Acquisition
-- Check [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md) for the latest database migrations (currently `V17`), active modules, endpoints, and components before writing code.
+- Review rules in this document and check [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md) for current database migrations (currently `V19`), active modules, endpoints, and components before writing code.
 - Read only relevant existing code, service interfaces, DTOs, or React components to understand patterns without unnecessarily scanning unrelated folders.
 
 ### Step 2: Impact Analysis & Scoping (Khoanh vùng ảnh hưởng)
 - Explicitly identify all affected layers:
-  - **Database**: Is a new Flyway migration script needed (`V18__...sql`)?
+  - **Database**: Is a new Flyway migration script needed (`V20__...sql`)?
   - **Backend**: Which Entities, Repositories, Services, DTOs, and Controllers are impacted?
   - **Frontend**: Which UI pages, components, modals, and API functions in `api.js` need modifications?
   - **i18n**: What translation keys must be added to all 3 languages (`en`, `vi`, `zh`) in `LanguageContext.jsx`?
@@ -122,9 +129,9 @@ graph LR
   - Run linter checks (`npm run lint` / `oxlint`) to ensure zero syntax or linting errors.
   - Verify UI component state handling, responsive breakpoints, fallback error boundaries, and complete i18n coverage.
 
-### Step 5: Synchronize & Update PROJECT_STATE.md - MANDATORY
-- **AUTOMATIC UPDATE**: Upon completing and verifying the feature, the Agent **MUST automatically update [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md)** to document:
-  - Any new Flyway database migration versions added (e.g. `V18`).
-  - Any new or modified backend API endpoints, DTOs, or services.
+### Step 5: Synchronize & Update PROJECT_STATE.md - MANDATORY AFTER EVERY SINGLE OPERATION
+- **MANDATORY FOR EVERY CHANGE (BIG OR SMALL)**: After **EVERY** task, modification, fix, refactor, or feature implementation, the Agent **MUST immediately update [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md)** to document:
+  - Any new Flyway database migration versions added (e.g. `V20`).
+  - Any new or modified backend API endpoints, DTOs, schedulers, or services.
   - Any new frontend components, pages, modals, or widgets.
-  - The latest project progress and state so future sessions have full, instant context.
+  - The latest project progress, working branches, and system state so that all future sessions have 100% accurate, up-to-date context.

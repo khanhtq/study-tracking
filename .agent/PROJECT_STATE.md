@@ -1,6 +1,6 @@
 # Study XP Tracker - Project State & Architecture Overview
 
-> **Purpose**: This document provides a complete, authoritative overview of the current project state, database schema versions, backend/frontend module breakdown, and core business rules. Agents can reference this file to instantly understand the system state without needing to re-scan the entire codebase.
+> **Purpose**: This document provides a complete, authoritative overview of the current project state, database schema versions, backend/frontend module breakdown, and core business rules. Agents MUST reference this file before every task and MUST update it after every single modification (big or small).
 
 ---
 
@@ -9,14 +9,14 @@
 | Layer | Technologies & Libraries | Key Responsibilities |
 | :--- | :--- | :--- |
 | **Frontend** | React 19, Vite 8, Tailwind CSS v4, Framer Motion, Lucide React, Recharts, SockJS-client, StompJS | Glassmorphism UI, Responsive UX (Mobile/Tablet/Desktop), Dark/Light theme, 3-language i18n, Real-time WebSocket subscriptions |
-| **Backend** | Java 21, Spring Boot 3.3.1, Spring Security 6 (JWT + OAuth2), Spring Data JPA, Lettuce Redis, STOMP | RESTful APIs, XP/Level calculation, Anti-Cheat validation, Flyway migrations, Redis leaderboard + fallback, WebSocket broker |
-| **Database** | PostgreSQL 15, Redis 7 (Sorted Sets & Cache) | Persistent storage, Flyway version-controlled schema, real-time leaderboard ranking |
-| **Storage** | Local Storage (`uploads/`) / Azure Blob Storage / Cloudinary | Storage abstraction for study documents, group chat multimedia, avatars, with fallback |
-| **Infrastructure** | Docker, Docker Compose, Terraform, GitHub Actions | Containerization, deployment automation, CI/CD pipelines |
+| **Backend** | Java 21, Spring Boot 3.3.1, Spring Security 6 (JWT + OAuth2), Spring Data JPA, Lettuce Redis, STOMP | RESTful APIs, XP/Level calculation, Anti-Cheat validation, Flyway migrations, Redis leaderboard + fallback, WebSocket broker, Group chat engine |
+| **Database** | PostgreSQL 15, Redis 7 (Sorted Sets & Cache) | Persistent storage, Flyway version-controlled schema, real-time leaderboard ranking, popularity scoring |
+| **Storage** | Azure Blob Storage / Cloudinary / Local Fallback | Study documents, chat media attachments, voice notes, and user avatars |
+| **Infrastructure** | Docker, Docker Compose, Terraform, GitHub Actions | Containerization, deployment automation, CI/CD pipelines (Backend & Frontend) |
 
 ---
 
-## 2. Database State & Flyway Migrations (Current: `V18`)
+## 2. Database State & Flyway Migrations (Current: `V19`)
 
 | Version | Migration Script | Description & Table Changes |
 | :--- | :--- | :--- |
@@ -37,9 +37,10 @@
 | **V15** | `V15__create_countdown_and_preset_tables.sql` | Created `system_preset_exams` & `countdown_events` with initial Vietnam exam seeds (THPT QG, DGNL) |
 | **V16** | `V16__add_community_events_and_tracker_counts.sql` | Added `created_by_user_id`, `is_community_event`, `tracker_count` to preset exams |
 | **V17** | `V17__add_community_events_and_tracker_counts.sql` | Schema consistency check for community exam sharing & tracker counter sync |
-| **V18** | `V18__create_community_chat_tables.sql` | Created Community & Group Real-time Chat subsystem: `chat_groups`, `group_members`, `group_join_requests`, `group_invites`, `group_messages`, `message_attachments`, `message_reactions` |
+| **V18** | `V18__create_community_chat_tables.sql` | Comprehensive Community Group Chat system: `chat_groups`, `group_members`, `group_join_requests`, `group_messages`, `message_mentions`, `message_attachments`, `message_reactions`, `group_pinned_messages`, `group_invite_links` |
+| **V19** | `V19__add_soft_delete_to_chat_groups.sql` | Added soft delete columns `deleted_at` and `deleted_by` to `chat_groups` with indexes |
 
-> **Next Flyway Migration to use**: `V19__<description>.sql`. **Never alter `V1` - `V18`**.
+> **Next Flyway Migration to use**: `V20__<description>.sql`. **Never alter `V1` - `V19`**.
 
 ---
 
@@ -53,21 +54,25 @@
 | **PresenceController** | `/api/presence` | `/log` (logs presence status true/false during camera-monitored study sessions) |
 | **DocumentController** | `/api/documents` | `/list`, `/upload`, `/folder`, `/delete/{id}`, `/restore/{id}`, `/favorite/{id}`, `/preview/{id}`, `/download/{id}` |
 | **CountdownController** | `/api/countdown` | `/events` (CRUD user countdowns, pin widget), `/presets` (preset exams), `/community/create`, `/community/track` |
+| **GroupController** | `/api/groups` | `/explore` (trending/search), `/my-groups`, `/create`, `/{groupId}` (details/update/delete), `/{groupId}/members` (roles, kick, mute), `/{groupId}/join`, `/{groupId}/leave`, `/{groupId}/requests` (approve/reject), `/{groupId}/invites` (create/revoke links) |
+| **GroupChatRestController** | `/api/groups/{groupId}/messages` | Paginated message stream, search messages (FTS), pinned messages, edit message, delete message, reactions, mentions |
+| **GroupChatStompController** | WebSocket STOMP | `/app/chat.group.{groupId}.send`, `/app/chat.group.{groupId}.react`, `/app/chat.group.{groupId}.typing`, broadcasts to `/topic/group.{groupId}` |
+| **ChatMediaController** | `/api/chat/media` | Upload chat media attachments (images, video, audio voice notes, study documents) |
+| **GroupInvitePublicController** | `/api/invite/{code}` | Public invite link resolution, metadata preview, and direct join verification |
 | **LeaderboardController** | `/api/leaderboard` | `/daily`, `/weekly`, `/monthly`, `/all-time` (Redis sorted sets with PostgreSQL fallback) |
 | **FriendshipController** | `/api/friends` | `/list`, `/requests`, `/send/{id}`, `/accept/{id}`, `/reject/{id}`, `/unfriend/{id}` |
 | **MessageController** | `/api/messages` | `/conversations`, `/{friendId}` (paginated direct messages) |
-| **GroupController** | `/api/v1/chat/groups` | `/`, `/{id}`, `/my-groups`, `/popular`, `/search`, `/{id}/join`, `/{id}/leave` |
-| **GroupMemberController** | `/api/v1/chat/groups/{groupId}/members` | `/`, `/{userId}/role`, `/{userId}/kick`, `/{userId}/mute`, `/{userId}/unmute`, `/requests`, `/requests/{reqId}/approve`, `/requests/{reqId}/reject` |
-| **GroupInviteController** | `/api/v1/chat` | `/groups/{groupId}/invites` (create, list, revoke), `/invites/{code}` (preview), `/invites/{code}/join` |
-| **ChatMediaController** | `/api/v1/chat/groups/{groupId}` | `/attachments` (POST upload, GET list all media), `/share-document` (share from Drive), `/save-document/{attachmentId}` (1-Click save to personal library) |
-| **GroupChatStompController** | `/app` & `/topic` | STOMP handlers for group messages, reactions, pins, typing indicators, and system broadcasts |
 | **PaymentController** | `/api/payments` | `/packages`, `/create-order`, `/callback` (MoMo / VNPay simulation & validation) |
 | **AdminController** | `/api/admin` | `/users`, `/ban/{id}`, `/unban/{id}`, `/stats`, `/suspicious-activity` |
 | **HealthController** | `/api/health` | Service health checks |
 
+### Backend Background Schedulers
+- `SessionHeartbeatScheduler`: Periodically checks and auto-closes dead/abandoned study sessions without recent heartbeat.
+- `UnverifiedUserCleanupScheduler`: Automatically purges expired unverified registrations.
+
 ---
 
-## 4. Frontend Structure, Pages & Modals
+## 4. Frontend Structure, Pages, Modals & Widgets
 
 ### 4.1. Core Pages (`frontend/src/pages/`)
 - `Landing.jsx`: Public landing page with features showcase, CTA, and dynamic preview.
@@ -77,30 +82,31 @@
   - Smart Focus Timer (Stopwatch, Pomodoro 25/5 & custom intervals).
   - Study Calendar & Heatmap (GitHub-style activity contributions).
   - Countdown Widget & Floating Mini-Badge (Pinned exam/event tracking).
-  - Trending Study Groups Widget (`TrendingGroupsWidget.jsx`).
+  - Trending Groups Widget (Quick access to study communities).
   - Dashboard Customizer (Widget reordering and visibility toggles).
   - Real-time Leaderboard preview and Online Friends bar.
-- `Community.jsx`: Community Study Groups Hub (Explore trending groups, Search, My Groups, Create group, Direct Room transition).
+- `Community.jsx`: Community exploration hub to discover study groups, browse trending groups by popularity, search, create groups, and manage memberships.
 - `DocumentDrive.jsx`: Cloud storage drive with folder navigation, drag-and-drop file upload, search, favorites, trash bin, and preview.
 - `Profile.jsx`: User profile, XP level progression, stats, badges, account settings, and sound/theme toggles.
 - `AdminDashboard.jsx`: User administration, ban management, and system metrics.
 
-### 4.2. Key Modals & Components (`frontend/src/components/`)
-- `StudyTimer.jsx`: Focus timer supporting Pomodoro & Stopwatch with audio chimes and XP bonus calculation.
-- `TrendingGroupsWidget.jsx`: Dashboard widget for exploring trending study groups, quick join, and instant chat access.
-- `CountdownModal.jsx`, `CountdownWidget.jsx`, `FloatingCountdownBadge.jsx`: Multi-event countdown tracker with system presets, community sharing, auto-expiry, and widget pinning.
-- `DashboardCustomizerModal.jsx`: Customizes widget visibility (XP bar, timer, manual log, online users, trending groups, countdown, history).
-- `ChatModal.jsx` & `FriendsModal.jsx`: Direct peer messaging and friend management via STOMP WebSocket.
-- `UploadProgressPopup.jsx` & `AvatarUploader.jsx`: File upload visualizer with chunked/direct progress.
+### 4.2. Chat & Community Components (`frontend/src/components/chat/`)
+- `GroupChatRoom.jsx`: Full-featured Discord/Slack-style group chat interface with thread replies, rich attachments, voice notes, document sharing, reactions, typing indicator, pinning, and mention auto-complete.
+- `GroupMembersModal.jsx`: Member list, role management (`OWNER`, `ADMIN`, `MODERATOR`, `MEMBER`), kick, ban, and mute controls.
+- `GroupInviteModal.jsx`: Generate & manage invite links with expiration time and usage limits.
+- `GroupMediaModal.jsx`: Gallery modal showing shared media, files, and links in the group.
+- `EditGroupModal.jsx`: Update group metadata, privacy (`PUBLIC`, `PRIVATE`), join policy (`OPEN`, `APPROVAL_REQUIRED`), avatar, and cover image.
+- `ShareDocumentModal.jsx`: Select and attach documents directly from DocumentDrive into group chat.
+- `ChatToast.jsx` & `ConfirmModal.jsx`: Notification toasts and action confirmation dialogs.
 
-### 4.3. Community & Chat Sub-components (`frontend/src/components/chat/`)
-- `GroupChatRoom.jsx`: Full-screen real-time group chat room with STOMP messaging, message search, pinboard, @mentions autocomplete, inline reply bubbles, emoji reactions, drag-and-drop & clipboard paste file attachments, mute banner alert, and responsive pixel-perfect inputs.
-- `GroupMediaModal.jsx`: Shared multimedia & documents browser tab with category filtering (All, Media, Documents, Audio), search, direct download, image lightbox, and 1-Click Save to personal Drive.
-- `GroupMembersModal.jsx`: Member list management, moderation tools (mute/unmute with countdown, role promotion, kick), and join request approval queue.
-- `GroupInviteModal.jsx`: Invite link generator with usage count and expiry management.
-- `ShareDocumentModal.jsx`: Select and share study documents directly from user's personal drive into group chat.
-- `ChatToast.jsx`: Glassmorphic floating toast alert for smooth, non-intrusive notifications.
-- `ConfirmModal.jsx`: Modern glassmorphic action confirmation modal with loading feedback.
+### 4.3. Other Key Modals & Components (`frontend/src/components/`)
+- `StudyTimer.jsx`: Focus timer supporting Pomodoro & Stopwatch with audio chimes and XP bonus calculation.
+- `CameraPresenceTracker.jsx` & `utils/presenceDetector.js`: TensorFlow/MediaPipe webcam face detection; pauses timer on 5min continuous absence and deducts inactive XP.
+- `CountdownModal.jsx`, `CountdownWidget.jsx`, `FloatingCountdownBadge.jsx`: Multi-event countdown tracker with system presets, community sharing, auto-expiry, and widget pinning.
+- `TrendingGroupsWidget.jsx`: Dashboard widget showing active/trending study groups.
+- `DashboardCustomizerModal.jsx`: Customizes widget visibility and dashboard layout.
+- `ChatModal.jsx` & `FriendsModal.jsx`: 1-on-1 direct messaging and friend management.
+- `UploadProgressPopup.jsx` & `AvatarUploader.jsx`: File upload visualizer with progress indication.
 
 ### 4.4. Contexts (`frontend/src/context/`)
 - `AuthContext.jsx`: Authentication state, user profile, token persistence, and logout flow.
@@ -118,18 +124,19 @@
 - Presence Auto-pause: If user is absent for $\ge 5$ minutes continuously, timer pauses and inactive time is deducted from total study duration.
 - Anti-Cheat Max Limit: Single session capped at a maximum of 12 hours ($43,200\text{ seconds}$). Sessions exceeding this are clipped or rejected.
 
-### 5.2. Community Chat & Moderation Rules
-- Membership Roles: `OWNER` > `ADMIN` > `MODERATOR` > `MEMBER`.
-- Member Mute: Muted members retain group access and history reading but are blocked from sending messages, reactions, and uploading files until `muted_until` expires.
-- 1-Click Drive Save: Attachments shared in chat can be cloned directly into the recipient's personal `StudyDocument` storage with zero re-upload.
-- Database JSON Mapping: `message_attachments.metadata` column is PostgreSQL `JSONB` and must be mapped using `@JdbcTypeCode(SqlTypes.JSON)`.
-- Storage Provider: Automatically defaults to `local` (`backend/uploads/`) during local development and `azure` (Azure Blob Storage) on production profile (`prod`).
+### 5.2. Community Group Chat Rules & Policies
+- Group Roles: `OWNER` (full control, transfer ownership, delete group), `ADMIN` (manage settings, invites, members), `MODERATOR` (delete messages, mute members), `MEMBER` (chat, react, share documents).
+- Join Policy: `OPEN` (instant join) or `APPROVAL_REQUIRED` (requires admin/mod approval via join requests).
+- Privacy: `PUBLIC` (discoverable in explore/search) vs `PRIVATE` (joinable only via invite link).
+- Soft Delete: Deleted groups retain data with `deleted_at` and `deleted_by` for audit and recovery.
 
-### 5.3. Real-Time WebSocket Topics
-- Direct Messages: `/topic/messages.{userId}` or `/user/queue/messages`
-- Group Messages: `/topic/group.{groupId}.messages`
-- Group Reactions: `/topic/group.{groupId}.reactions`
-- Group Pinned: `/topic/group.{groupId}.pinned`
-- Group Typing: `/topic/group.{groupId}.typing`
-- Friend Status & Online Presence: `/topic/presence`
-- Live XP / Leaderboard Updates: `/topic/leaderboard`
+### 5.3. Multi-Language Standard
+- All keys must exist in `LanguageContext.jsx` under `translations.en`, `translations.vi`, and `translations.zh`.
+- Access using `t('section.key')` or `t('key')`.
+
+### 5.4. Real-Time WebSocket Topics
+- Group Chat Messages & Events: `/topic/group.{groupId}`
+- Group Typing Indicators: `/topic/group.{groupId}.typing`
+- Direct Messages: `/user/queue/messages` or `/topic/messages.{userId}`
+- Friend Presence Updates: `/topic/presence`
+- Live Leaderboard Updates: `/topic/leaderboard`
