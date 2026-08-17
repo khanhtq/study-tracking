@@ -219,12 +219,12 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
           <div className="flex items-center gap-3">
             <button
               onClick={onBackToDashboard}
-              className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-slate-100 transition-colors"
             >
               ← Về Trang Chủ
             </button>
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-400" />
+              <Users className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
               <h1 className="text-sm font-bold text-slate-100 hidden sm:inline">{t('community_title')}</h1>
             </div>
           </div>
@@ -245,8 +245,8 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
       <div className="max-w-7xl mx-auto px-4 pt-8 pb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{t('community_title')}</h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">{t('community_subtitle')}</p>
+            <h2 className="text-2xl font-extrabold text-slate-100 tracking-tight">{t('community_title')}</h2>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">{t('community_subtitle')}</p>
           </div>
 
           {/* Search bar */}
@@ -257,19 +257,19 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
               placeholder="Tìm kiếm nhóm học tập..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500/50 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-colors shadow-inner"
+              className="w-full bg-slate-900/80 border border-slate-800 focus:border-indigo-500 rounded-2xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-400 focus:outline-none transition-colors shadow-inner"
             />
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex items-center gap-2 mt-6 border-b border-slate-800 pb-3">
           <button
             onClick={() => setActiveTab('explore')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'explore'
-                ? 'bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/40 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-500 dark:text-indigo-300 shadow-xs'
+                : 'text-slate-400 hover:text-slate-100'
             }`}
           >
             <Compass className="w-4 h-4" />
@@ -280,8 +280,8 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
             onClick={() => setActiveTab('my')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'my'
-                ? 'bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/40 text-indigo-600 dark:text-indigo-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'bg-indigo-600/20 border border-indigo-500/40 text-indigo-500 dark:text-indigo-300 shadow-xs'
+                : 'text-slate-400 hover:text-slate-100'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -298,7 +298,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
             <span className="text-xs text-slate-400 uppercase tracking-widest">{t('loading_account')}</span>
           </div>
         ) : displayedGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-slate-400 dark:text-slate-500 text-xs gap-3">
+          <div className="flex flex-col items-center justify-center h-64 text-slate-400 text-xs gap-3">
             <Users className="w-10 h-10 opacity-30" />
             <p>{t('no_groups_found')}</p>
           </div>
@@ -311,31 +311,31 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
               return (
                 <div
                   key={group.id}
-                  className="flex flex-col justify-between p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow-md group"
+                  className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 transition-all shadow-sm hover:shadow-md group"
                 >
                   <div>
                     {/* Top Group Badges */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         {group.privacy === 'PUBLIC' ? (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20">
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                             <Globe className="w-2.5 h-2.5" />
                             {t('privacy_public')}
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-500/20">
+                          <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                             <Lock className="w-2.5 h-2.5" />
                             {t('privacy_private')}
                           </span>
                         )}
 
-                        <span className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-full">
                           {group.joinPolicy === 'OPEN' ? t('join_policy_open') : t('join_policy_approval')}
                         </span>
                       </div>
 
                       {group.currentUserRole && (
-                        <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20">
+                        <span className="text-[10px] font-bold text-indigo-500 dark:text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
                           {t(`role_${group.currentUserRole.toLowerCase()}`)}
                         </span>
                       )}
@@ -343,7 +343,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
 
                     {/* Group Title & Avatar */}
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 dark:bg-indigo-600/30 border border-indigo-500/30 flex items-center justify-center text-base font-bold text-indigo-600 dark:text-indigo-300 flex-shrink-0 overflow-hidden shadow-xs">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-base font-bold text-indigo-500 dark:text-indigo-300 flex-shrink-0 overflow-hidden shadow-xs">
                         {group.avatarUrl ? (
                           <img src={getFullAvatarUrl(group.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
@@ -351,10 +351,10 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                         )}
                       </div>
                       <div className="truncate">
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                        <h3 className="text-sm font-bold text-slate-100 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors truncate">
                           {group.name}
                         </h3>
-                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
+                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
                           {group.description || 'Chưa có mô tả cho nhóm học này.'}
                         </p>
                       </div>
@@ -362,55 +362,47 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                   </div>
 
                   {/* Group Stats & Action */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+                  <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between mt-3">
+                    <div className="flex items-center gap-3 text-[11px] text-slate-400">
                       <span>
-                        <strong className="text-slate-800 dark:text-slate-200">{group.memberCount}</strong> {t('members_count')}
+                        <strong className="text-slate-200">{group.memberCount}</strong> {t('members_count')}
                       </span>
                       <span>•</span>
-                      <span>
-                        <strong className="text-slate-800 dark:text-slate-200">{group.messageCount || 0}</strong> {t('messages_count')}
+                      <span className="flex items-center gap-1 text-indigo-500 dark:text-indigo-400 font-semibold bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20 text-[10px]">
+                        <Flame className="w-3 h-3" />
+                        {Math.round(group.popularityScore || 0)}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {isMember && (group.currentUserRole === 'OWNER' || group.currentUserRole === 'ADMIN') && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setGroupToEdit(group); }}
-                          className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors cursor-pointer"
-                          title={t('edit_group_info')}
-                        >
-                          <Settings className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {isMember && group.currentUserRole === 'OWNER' && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setGroupToDelete(group); }}
-                          className="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors cursor-pointer"
-                          title={t('delete_group')}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                       {isMember ? (
                         <button
                           onClick={() => setActiveGroupId(group.id)}
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Vào Chat</span>
+                          <span>Vào chat</span>
                         </button>
-                      ) : hasPending ? (
-                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-200 dark:border-amber-500/20">
-                          {t('pending_approval')}
-                        </span>
                       ) : (
                         <button
                           onClick={() => handleJoinGroup(group)}
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                          disabled={joiningGroupId === group.id || hasPending}
+                          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
+                            hasPending
+                              ? 'bg-slate-800 text-slate-400 border border-slate-700 cursor-not-allowed'
+                              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
+                          }`}
                         >
-                          <span>{t('join_group_btn')}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          {joiningGroupId === group.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : hasPending ? (
+                            <span>{t('pending_approval')}</span>
+                          ) : (
+                            <>
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>{t('join_group_btn')}</span>
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
@@ -430,55 +422,55 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-950/40">
                 <div className="flex items-center gap-2">
                   <Plus className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{t('create_group_btn')}</h3>
+                  <h3 className="text-sm font-bold text-slate-100">{t('create_group_btn')}</h3>
                 </div>
-                <button onClick={() => setIsCreateModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
+                <button onClick={() => setIsCreateModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-slate-200 cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleCreateGroup} className="p-5 space-y-4">
                 {createError && (
-                  <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+                  <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 text-xs">
                     {createError}
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{t('group_name')} *</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('group_name')} *</label>
                   <input
                     type="text"
                     required
                     placeholder={t('enter_group_name_placeholder')}
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-400 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{t('group_desc')}</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('group_desc')}</label>
                   <textarea
                     rows={3}
                     placeholder={t('enter_group_desc_placeholder')}
                     value={newGroupDesc}
                     onChange={(e) => setNewGroupDesc(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500/50 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none resize-none"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-400 focus:outline-none resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{t('group_privacy')}</label>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('group_privacy')}</label>
                     <select
                       value={newGroupPrivacy}
                       onChange={(e) => setNewGroupPrivacy(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-200 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
                     >
                       <option value="PUBLIC">{t('privacy_public')}</option>
                       <option value="PRIVATE">{t('privacy_private')}</option>
@@ -486,11 +478,11 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{t('join_policy')}</label>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('join_policy')}</label>
                     <select
                       value={newGroupJoinPolicy}
                       onChange={(e) => setNewGroupJoinPolicy(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-200 focus:outline-none"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
                     >
                       <option value="OPEN">{t('join_policy_open')}</option>
                       <option value="APPROVAL_REQUIRED">{t('join_policy_approval')}</option>
@@ -499,11 +491,11 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">{t('max_members')}</label>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">{t('max_members')}</label>
                   <select
                     value={newGroupMaxMembers}
                     onChange={(e) => setNewGroupMaxMembers(Number(e.target.value))}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-slate-200 focus:outline-none"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none"
                   >
                     <option value={50}>50 {t('members_count')}</option>
                     <option value={100}>100 {t('members_count')}</option>
@@ -517,7 +509,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 transition-colors cursor-pointer"
                   >
                     {t('drive_btn_cancel')}
                   </button>
@@ -544,9 +536,9 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4"
+              className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 text-center space-y-4"
             >
-              <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 dark:bg-indigo-600/30 border border-indigo-500/40 mx-auto flex items-center justify-center text-xl font-bold text-indigo-600 dark:text-indigo-300">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 mx-auto flex items-center justify-center text-xl font-bold text-indigo-500 dark:text-indigo-300">
                 {invitePreview.group?.avatarUrl ? (
                   <img src={getFullAvatarUrl(invitePreview.group.avatarUrl)} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
                 ) : (
@@ -555,9 +547,9 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
               </div>
 
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">{invitePreview.group?.name}</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{invitePreview.group?.description || 'Bạn được mời tham gia nhóm học tập này.'}</p>
-                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                <h3 className="text-base font-bold text-slate-100">{invitePreview.group?.name}</h3>
+                <p className="text-xs text-slate-400 mt-1">{invitePreview.group?.description || 'Bạn được mời tham gia nhóm học tập này.'}</p>
+                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 mt-2">
                   <span>{invitePreview.group?.memberCount} thành viên</span>
                 </div>
               </div>
@@ -568,16 +560,17 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     setInvitePreview(null);
                     setInviteCodeToJoin(null);
                   }}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800/60 transition-colors cursor-pointer"
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 bg-slate-800/60 transition-colors cursor-pointer"
                 >
                   {t('drive_btn_cancel')}
                 </button>
                 <button
-                  onClick={handleJoinViaInvite}
-                  disabled={joiningInvite || !invitePreview.isValid}
-                  className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                  onClick={handleAcceptInvite}
+                  disabled={joiningGroupId !== null}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {joiningInvite ? <Loader2 className="w-3.5 h-3.5 animate-spin mx-auto" /> : 'Tham gia ngay'}
+                  {joiningGroupId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  <span>{t('join_group_btn')}</span>
                 </button>
               </div>
             </motion.div>
