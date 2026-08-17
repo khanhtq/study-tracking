@@ -355,6 +355,12 @@ const translations = {
     footer_contact_email: "Email liên hệ",
     footer_address: "Địa chỉ",
     footer_copyright: "Ứng dụng gamification hỗ trợ theo dõi thời gian học tập, thăng cấp XP và duy trì thói quen học tập hiệu quả.",
+    footer_donate_title: "Ủng hộ phát triển",
+    footer_donate_desc: "Mọi sự đóng góp đều là nguồn động lực to lớn giúp duy trì máy chủ và phát triển tính năng mới.",
+    footer_bank_name: "Ngân hàng MB Bank",
+    footer_bank_acc: "STK",
+    footer_bank_holder: "Chủ TK",
+    footer_copied_stk: "Đã sao chép số tài khoản!",
 
     // user profile & settings
     profile_seo_title: "Trang Cá Nhân & Cài Đặt - Study XP Tracker",
@@ -1104,6 +1110,12 @@ const translations = {
     footer_contact_email: "Contact Email",
     footer_address: "Address",
     footer_copyright: "Gamified learning application to track study hours, level up XP, and build long-term study habits.",
+    footer_donate_title: "Support Project",
+    footer_donate_desc: "Every contribution provides great motivation to maintain servers and develop new features.",
+    footer_bank_name: "MB Bank",
+    footer_bank_acc: "Account No.",
+    footer_bank_holder: "Account Name",
+    footer_copied_stk: "Copied account number!",
 
     // user profile & settings
     profile_seo_title: "Profile & Settings - Study XP Tracker",
@@ -1689,6 +1701,12 @@ const translations = {
     footer_contact_email: "联系邮箱",
     footer_address: "地址",
     footer_copyright: "游戏化学习应用，用于跟踪学习时间、提升 XP 等级并建立长期学习习惯。",
+    footer_donate_title: "支持项目发展",
+    footer_donate_desc: "每一份支持都是维护服务器和持续开发新功能的巨大动力。",
+    footer_bank_name: "MB 银行 (MB Bank)",
+    footer_bank_acc: "银行账号",
+    footer_bank_holder: "开户姓名",
+    footer_copied_stk: "已复制银行账号！",
 
     // user profile & settings
     profile_seo_title: "个人资料与设置 - Study XP Tracker",
