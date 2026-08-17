@@ -24,6 +24,18 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
+const formatBytes = formatFileSize;
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString([], { month: 'numeric', day: 'numeric', year: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
 export default function GroupMediaModal({ groupId, groupName, isOpen, onClose }) {
   const { t } = useLanguage();
   const { user: currentUser } = useAuth();
