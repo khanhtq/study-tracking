@@ -59,12 +59,12 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
       await loadData();
 
       if (group.joinPolicy === 'OPEN') {
-        showToast(`Đã tham gia nhóm "${group.name}"!`, 'success');
+        showToast(t('joined_badge') || `Đã tham gia nhóm "${group.name}"!`, 'success');
         if (onOpenGroup) {
           onOpenGroup(group.id);
         }
       } else {
-        showToast('Đã gửi yêu cầu tham gia. Vui lòng chờ phê duyệt!', 'info');
+        showToast(t('pending_approval') || 'Đã gửi yêu cầu tham gia. Vui lòng chờ phê duyệt!', 'info');
       }
     } catch (err) {
       showToast(err.message || 'Không thể tham gia nhóm.', 'error');
@@ -88,7 +88,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
   };
 
   return (
-    <div className="glass-panel border border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col justify-between">
+    <div className="glass-panel rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col justify-between border border-slate-200 dark:border-slate-800/80">
       {/* Toast popup for widget */}
       <AnimatePresence>
         {widgetToast && (
@@ -115,55 +115,57 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
       <div>
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
-              <Flame className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
+              <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
-                <span>{t('widget_trendingGroups_name') || 'Nhóm học tập & Cộng đồng'}</span>
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <span>{t('widget_trendingGroups_name') || t('community_title') || 'Nhóm học tập & Cộng đồng'}</span>
               </h3>
-              <p className="text-[11px] text-slate-400">
-                Thảo luận, chia sẻ tài liệu và cùng nhau tiến bộ
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {t('community_subtitle') || 'Thảo luận, chia sẻ tài liệu và cùng nhau tiến bộ'}
               </p>
             </div>
           </div>
 
           <button
             onClick={() => onNavigateCommunity && onNavigateCommunity()}
-            className="flex items-center gap-1 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors p-1.5 rounded-xl hover:bg-indigo-500/10"
-            title="Khám phá tất cả nhóm"
+            className="flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors p-1.5 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-500/10 cursor-pointer"
+            title={t('explore_groups')}
           >
-            <span className="hidden sm:inline">Khám phá</span>
+            <span className="hidden sm:inline">{t('explore_groups')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 border border-slate-800/80 rounded-2xl mb-4">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl mb-4">
           <button
             onClick={() => setActiveTab('trending')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'trending'
-                ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
-            <span>Xu hướng</span>
+            <span>{t('explore_groups')}</span>
           </button>
           <button
             onClick={() => setActiveTab('my')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'my'
-                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Nhóm của tôi</span>
+            <span>{t('my_groups')}</span>
             {myGroups.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                activeTab === 'my' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-300'
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                activeTab === 'my'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
               }`}>
                 {myGroups.length}
               </span>
@@ -175,14 +177,14 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
       {/* Body: Groups list */}
       <div className="space-y-2.5 min-h-[220px]">
         {loading ? (
-          <div className="flex flex-col items-center justify-center h-48 gap-2 text-slate-500 text-xs">
+          <div className="flex flex-col items-center justify-center h-48 gap-2 text-slate-400 text-xs">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-            <span>Đang tải nhóm học tập...</span>
+            <span>{t('loading_account')}</span>
           </div>
         ) : activeTab === 'trending' ? (
           popularGroups.length === 0 ? (
-            <div className="text-center py-8 text-xs text-slate-500">
-              Chưa có nhóm nào đang hoạt động. Hãy tạo nhóm mới!
+            <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400">
+              {t('no_groups_found')}
             </div>
           ) : (
             popularGroups.slice(0, 4).map((group) => {
@@ -191,10 +193,10 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                 <div
                   key={group.id}
                   onClick={() => handleGroupClick(group)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/40 border border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-900/60 transition-all cursor-pointer group"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-white/90 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900/60 transition-all cursor-pointer group shadow-xs hover:shadow-sm"
                 >
                   <div className="flex items-center gap-3 overflow-hidden pr-2">
-                    <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-indigo-600/30 to-violet-600/30 border border-slate-700/60 flex items-center justify-center flex-shrink-0 text-slate-200 font-bold text-sm">
+                    <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-indigo-600 dark:text-indigo-300 font-bold text-sm shadow-xs">
                       {group.avatarUrl ? (
                         <img src={getFullAvatarUrl(group.avatarUrl)} alt={group.name} className="w-full h-full object-cover" />
                       ) : (
@@ -204,23 +206,23 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
 
                     <div className="overflow-hidden">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-200 group-hover:text-indigo-400 transition-colors truncate">
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                           {group.name}
                         </span>
                         {group.privacy === 'PRIVATE' ? (
-                          <Lock className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                          <Lock className="w-3 h-3 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                         ) : (
-                          <Globe className="w-3 h-3 text-indigo-400 flex-shrink-0" />
+                          <Globe className="w-3 h-3 text-indigo-500 dark:text-indigo-400 flex-shrink-0" />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                         <span className="flex items-center gap-1">
-                          <Users className="w-3 h-3 text-slate-500" />
-                          {group.memberCount} thành viên
+                          <Users className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                          {group.memberCount} {t('members_count')}
                         </span>
                         <span>•</span>
-                        <span className="flex items-center gap-1 text-amber-400/90 font-medium">
-                          <Flame className="w-3 h-3" />
+                        <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-500/20 text-[10px]">
+                          <Flame className="w-3 h-3 text-indigo-500" />
                           {Math.round(group.popularityScore || 0)}
                         </span>
                       </div>
@@ -234,7 +236,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                           e.stopPropagation();
                           handleGroupClick(group);
                         }}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-bold transition-all"
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold transition-all cursor-pointer shadow-xs"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Vào chat</span>
@@ -243,20 +245,20 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                       <button
                         onClick={(e) => handleJoinGroup(e, group)}
                         disabled={isJoining || group.hasPendingRequest}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md ${
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
                           group.hasPendingRequest
-                            ? 'bg-slate-800 text-slate-400 cursor-not-allowed'
+                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
                         }`}
                       >
                         {isJoining ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : group.hasPendingRequest ? (
-                          <span>Chờ duyệt</span>
+                          <span>{t('pending_approval')}</span>
                         ) : (
                           <>
                             <Plus className="w-3.5 h-3.5" />
-                            <span>Tham gia</span>
+                            <span>{t('join_group_btn')}</span>
                           </>
                         )}
                       </button>
@@ -269,12 +271,12 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
         ) : (
           myGroups.length === 0 ? (
             <div className="text-center py-8 space-y-2">
-              <p className="text-xs text-slate-400">Bạn chưa tham gia nhóm học tập nào</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t('no_groups_found')}</p>
               <button
                 onClick={() => setActiveTab('trending')}
-                className="px-4 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-xs font-bold transition-all"
+                className="px-4 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-600/20 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-200 dark:border-indigo-500/30 text-xs font-bold transition-all cursor-pointer"
               >
-                Khám phá nhóm sôi nổi ngay
+                {t('explore_groups')}
               </button>
             </div>
           ) : (
@@ -282,10 +284,10 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
               <div
                 key={group.id}
                 onClick={() => handleGroupClick(group)}
-                className="flex items-center justify-between p-3 rounded-2xl bg-slate-950/40 border border-slate-800/80 hover:border-indigo-500/40 hover:bg-slate-900/60 transition-all cursor-pointer group"
+                className="flex items-center justify-between p-3 rounded-2xl bg-white/90 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900/60 transition-all cursor-pointer group shadow-xs hover:shadow-sm"
               >
                 <div className="flex items-center gap-3 overflow-hidden pr-2">
-                  <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-indigo-600/30 to-violet-600/30 border border-slate-700/60 flex items-center justify-center flex-shrink-0 text-slate-200 font-bold text-sm">
+                  <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-indigo-600 dark:text-indigo-300 font-bold text-sm shadow-xs">
                     {group.avatarUrl ? (
                       <img src={getFullAvatarUrl(group.avatarUrl)} alt={group.name} className="w-full h-full object-cover" />
                     ) : (
@@ -295,20 +297,20 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
 
                   <div className="overflow-hidden">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-slate-200 group-hover:text-indigo-400 transition-colors truncate">
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                         {group.name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                       <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-slate-500" />
-                        {group.memberCount} thành viên
+                        <Users className="w-3 h-3 text-slate-400 dark:text-slate-500" />
+                        {group.memberCount} {t('members_count')}
                       </span>
                       {group.currentUserRole && (
                         <>
                           <span>•</span>
-                          <span className="text-indigo-300 font-semibold text-[10px] bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20">
-                            {group.currentUserRole}
+                          <span className="text-indigo-600 dark:text-indigo-300 font-semibold text-[10px] bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-200 dark:border-indigo-500/20">
+                            {t(`role_${group.currentUserRole.toLowerCase()}`) || group.currentUserRole}
                           </span>
                         </>
                       )}
@@ -321,7 +323,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                     e.stopPropagation();
                     handleGroupClick(group);
                   }}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex-shrink-0"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 flex-shrink-0 cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Vào chat</span>
@@ -333,13 +335,13 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
       </div>
 
       {/* Footer link to community */}
-      <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-        <span>Hơn 100+ bạn học đang hoạt động</span>
+      <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>{t('community_title')}</span>
         <button
           onClick={() => onNavigateCommunity && onNavigateCommunity()}
-          className="font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors cursor-pointer"
         >
-          Xem tất cả nhóm →
+          {t('explore_groups')} →
         </button>
       </div>
     </div>

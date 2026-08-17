@@ -6,9 +6,9 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="border-t border-slate-900 bg-slate-950/90 backdrop-blur-md pt-10 pb-8 mt-20 relative z-10 text-slate-400 text-sm">
+    <footer className="border-t border-slate-800 bg-slate-950/90 backdrop-blur-md pt-10 pb-8 mt-20 relative z-10 text-slate-400 text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-900/80">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-800/80">
           
           {/* Brand Column */}
           <div className="space-y-3">
