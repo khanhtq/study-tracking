@@ -481,7 +481,7 @@ export default function GroupMembersModal({ groupId, currentRole, isOpen, onClos
                               </span>
                             ) : (
                               <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${
-                                isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950'
+                                isSelected ? 'bg-indigo-600 border-indigo-500 text-white' : 'border-slate-300 dark:border-slate-700 bg-slate-900 dark:bg-slate-950'
                               }`}>
                                 {isSelected && <Check className="w-3.5 h-3.5" />}
                               </div>

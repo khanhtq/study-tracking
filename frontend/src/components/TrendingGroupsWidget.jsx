@@ -139,13 +139,13 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 border border-slate-800 rounded-2xl mb-4">
+        <div className="flex items-center gap-1.5 p-1 bg-[#EEF0F3] dark:bg-slate-950/60 border border-[#D1D5DB] dark:border-slate-800 rounded-2xl mb-4">
           <button
             onClick={() => setActiveTab('trending')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'trending'
                 ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-400 hover:text-slate-100'
+                : 'bg-[#F4F4F6] hover:bg-[#E5E7EB] dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-[#D1D5DB] dark:border-slate-700 text-[#1F2937] dark:text-slate-200 shadow-xs'
             }`}
           >
             <Flame className="w-3.5 h-3.5" />
@@ -156,16 +156,16 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'my'
                 ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-400 hover:text-slate-100'
+                : 'bg-[#F4F4F6] hover:bg-[#E5E7EB] dark:bg-slate-800/80 dark:hover:bg-slate-800 border border-[#D1D5DB] dark:border-slate-700 text-[#1F2937] dark:text-slate-200 shadow-xs'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             <span>{t('my_groups')}</span>
             {myGroups.length > 0 && (
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 activeTab === 'my'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-800 text-slate-300'
+                  ? 'bg-white/25 text-white'
+                  : 'bg-[#D1D5DB] dark:bg-slate-700 text-[#1F2937] dark:text-slate-200'
               }`}>
                 {myGroups.length}
               </span>
@@ -193,7 +193,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                 <div
                   key={group.id}
                   onClick={() => handleGroupClick(group)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all cursor-pointer group shadow-sm"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/60 border border-[#E5E7EB] dark:border-slate-800 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer group shadow-sm"
                 >
                   <div className="flex items-center gap-3 overflow-hidden pr-2">
                     <div className="w-10 h-10 rounded-2xl overflow-hidden bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300 font-bold text-sm shadow-xs">
@@ -284,10 +284,10 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
               <div
                 key={group.id}
                 onClick={() => handleGroupClick(group)}
-                className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-900 transition-all cursor-pointer group shadow-sm"
+                className="flex items-center justify-between p-3 rounded-2xl bg-[#F9FAFB] dark:bg-slate-900/60 border border-[#E5E7EB] dark:border-slate-800 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer group shadow-sm"
               >
                 <div className="flex items-center gap-3 overflow-hidden pr-2">
-                  <div className="w-10 h-10 rounded-2xl overflow-hidden bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-indigo-500 dark:text-indigo-300 font-bold text-sm shadow-xs">
+                  <div className="w-10 h-10 rounded-2xl overflow-hidden bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-indigo-700 dark:text-indigo-300 font-bold text-sm shadow-xs">
                     {group.avatarUrl ? (
                       <img src={getFullAvatarUrl(group.avatarUrl)} alt={group.name} className="w-full h-full object-cover" />
                     ) : (
@@ -297,7 +297,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
 
                   <div className="overflow-hidden">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-slate-100 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors truncate">
+                      <span className="text-xs font-bold text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                         {group.name}
                       </span>
                     </div>
@@ -309,7 +309,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                       {group.currentUserRole && (
                         <>
                           <span>•</span>
-                          <span className="text-indigo-600 dark:text-indigo-300 font-semibold text-[10px] bg-indigo-500/10 px-1.5 py-0.2 rounded border border-indigo-500/20">
+                          <span className="text-indigo-700 dark:text-indigo-300 font-bold text-[10px] bg-indigo-500/15 px-1.5 py-0.2 rounded border border-indigo-500/30">
                             {t(`role_${group.currentUserRole.toLowerCase()}`) || group.currentUserRole}
                           </span>
                         </>
@@ -324,7 +324,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
                       e.stopPropagation();
                       handleGroupClick(group);
                     }}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all cursor-pointer shadow-xs"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Vào chat</span>

@@ -37,11 +37,11 @@ export default function FloatingCountdownBadge({ activeCountdown, onClick }) {
       >
         <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse shrink-0" />
         
-        <span className="hidden sm:inline text-xs font-semibold text-slate-200 truncate max-w-[160px]">
+        <span className="hidden sm:inline text-xs font-bold text-slate-100 truncate max-w-[160px]">
           {titleText}
         </span>
 
-        <div className="bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full shrink-0">
+        <div className="bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-mono font-bold text-xs px-2 py-0.5 rounded-full shrink-0">
           {daysRemaining} {t('countdown_days')}
         </div>
 

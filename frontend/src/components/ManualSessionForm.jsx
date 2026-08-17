@@ -271,7 +271,7 @@ function ManualSessionForm({ onSuccess }) {
               <input
                 type="text"
                 placeholder={t('goal_subject_placeholder')}
-                className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 required
@@ -290,11 +290,11 @@ function ManualSessionForm({ onSuccess }) {
                   type="number"
                   min="0"
                   placeholder={t('hour')}
-                  className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                   value={hours}
                   onChange={(e) => setHours(e.target.value)}
                 />
-                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-500 uppercase">{t('hour').charAt(0).toUpperCase()}</span>
+                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-400 uppercase">{t('hour').charAt(0).toUpperCase()}</span>
               </div>
               <div className="relative">
                 <input
@@ -302,11 +302,11 @@ function ManualSessionForm({ onSuccess }) {
                   min="0"
                   max="59"
                   placeholder={t('minute')}
-                  className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                   value={minutes}
                   onChange={(e) => setMinutes(e.target.value)}
                 />
-                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-500 uppercase">{t('minute').charAt(0).toUpperCase()}</span>
+                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-400 uppercase">{t('minute').charAt(0).toUpperCase()}</span>
               </div>
               <div className="relative">
                 <input
@@ -314,11 +314,11 @@ function ManualSessionForm({ onSuccess }) {
                   min="0"
                   max="59"
                   placeholder={t('second')}
-                  className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-800 rounded-2xl px-3 py-3 text-center text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
                   value={seconds}
                   onChange={(e) => setSeconds(e.target.value)}
                 />
-                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-500 uppercase">{t('second').charAt(0).toUpperCase()}</span>
+                <span className="absolute bottom-1 right-2 text-[9px] font-bold text-slate-400 uppercase">{t('second').charAt(0).toUpperCase()}</span>
               </div>
             </div>
           </div>
@@ -368,10 +368,10 @@ function ManualSessionForm({ onSuccess }) {
                     exit={{ opacity: 0, x: -30 }}
                     className={`relative p-4 rounded-2xl border transition-all ${
                       isRunning 
-                        ? 'bg-indigo-500/5 border-indigo-500/30 shadow-[0_0_15px_rgba(99,102,241,0.1)]' 
+                        ? 'bg-indigo-500/10 border-indigo-500/40 shadow-[0_0_15px_rgba(99,102,241,0.1)]' 
                         : isCompleted
-                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                        : 'bg-slate-900/40 border-slate-800/80'
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-[#F9FAFB] dark:bg-slate-900/40 border border-[#E5E7EB] dark:border-slate-800/80'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-4">
@@ -379,27 +379,27 @@ function ManualSessionForm({ onSuccess }) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className={`font-bold text-sm truncate ${
-                            isCompleted ? 'text-slate-400 line-through' : 'text-slate-200'
+                            isCompleted ? 'text-slate-400 line-through' : 'text-slate-100'
                           }`}>
                             {goal.subject}
                           </span>
                           {isCompleted && (
-                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/20">
+                            <span className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">
                               {t('goal_status_completed')}
                             </span>
                           )}
                           {isRunning && (
-                            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded-full font-bold border border-indigo-500/20 animate-pulse">
+                            <span className="text-[10px] bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold border border-indigo-500/30 animate-pulse">
                               {t('goal_status_running')}
                             </span>
                           )}
                           {goal.status === 'paused' && (
-                            <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-500/20">
+                            <span className="text-[10px] bg-amber-500/15 text-amber-800 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-500/30">
                               {t('goal_status_paused')}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400 font-medium">
                           <span>{t('goal_set_label')} {formatDurationText(goal.durationSeconds)}</span>
                         </div>
                       </div>
@@ -408,7 +408,7 @@ function ManualSessionForm({ onSuccess }) {
                       <div className="flex items-center gap-3 shrink-0">
                         {/* Countdown display */}
                         <div className={`text-base font-extrabold tracking-tight tabular-nums ${
-                          isRunning ? 'text-indigo-400' : isCompleted ? 'text-emerald-400' : 'text-slate-300'
+                          isRunning ? 'text-indigo-600 dark:text-indigo-400' : isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-100'
                         }`}>
                           {formatTime(goal.remainingSeconds)}
                         </div>

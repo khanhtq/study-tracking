@@ -10,7 +10,7 @@ import EditGroupModal from '../components/chat/EditGroupModal';
 import SEO from '../components/SEO';
 import {
   Users, Search, Plus, Compass, MessageSquare, Shield,
-  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2, Trash2, Settings
+  Globe, Lock, Sparkles, ArrowRight, Loader2, X, Check, CheckCircle2, Trash2, Settings, Flame
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,6 +34,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
   const [activeGroupId, setActiveGroupId] = useState(validInitialId);
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
   const [groupToEdit, setGroupToEdit] = useState(null);
+  const [joiningGroupId, setJoiningGroupId] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -153,6 +154,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
 
   const handleJoinGroup = async (group) => {
     try {
+      setJoiningGroupId(group.id);
       await communityChatApi.joinGroup(group.id, {});
       await loadData();
       if (group.joinPolicy === 'OPEN') {
@@ -163,6 +165,8 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
       }
     } catch (err) {
       showToast(err.message || 'Không thể tham gia nhóm.', 'error');
+    } finally {
+      setJoiningGroupId(null);
     }
   };
 
@@ -565,11 +569,11 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                   {t('drive_btn_cancel')}
                 </button>
                 <button
-                  onClick={handleAcceptInvite}
-                  disabled={joiningGroupId !== null}
+                  onClick={handleJoinViaInvite}
+                  disabled={joiningInvite}
                   className="flex-1 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  {joiningGroupId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {joiningInvite ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   <span>{t('join_group_btn')}</span>
                 </button>
               </div>
