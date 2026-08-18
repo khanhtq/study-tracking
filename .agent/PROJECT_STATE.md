@@ -267,3 +267,11 @@
 - **Verification**:
   - Frontend production build (`npm run build`) completed with 0 errors (100% PASS).
 
+### 6.9. Agent Rules Discovery Standardization & Strict UI Icon Policy
+- **System Rules Initialization (`GEMINI.md` & `AGENTS.md`)**:
+  - Established root-level `GEMINI.md` and `AGENTS.md` and synchronized with `.agents/rules/development_guidelines.md` and `.agent/rules/development_guidelines.md`.
+  - Configured mandatory pre-task context checking of `PROJECT_STATE.md` and post-task synchronization on every turn.
+- **Strict UI Icon Policy (`NO REDUNDANT / EXCESSIVE ICONS`)**:
+  - Prohibited adding unnecessary, repetitive, or decorative clutter icons across all UI components, buttons, badges, tables, and headers.
+  - Required icons to be used strictly when they provide clear visual utility or improve UX affordance (action triggers, status badges), avoiding icon-stuffing across plain text labels.
+
