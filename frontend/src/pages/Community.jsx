@@ -52,6 +52,8 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
   const [newGroupPrivacy, setNewGroupPrivacy] = useState('PUBLIC');
   const [newGroupJoinPolicy, setNewGroupJoinPolicy] = useState('OPEN');
   const [newGroupMaxMembers, setNewGroupMaxMembers] = useState(1000);
+  const [selectedCountdownKey, setSelectedCountdownKey] = useState('');
+  const [availableCountdowns, setAvailableCountdowns] = useState([]);
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [groupToDelete, setGroupToDelete] = useState(null);
@@ -96,6 +98,15 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
     }
   }, [inviteCodeToJoin]);
 
+  // Load available countdowns when opening create modal
+  useEffect(() => {
+    if (isCreateModalOpen) {
+      communityChatApi.getAvailableCountdownsForCreation()
+        .then((data) => setAvailableCountdowns(Array.isArray(data) ? data : []))
+        .catch(() => setAvailableCountdowns([]));
+    }
+  }, [isCreateModalOpen]);
+
   const showToast = (message, type = 'success', title = null) => {
     setToast({ message, type, title });
   };
@@ -128,18 +139,58 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
       setCreatingGroup(true);
       setCreateError(null);
 
+      let linkedPresetExamId = null;
+      let linkedPresetExamCode = null;
+      let linkedCustomCountdownId = null;
+
+      if (selectedCountdownKey) {
+        const parts = selectedCountdownKey.split(':');
+        const type = parts[0];
+        const id = parts[1];
+        if (type === 'PRESET_ID' && id && id !== 'null' && id !== 'undefined') {
+          linkedPresetExamId = Number(id);
+        } else if (type === 'PRESET_CODE' && id && id !== 'null' && id !== 'undefined') {
+          linkedPresetExamCode = id;
+        } else if (type === 'PRESET' && id && id !== 'null' && id !== 'undefined') {
+          if (!isNaN(id)) linkedPresetExamId = Number(id);
+          else linkedPresetExamCode = id;
+        } else if (type === 'CUSTOM' && id && id !== 'null' && id !== 'undefined') {
+          linkedCustomCountdownId = id;
+        }
+      }
+
       const payload = {
         name: newGroupName.trim(),
         description: newGroupDesc.trim() || null,
         privacy: newGroupPrivacy,
         joinPolicy: newGroupJoinPolicy,
         maxMembers: Number(newGroupMaxMembers) || 1000,
+        linkedPresetExamId,
+        linkedPresetExamCode,
+        linkedCustomCountdownId,
       };
 
       const created = await communityChatApi.createGroup(payload);
+
+      // Fallback nếu backend cũ chưa hỗ trợ link trực tiếp trong createGroup
+      if (selectedCountdownKey && created?.id) {
+        try {
+          const linkPayload = {};
+          if (linkedPresetExamId) linkPayload.presetExamId = linkedPresetExamId;
+          if (linkedPresetExamCode) linkPayload.presetExamCode = linkedPresetExamCode;
+          if (linkedCustomCountdownId) linkPayload.customCountdownId = linkedCustomCountdownId;
+          await communityChatApi.linkCountdownToGroup(created.id, linkPayload);
+        } catch (linkErr) {
+          if (!linkErr.message?.includes('đã được liên kết')) {
+            console.warn('Lỗi liên kết sự kiện khi tạo nhóm:', linkErr);
+          }
+        }
+      }
+
       setIsCreateModalOpen(false);
       setNewGroupName('');
       setNewGroupDesc('');
+      setSelectedCountdownKey('');
       await loadData();
       showToast('Đã tạo nhóm học tập mới thành công!', 'success');
       if (created?.id) {
@@ -309,13 +360,20 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displayedGroups.map((group) => {
-              const isMember = group.isMember;
+              const isMember = group.isMember || !!group.currentUserRole;
               const hasPending = group.hasPendingRequest;
 
               return (
                 <div
                   key={group.id}
-                  className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 transition-all shadow-sm hover:shadow-md group"
+                  onClick={() => {
+                    if (isMember) {
+                      setActiveGroupId(group.id);
+                    } else {
+                      showToast(t('must_join_group_first') || 'Bạn chưa tham gia nhóm này. Vui lòng bấm Tham gia nhóm để vào phòng chat.', 'info');
+                    }
+                  }}
+                  className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 transition-all shadow-sm hover:shadow-md group cursor-pointer"
                 >
                   <div>
                     {/* Top Group Badges */}
@@ -381,7 +439,10 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     <div className="flex items-center gap-2">
                       {isMember ? (
                         <button
-                          onClick={() => setActiveGroupId(group.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveGroupId(group.id);
+                          }}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -389,7 +450,10 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleJoinGroup(group)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJoinGroup(group);
+                          }}
                           disabled={joiningGroupId === group.id || hasPending}
                           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
                             hasPending
@@ -507,6 +571,34 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     <option value={1000}>1,000 {t('members_count')}</option>
                     <option value={5000}>5,000 {t('members_count')}</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                    {t('link_event_on_create_group') || 'Liên kết sự kiện đếm ngược mục tiêu (Không bắt buộc)'}
+                  </label>
+                  <select
+                    value={selectedCountdownKey}
+                    onChange={(e) => setSelectedCountdownKey(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none cursor-pointer"
+                  >
+                    <option value="">{t('none_selected') || 'Không liên kết'}</option>
+                    {availableCountdowns.map((ev, idx) => {
+                      const value = ev.isPreset
+                        ? (ev.presetExamId ? `PRESET_ID:${ev.presetExamId}` : `PRESET_CODE:${ev.presetExamCode}`)
+                        : `CUSTOM:${ev.customCountdownId}`;
+                      const badge = ev.isOfficialDate ? ` (${t('countdown_official_badge') || 'Chính thức'})` : '';
+                      const daysText = ev.daysRemaining === 0 ? t('today_is_event') : `(${ev.daysRemaining}d)`;
+                      return (
+                        <option key={value || `preset-opt-${idx}`} value={value}>
+                          {ev.title}{badge} - {daysText}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {t('link_countdown_create_hint') || 'Sự kiện này sẽ được tự động liên kết để cả nhóm cùng theo dõi và đếm ngược mỗi ngày.'}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-end gap-2 pt-2">

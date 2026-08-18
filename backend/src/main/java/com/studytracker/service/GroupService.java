@@ -32,6 +32,7 @@ public class GroupService {
     private final GroupRankingService groupRankingService;
     private final GroupMessageRepository groupMessageRepository;
     private final org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+    private final GroupCountdownService groupCountdownService;
 
     private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
@@ -75,6 +76,20 @@ public class GroupService {
 
         if (savedGroup.getPrivacy() == GroupPrivacy.PUBLIC) {
             groupRankingService.updateGroupScore(savedGroup.getId(), 1.0);
+        }
+
+        // Tự động liên kết sự kiện đếm ngược nếu người dùng chọn khi tạo nhóm
+        if (request.getLinkedPresetExamId() != null || (request.getLinkedPresetExamCode() != null && !request.getLinkedPresetExamCode().isBlank()) || request.getLinkedCustomCountdownId() != null) {
+            try {
+                com.studytracker.dto.LinkCountdownRequest linkReq = com.studytracker.dto.LinkCountdownRequest.builder()
+                        .presetExamId(request.getLinkedPresetExamId())
+                        .presetExamCode(request.getLinkedPresetExamCode())
+                        .customCountdownId(request.getLinkedCustomCountdownId())
+                        .build();
+                groupCountdownService.linkCountdown(savedGroup.getId(), linkReq, currentUser);
+            } catch (Exception e) {
+                log.warn("Không thể tự động liên kết sự kiện khi tạo nhóm [{}]: {}", savedGroup.getId(), e.getMessage());
+            }
         }
 
         log.info("Người dùng [{}] đã tạo nhóm mới: [{}] ({})", currentUser.getUsername(), savedGroup.getName(), savedGroup.getId());
@@ -413,7 +428,7 @@ public class GroupService {
                 .group(group)
                 .sender(currentUser)
                 .messageType(GroupMessageType.SYSTEM)
-                .content("🔔 Thành viên [" + targetName + "] đã bị tắt quyền chat trong " + duration + " phút.")
+                .content("Thành viên [" + targetName + "] đã bị tắt quyền chat trong " + duration + " phút.")
                 .hasMentions(false)
                 .isEdited(false)
                 .isDeleted(false)
@@ -460,7 +475,7 @@ public class GroupService {
                 .group(group)
                 .sender(currentUser)
                 .messageType(GroupMessageType.SYSTEM)
-                .content("🔔 Thành viên [" + targetName + "] đã được mở lại quyền chat.")
+                .content("Thành viên [" + targetName + "] đã được mở lại quyền chat.")
                 .hasMentions(false)
                 .isEdited(false)
                 .isDeleted(false)

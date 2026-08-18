@@ -1092,6 +1092,89 @@ export const communityChatApi = {
     const query = type ? `?type=${encodeURIComponent(type)}` : '';
     return apiCall(`/v1/chat/groups/${groupId}/attachments${query}`);
   },
+
+  // Group Countdowns & Daily Milestone Links
+  getGroupCountdowns: (groupId) => {
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns`);
+  },
+  getAvailableCountdownsForCreation: async () => {
+    if (isGuestMode()) return [];
+    try {
+      const [presets, userCountdowns] = await Promise.all([
+        countdownApi.getPresets().catch(() => []),
+        countdownApi.getEvents().catch(() => []),
+      ]);
+
+      const now = new Date();
+      const result = [];
+      const presetCodes = new Set();
+
+      if (Array.isArray(presets)) {
+        presets.forEach((p) => {
+          if (p.examCode) presetCodes.add(p.examCode);
+          const targetDate = new Date(p.targetDate);
+          const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0) {
+            result.push({
+              presetExamId: p.id || null,
+              presetExamCode: p.examCode || null,
+              customCountdownId: null,
+              title: p.title,
+              category: p.category,
+              color: p.color,
+              targetDate: p.targetDate,
+              daysRemaining: diffDays,
+              isPreset: true,
+              isOfficialDate: Boolean(p.isOfficialDate),
+            });
+          }
+        });
+      }
+
+      if (Array.isArray(userCountdowns)) {
+        userCountdowns.forEach((c) => {
+          if (c.presetExamCode && presetCodes.has(c.presetExamCode)) return;
+          const targetDate = new Date(c.targetDate);
+          const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0) {
+            result.push({
+              presetExamId: null,
+              customCountdownId: c.id,
+              title: c.title,
+              category: c.category,
+              color: c.color,
+              targetDate: c.targetDate,
+              daysRemaining: diffDays,
+              isPreset: false,
+              isOfficialDate: false,
+            });
+          }
+        });
+      }
+
+      return result.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+    } catch (err) {
+      console.warn('Lỗi lấy sự kiện đếm ngược:', err);
+      return [];
+    }
+  },
+  getAvailableCountdownsToLink: (groupId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/available`);
+  },
+  linkCountdownToGroup: (groupId, payload) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/link`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  unlinkCountdownFromGroup: (groupId, linkId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/${linkId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 

@@ -331,6 +331,7 @@ public class CountdownService {
         int trackerCount = (int) Math.max(liveCount, storedCount);
 
         return SystemPresetExamDto.builder()
+                .id(preset.getId())
                 .examCode(preset.getExamCode())
                 .title(preset.getTitle())
                 .category(preset.getCategory())

@@ -34,4 +34,23 @@ public class CreateGroupRequest {
     private String avatarUrl;
 
     private String coverUrl;
+
+    private Long linkedPresetExamId;
+
+    private String linkedPresetExamCode;
+
+    private java.util.UUID linkedCustomCountdownId;
+
+    @com.fasterxml.jackson.annotation.JsonSetter("linkedCustomCountdownId")
+    public void setLinkedCustomCountdownIdFromString(String rawId) {
+        if (rawId == null || rawId.isBlank() || "null".equalsIgnoreCase(rawId.trim()) || "undefined".equalsIgnoreCase(rawId.trim())) {
+            this.linkedCustomCountdownId = null;
+        } else {
+            try {
+                this.linkedCustomCountdownId = java.util.UUID.fromString(rawId.trim());
+            } catch (Exception e) {
+                this.linkedCustomCountdownId = null;
+            }
+        }
+    }
 }

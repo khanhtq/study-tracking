@@ -41,8 +41,9 @@
 | **V19** | `V19__add_soft_delete_to_chat_groups.sql` | Added soft delete columns `deleted_at` and `deleted_by` to `chat_groups` with indexes |
 | **V20** | `V20__remove_non_thpt_presets.sql` | Purged default non-THPT preset exams and decoupled existing foreign keys to NULL |
 | **V21** | `V21__assign_thpt_to_admin.sql` | Assigned national THPT QG exam preset creator to Admin user |
+| **V22** | `V22__create_group_countdown_links_table.sql` | Created `group_countdown_links` table for group exam milestone tracking and daily automated briefings |
 
-> **Next Flyway Migration to use**: `V22__<description>.sql`. **Never alter `V1` - `V21`**.
+> **Next Flyway Migration to use**: `V23__<description>.sql`. **Never alter `V1` - `V22`**.
 
 ---
 
@@ -280,4 +281,45 @@
 - **Strict UI Icon Policy (`NO REDUNDANT / EXCESSIVE ICONS`)**:
   - Prohibited adding unnecessary, repetitive, or decorative clutter icons across all UI components, buttons, badges, tables, and headers.
   - Required icons to be used strictly when they provide clear visual utility or improve UX affordance (action triggers, status badges), avoiding icon-stuffing across plain text labels.
+
+### 6.11. Group Countdown Milestones & Daily Automated Broadcast (`feature/community-realtime-chat`)
+- **Group Exam Milestone Linking (`group_countdown_links`)**:
+  - Added Flyway migration `V22__create_group_countdown_links_table.sql` supporting foreign keys to `system_preset_exams` and `countdown_events` with cascading deletion.
+  - **Group Owner/Admin Privileges**: Allowed group creators and moderators to link official preset exams or custom countdowns to the group, and unlink anytime with confirmation modals.
+  - **Real-time Announcement**: Emitted real-time system message into the chat room immediately upon linking/unlinking events.
+- **Daily Automated Countdown Briefing (`GroupCountdownDailyScheduler.java`)**:
+  - Scheduled daily cron job running at 7:00 AM VN time (`@Scheduled(cron = "0 0 7 * * *", zone = "Asia/Ho_Chi_Minh")`).
+  - Aggregates active milestones, calculates accurate remaining days, formats a styled daily briefing card, and broadcasts to `/topic/group.{groupId}.messages` via WebSocket STOMP.
+  - Recorded `last_daily_notified_at` to prevent duplicate daily notifications on server restart.
+- **UI & UX Integration (`GroupChatRoom.jsx` & `GroupCountdownsModal.jsx`)**:
+  - **Header Milestone Pill**: Displays active countdown milestone badge in the group chat header with remaining days.
+  - **Group Countdowns Modal**: Complete management modal to view milestones, browse available exams, and link/unlink events.
+  - **Card-Style System Messages**: Upgraded multi-line countdown reminders into glassmorphism alert cards with gradient badges and clean typography.
+  - **Full i18n**: Added translation keys across Vietnamese, English, and Chinese.
+- **Automated Verification**:
+  - Added unit test suite `GroupCountdownServiceTest.java` (7/7 tests passing - 100% PASS).
+  - 62/62 full Maven backend unit tests passing (100% PASS).
+  - Vite production build completed with 0 errors (100% PASS).
+
+### 6.12. Unjoined Group Toast Protection & Clean System Messages Refinement
+- **Unjoined Group Toast Guard (`Community.jsx` & `TrendingGroupsWidget.jsx`)**:
+  - When clicking on any group card that the current user has not joined, the UI immediately notifies the user via Toast notification (`must_join_group_first`) instead of navigating into the room and failing with a 403 error.
+  - Added fallback auto-exit in `GroupChatRoom.jsx` if a non-member direct URL access occurs.
+- **Clean System Messages Formatting**:
+  - Stripped all raw `**` markdown bold symbols and decorative emojis from system announcements across `GroupCountdownService.java` and `GroupChatRoom.jsx`.
+  - Polished dropdown selector text in `GroupCountdownsModal.jsx` and added 100% i18n key coverage.
+
+### 6.13. Linking Countdown Milestones during Group Creation (`feature/community-realtime-chat`)
+- **Direct Event Linking on Group Creation**:
+  - Updated `CreateGroupRequest.java` and `GroupService.java` to support `linkedPresetExamId` and `linkedCustomCountdownId`.
+  - Added endpoint `GET /api/v1/chat/groups/countdowns/available` allowing the group creator to fetch active system preset exams and their own countdown events before the group is instantiated.
+  - Automatically establishes the milestone link and creates the initial system announcement upon group creation.
+- **Frontend Integration (`Community.jsx` & `api.js`)**:
+  - Direct retrieval of preset exams and user countdown events without 404 console errors.
+  - Enforced guaranteed auto-link call on group creation callback to ensure the milestone link is immediately active regardless of backend reload lifecycle.
+  - Added an intuitive milestone selector dropdown in the Create Group Modal with remaining day counters and official badges.
+  - Fully translated across Vietnamese, English, and Chinese in `LanguageContext.jsx`.
+- **Verification**:
+  - Maven tests `GroupCountdownServiceTest` and `GroupServiceTest` passing (10/10 PASS).
+  - Vite production build completed with 0 errors.
 

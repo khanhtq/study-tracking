@@ -12,6 +12,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SystemPresetExamDto {
+    private Long id;
     private String examCode;
     private String title;
     private String category;

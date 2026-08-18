@@ -8,13 +8,14 @@ import GroupMembersModal from './GroupMembersModal';
 import GroupInviteModal from './GroupInviteModal';
 import GroupMediaModal from './GroupMediaModal';
 import EditGroupModal from './EditGroupModal';
+import GroupCountdownsModal from './GroupCountdownsModal';
 import ChatToast from './ChatToast';
 import ConfirmModal from './ConfirmModal';
 import {
   ArrowLeft, Search, Pin, Users, Link2, FileText, Send, Paperclip,
   Smile, CornerDownRight, X, Edit2, Trash2, ChevronDown, Check,
   Download, Loader2, Play, Image as ImageIcon, Volume2, VolumeX, ShieldCheck,
-  Shield, Crown, Eye, Settings
+  Shield, Crown, Eye, Settings, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -65,6 +66,8 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [isCountdownsModalOpen, setIsCountdownsModalOpen] = useState(false);
+  const [groupCountdowns, setGroupCountdowns] = useState([]);
   const [isShareDocOpen, setIsShareDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,8 +99,20 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       setPinnedMessages(data?.pinnedMessages || []);
     } catch (err) {
       console.error('Lỗi tải chi tiết nhóm:', err);
+      if (err?.message?.includes('không phải là thành viên') || err?.response?.status === 403) {
+        if (onBack) onBack();
+      }
     } finally {
       setLoadingDetail(false);
+    }
+  }, [groupId, onBack]);
+
+  const loadGroupCountdowns = useCallback(async () => {
+    try {
+      const data = await communityChatApi.getGroupCountdowns(groupId);
+      setGroupCountdowns(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Lỗi tải đếm ngược nhóm:', err);
     }
   }, [groupId]);
 
@@ -111,15 +126,19 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       setTimeout(scrollToBottom, 100);
     } catch (err) {
       console.error('Lỗi tải tin nhắn:', err);
+      if (err?.message?.includes('không phải là thành viên') || err?.response?.status === 403) {
+        if (onBack) onBack();
+      }
     } finally {
       setLoadingMessages(false);
     }
-  }, [groupId]);
+  }, [groupId, onBack]);
 
   useEffect(() => {
     loadGroupDetail();
+    loadGroupCountdowns();
     loadInitialMessages();
-  }, [loadGroupDetail, loadInitialMessages]);
+  }, [loadGroupDetail, loadGroupCountdowns, loadInitialMessages]);
 
   // Đăng ký STOMP Broker Topics
   useEffect(() => {
@@ -535,15 +554,55 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">
-                {groupDetail?.group?.memberCount || 0} {t('members_count')}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] text-slate-400">
+                  {groupDetail?.group?.memberCount || 0} {t('members_count')}
+                </p>
+                {groupCountdowns.length > 0 && (
+                  <button
+                    onClick={() => setIsCountdownsModalOpen(true)}
+                    className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-400 text-[10px] font-semibold transition-all cursor-pointer truncate max-w-[200px]"
+                    title={t('group_countdowns')}
+                  >
+                    <Calendar className="w-3 h-3 flex-shrink-0 text-indigo-400" />
+                    <span className="truncate">{groupCountdowns[0].title}:</span>
+                    <span className="font-bold text-indigo-300 flex-shrink-0">
+                      {groupCountdowns[0].daysRemaining === 0
+                        ? t('today_is_event')
+                        : t('days_remaining_label').replace('{count}', groupCountdowns[0].daysRemaining)}
+                    </span>
+                    {groupCountdowns.length > 1 && (
+                      <span className="text-[9px] px-1 bg-indigo-500/30 rounded-full font-bold flex-shrink-0">
+                        +{groupCountdowns.length - 1}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-1.5">
+          {/* Group Countdowns Button */}
+          <button
+            onClick={() => setIsCountdownsModalOpen(true)}
+            className={`relative p-2 rounded-xl border transition-colors cursor-pointer ${
+              groupCountdowns.length > 0
+                ? 'bg-indigo-500/10 hover:bg-indigo-500/20 border-indigo-500/30 text-indigo-400 hover:text-indigo-300'
+                : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300 hover:text-slate-100'
+            }`}
+            title={t('group_countdowns')}
+          >
+            <Calendar className="w-4 h-4" />
+            {groupCountdowns.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center">
+                {groupCountdowns.length}
+              </span>
+            )}
+          </button>
+
           {/* Pinned Messages Button */}
           {pinnedMessages.length > 0 && (
             <button
@@ -719,10 +778,108 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               const isSystem = msg.messageType === 'SYSTEM';
 
               if (isSystem) {
+                const isCountdownBroadcast = msg.content?.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]');
+
+                if (isCountdownBroadcast) {
+                  const lines = (msg.content || '')
+                    .split('\n')
+                    .map((l) => l.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').trim())
+                    .filter(Boolean);
+
+                  const localizedLines = [];
+                  localizedLines.push(t('sys_msg_daily_briefing_subtitle') || 'Mục tiêu học tập sắp tới của nhóm:');
+                  localizedLines.push('');
+
+                  for (const line of lines) {
+                    if (
+                      line.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]') ||
+                      line.includes('Mục tiêu học tập') ||
+                      line.includes('Chúc cả nhóm')
+                    ) {
+                      continue;
+                    }
+
+                    // Match "• Title: Còn X ngày (date)"
+                    const daysMatch = line.match(/[•\-\*]?\s*(.+?):\s*Còn\s*(\d+)\s*ngày(?: nữa)?\s*\(([^)]+)\)/i);
+                    if (daysMatch) {
+                      const itemText = (t('sys_msg_daily_days_left') || '• {title}: Còn {days} ngày ({date})')
+                        .replace('{title}', daysMatch[1].trim())
+                        .replace('{days}', daysMatch[2].trim())
+                        .replace('{date}', daysMatch[3].trim());
+                      localizedLines.push(itemText);
+                      continue;
+                    }
+
+                    // Match "• Title: Hôm nay là ngày..."
+                    const todayMatch = line.match(/[•\-\*]?\s*(.+?):\s*Hôm nay là ngày/i);
+                    if (todayMatch) {
+                      const itemText = (t('sys_msg_daily_today_event') || '• {title}: Hôm nay là ngày thi/sự kiện chính thức!')
+                        .replace('{title}', todayMatch[1].trim());
+                      localizedLines.push(itemText);
+                      continue;
+                    }
+
+                    localizedLines.push(line);
+                  }
+
+                  localizedLines.push('');
+                  localizedLines.push(t('sys_msg_daily_footer') || 'Chúc cả nhóm có một ngày học tập tập trung và hiệu quả!');
+
+                  return (
+                    <div key={msg.id} className="flex justify-center my-3 px-3">
+                      <div className="max-w-md w-full p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-slate-200 shadow-sm">
+                        <div className="text-indigo-400 font-semibold text-xs mb-2 pb-1.5 border-b border-slate-800">
+                          {t('sys_msg_daily_briefing_title') || t('daily_countdown_reminder_badge') || 'Bản tin đếm ngược mục tiêu'}
+                        </div>
+                        <div className="text-xs leading-relaxed text-slate-300 whitespace-pre-line">
+                          {localizedLines.join('\n')}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Format single-line system messages dynamically
+                let localizedSingle = msg.content
+                  ? msg.content.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').replace(/\s+/g, ' ').trim()
+                  : '';
+
+                // 1. Link countdown: "[actor] đã liên kết mục tiêu đếm ngược [title] (còn [days] ngày)..."
+                const linkMatch = localizedSingle.match(/(?:\[?([^\]]+)\]?)\s+đã liên kết mục tiêu đếm ngược(?:\s*:)?\s*([^(]+?)\s*\(còn\s*(\d+)\s*ngày\)\s*vào nhóm/i);
+                if (linkMatch) {
+                  localizedSingle = (t('sys_msg_linked_countdown') || '{actor} đã liên kết mục tiêu đếm ngược {title} (còn {days} ngày) vào nhóm học tập.')
+                    .replace('{actor}', linkMatch[1].trim())
+                    .replace('{title}', linkMatch[2].trim())
+                    .replace('{days}', linkMatch[3].trim());
+                } else {
+                  // 2. Unlink countdown: "[actor] đã hủy liên kết mục tiêu đếm ngược [title] khỏi nhóm"
+                  const unlinkMatch = localizedSingle.match(/(?:\[?([^\]]+)\]?)\s+đã hủy liên kết mục tiêu đếm ngược(?:\s*:)?\s*(.+?)\s*khỏi nhóm/i);
+                  if (unlinkMatch) {
+                    localizedSingle = (t('sys_msg_unlinked_countdown') || '{actor} đã hủy liên kết mục tiêu đếm ngược {title} khỏi nhóm.')
+                      .replace('{actor}', unlinkMatch[1].trim())
+                      .replace('{title}', unlinkMatch[2].trim());
+                  } else {
+                    // 3. Mute member: "Thành viên [target] đã bị tắt quyền chat trong [duration] phút"
+                    const muteMatch = localizedSingle.match(/Thành viên\s*\[?([^\]]+)\]?\s*đã bị tắt quyền chat trong\s*(\d+)\s*phút/i);
+                    if (muteMatch) {
+                      localizedSingle = (t('sys_msg_muted_member') || 'Thành viên {target} đã bị tắt quyền chat trong {duration} phút.')
+                        .replace('{target}', muteMatch[1].trim())
+                        .replace('{duration}', muteMatch[2].trim());
+                    } else {
+                      // 4. Unmute member: "Thành viên [target] đã được mở lại quyền chat"
+                      const unmuteMatch = localizedSingle.match(/Thành viên\s*\[?([^\]]+)\]?\s*đã được mở lại quyền chat/i);
+                      if (unmuteMatch) {
+                        localizedSingle = (t('sys_msg_unmuted_member') || 'Thành viên {target} đã được mở lại quyền chat.')
+                          .replace('{target}', unmuteMatch[1].trim());
+                      }
+                    }
+                  }
+                }
+
                 return (
-                  <div key={msg.id} className="flex justify-center my-2">
-                    <span className="text-xs text-slate-300 bg-slate-900/90 px-3.5 py-1.5 rounded-full border border-slate-800 shadow-sm">
-                      {msg.content}
+                  <div key={msg.id} className="flex justify-center my-2 px-3">
+                    <span className="text-[11px] font-medium text-slate-400 bg-slate-900/60 px-3.5 py-1 rounded-full border border-slate-800/60 max-w-lg text-center leading-relaxed">
+                      {localizedSingle}
                     </span>
                   </div>
                 );
@@ -1250,6 +1407,16 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           onBack();
         }}
         isOwner={currentRole === 'OWNER'}
+      />
+
+      <GroupCountdownsModal
+        isOpen={isCountdownsModalOpen}
+        onClose={() => {
+          setIsCountdownsModalOpen(false);
+          loadGroupCountdowns();
+        }}
+        group={groupDetail?.group}
+        isOwnerOrMod={isModOrAbove}
       />
 
       {/* Image Preview Modal */}

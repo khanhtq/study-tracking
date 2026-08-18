@@ -81,9 +81,7 @@ export default function TrendingGroupsWidget({ onNavigateCommunity, onOpenGroup 
         onNavigateCommunity(group.id);
       }
     } else {
-      if (onNavigateCommunity) {
-        onNavigateCommunity(group.id);
-      }
+      showToast(t('must_join_group_first') || 'Bạn chưa tham gia nhóm này. Vui lòng bấm Tham gia nhóm trước!', 'info');
     }
   };
 
