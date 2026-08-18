@@ -1100,66 +1100,61 @@ export const communityChatApi = {
   getAvailableCountdownsForCreation: async () => {
     if (isGuestMode()) return [];
     try {
-      return await apiCall('/v1/chat/groups/countdowns/available');
-    } catch (err) {
-      // Fallback: kết hợp presets và countdowns hiện có
-      try {
-        const [presets, userCountdowns] = await Promise.all([
-          countdownApi.getPresets().catch(() => []),
-          countdownApi.getUserCountdowns().catch(() => []),
-        ]);
+      const [presets, userCountdowns] = await Promise.all([
+        countdownApi.getPresets().catch(() => []),
+        countdownApi.getEvents().catch(() => []),
+      ]);
 
-        const now = new Date();
-        const result = [];
-        const presetCodes = new Set();
+      const now = new Date();
+      const result = [];
+      const presetCodes = new Set();
 
-        if (Array.isArray(presets)) {
-          presets.forEach((p) => {
-            if (p.examCode) presetCodes.add(p.examCode);
-            const targetDate = new Date(p.targetDate);
-            const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0) {
-              result.push({
-                presetExamId: p.id,
-                customCountdownId: null,
-                title: p.title,
-                category: p.category,
-                color: p.color,
-                targetDate: p.targetDate,
-                daysRemaining: diffDays,
-                isPreset: true,
-                isOfficialDate: Boolean(p.isOfficialDate),
-              });
-            }
-          });
-        }
-
-        if (Array.isArray(userCountdowns)) {
-          userCountdowns.forEach((c) => {
-            if (c.presetExamCode && presetCodes.has(c.presetExamCode)) return;
-            const targetDate = new Date(c.targetDate);
-            const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 0) {
-              result.push({
-                presetExamId: null,
-                customCountdownId: c.id,
-                title: c.title,
-                category: c.category,
-                color: c.color,
-                targetDate: c.targetDate,
-                daysRemaining: diffDays,
-                isPreset: false,
-                isOfficialDate: false,
-              });
-            }
-          });
-        }
-
-        return result.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
-      } catch (fallbackErr) {
-        console.warn('Lỗi fallback lấy sự kiện đếm ngược:', fallbackErr);
-        return [];
+      if (Array.isArray(presets)) {
+        presets.forEach((p) => {
+          if (p.examCode) presetCodes.add(p.examCode);
+          const targetDate = new Date(p.targetDate);
+          const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0) {
+            result.push({
+              presetExamId: p.id,
+              customCountdownId: null,
+              title: p.title,
+              category: p.category,
+              color: p.color,
+              targetDate: p.targetDate,
+              daysRemaining: diffDays,
+              isPreset: true,
+              isOfficialDate: Boolean(p.isOfficialDate),
+            });
+          }
+        });
       }
+
+      if (Array.isArray(userCountdowns)) {
+        userCountdowns.forEach((c) => {
+          if (c.presetExamCode && presetCodes.has(c.presetExamCode)) return;
+          const targetDate = new Date(c.targetDate);
+          const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0) {
+            result.push({
+              presetExamId: null,
+              customCountdownId: c.id,
+              title: c.title,
+              category: c.category,
+              color: c.color,
+              targetDate: c.targetDate,
+              daysRemaining: diffDays,
+              isPreset: false,
+              isOfficialDate: false,
+            });
+          }
+        });
+      }
+
+      return result.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+    } catch (err) {
+      console.warn('Lỗi lấy sự kiện đếm ngược:', err);
+      return [];
     }
   },
   getAvailableCountdownsToLink: (groupId) => {

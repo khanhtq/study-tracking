@@ -162,6 +162,19 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
       };
 
       const created = await communityChatApi.createGroup(payload);
+
+      // Tự động liên kết sự kiện vào nhóm mới tạo
+      if (selectedCountdownKey && created?.id) {
+        try {
+          const linkPayload = {};
+          if (linkedPresetExamId) linkPayload.presetExamId = linkedPresetExamId;
+          if (linkedCustomCountdownId) linkPayload.customCountdownId = linkedCustomCountdownId;
+          await communityChatApi.linkCountdownToGroup(created.id, linkPayload);
+        } catch (linkErr) {
+          console.warn('Lỗi liên kết sự kiện khi tạo nhóm:', linkErr);
+        }
+      }
+
       setIsCreateModalOpen(false);
       setNewGroupName('');
       setNewGroupDesc('');
