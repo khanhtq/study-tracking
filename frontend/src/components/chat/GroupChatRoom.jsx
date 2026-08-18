@@ -775,14 +775,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                 const isCountdownBroadcast = msg.content?.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]');
                 if (isCountdownBroadcast) {
                   return (
-                    <div key={msg.id} className="flex justify-center my-3 px-2">
-                      <div className="max-w-md w-full p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-slate-100 shadow-xl backdrop-blur-md">
-                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-indigo-500/20 text-indigo-400 font-bold text-xs">
-                          <Calendar className="w-4 h-4 text-indigo-400" />
-                          <span>{t('daily_countdown_reminder_badge')}</span>
+                    <div key={msg.id} className="flex justify-center my-3 px-3">
+                      <div className="max-w-md w-full p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-slate-200 shadow-sm">
+                        <div className="text-indigo-400 font-semibold text-xs mb-2 pb-1.5 border-b border-slate-800">
+                          {t('daily_countdown_reminder_badge') || 'Bản tin đếm ngược mục tiêu'}
                         </div>
-                        <div className="text-xs sm:text-sm whitespace-pre-line leading-relaxed text-slate-200">
-                          {msg.content}
+                        <div className="text-xs leading-relaxed text-slate-300 whitespace-pre-line">
+                          {msg.content.replace('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]', '').trim()}
                         </div>
                       </div>
                     </div>
@@ -790,8 +789,8 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                 }
 
                 return (
-                  <div key={msg.id} className="flex justify-center my-2 px-2">
-                    <span className="text-xs text-slate-300 bg-slate-900/90 px-3.5 py-1.5 rounded-2xl border border-slate-800 shadow-sm max-w-md text-center whitespace-pre-line">
+                  <div key={msg.id} className="flex justify-center my-2 px-3">
+                    <span className="text-[11px] font-medium text-slate-400 bg-slate-900/60 px-3.5 py-1 rounded-full border border-slate-800/60 max-w-lg text-center leading-relaxed">
                       {msg.content}
                     </span>
                   </div>

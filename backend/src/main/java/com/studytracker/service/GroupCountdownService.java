@@ -190,7 +190,7 @@ public class GroupCountdownService {
 
         // Bắn tin nhắn thông báo vào phòng chat
         String actorName = managedUser.getDisplayName() != null ? managedUser.getDisplayName() : managedUser.getEmail();
-        String announcement = String.format("🎯 [%s] đã liên kết mục tiêu đếm ngược: **%s** (Còn **%d ngày**) vào nhóm học tập!", actorName, eventTitle, daysRemaining);
+        String announcement = String.format("%s đã liên kết mục tiêu đếm ngược %s (còn %d ngày) vào nhóm học tập.", actorName, eventTitle, daysRemaining);
         broadcastSystemMessage(group, managedUser, announcement);
 
         return mapToGroupCountdownDto(saved, now);
@@ -216,7 +216,7 @@ public class GroupCountdownService {
 
         // Bắn tin nhắn thông báo hủy liên kết vào nhóm
         String actorName = currentUser.getDisplayName() != null ? currentUser.getDisplayName() : currentUser.getUsername();
-        String announcement = String.format("🔔 [%s] đã hủy liên kết mục tiêu đếm ngược: **%s** khỏi nhóm.", actorName, eventTitle);
+        String announcement = String.format("%s đã hủy liên kết mục tiêu đếm ngược %s khỏi nhóm.", actorName, eventTitle);
         broadcastSystemMessage(group, currentUser, announcement);
     }
 
@@ -266,22 +266,22 @@ public class GroupCountdownService {
 
             // Xây dựng nội dung tin nhắn bản tin đếm ngược
             StringBuilder sb = new StringBuilder();
-            sb.append("🔔 **[BẢN TIN ĐẾM NGƯỢC HÔM NAY]**\n");
-            sb.append("📅 Mục tiêu học tập sắp tới của nhóm chúng ta:\n\n");
+            sb.append("[BẢN TIN ĐẾM NGƯỢC HÔM NAY]\n");
+            sb.append("Mục tiêu học tập sắp tới của nhóm:\n\n");
 
             for (GroupCountdownDto cd : activeCountdowns) {
                 LocalDate targetLocal = LocalDate.ofInstant(cd.getTargetDate(), VN_ZONE);
                 String formattedDate = targetLocal.format(DATE_FORMATTER);
                 if (cd.getDaysRemaining() == 0) {
-                    sb.append(String.format("🔥 **%s**: Hôm nay là ngày thi/sự kiện chính thức!\n", cd.getTitle()));
+                    sb.append(String.format("• %s: Hôm nay là ngày thi/sự kiện chính thức!\n", cd.getTitle()));
                 } else if (cd.getDaysRemaining() == 1) {
-                    sb.append(String.format("⏰ **%s**: Còn đúng **1 ngày** nữa (%s)!\n", cd.getTitle(), formattedDate));
+                    sb.append(String.format("• %s: Còn 1 ngày nữa (%s)\n", cd.getTitle(), formattedDate));
                 } else {
-                    sb.append(String.format("🎯 **%s**: Còn **%d ngày** (%s)\n", cd.getTitle(), cd.getDaysRemaining(), formattedDate));
+                    sb.append(String.format("• %s: Còn %d ngày (%s)\n", cd.getTitle(), cd.getDaysRemaining(), formattedDate));
                 }
             }
 
-            sb.append("\n💪 *Chúc cả nhóm có một ngày học tập tập trung và hiệu quả!*");
+            sb.append("\nChúc cả nhóm có một ngày học tập tập trung và hiệu quả!");
 
             // Lưu tin nhắn và phát STOMP
             User sender = group.getOwner();
