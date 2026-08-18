@@ -14,6 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AvailableCountdownDto {
     private Long presetExamId;
+    private String presetExamCode;
     private UUID customCountdownId;
     private String title;
     private String category;

@@ -93,6 +93,7 @@ public class GroupCountdownService {
                 long days = calculateDaysRemaining(preset.getTargetDate(), now);
                 result.add(AvailableCountdownDto.builder()
                         .presetExamId(preset.getId())
+                        .presetExamCode(preset.getExamCode())
                         .customCountdownId(null)
                         .title(preset.getTitle())
                         .category(preset.getCategory())

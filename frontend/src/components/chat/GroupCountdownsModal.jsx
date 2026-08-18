@@ -35,14 +35,43 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [linkedData, availableData] = await Promise.all([
-        communityChatApi.getGroupCountdowns(group.id),
-        isOwnerOrMod
-          ? communityChatApi.getAvailableCountdownsToLink(group.id).catch(() => [])
-          : Promise.resolve([]),
-      ]);
+      let linkedData = [];
+      try {
+        linkedData = await communityChatApi.getGroupCountdowns(group.id);
+      } catch (e) {
+        console.warn('Lỗi lấy sự kiện đếm ngược của nhóm:', e);
+      }
       setCountdowns(Array.isArray(linkedData) ? linkedData : []);
-      setAvailableEvents(Array.isArray(availableData) ? availableData : []);
+
+      if (isOwnerOrMod) {
+        let availableData = [];
+        try {
+          availableData = await communityChatApi.getAvailableCountdownsToLink(group.id);
+        } catch (e) {
+          console.warn('Lỗi lấy available countdowns từ endpoint nhóm, thử fallback:', e);
+        }
+
+        if (!Array.isArray(availableData) || availableData.length === 0) {
+          try {
+            const allAvailable = await communityChatApi.getAvailableCountdownsForCreation();
+            const linkedPresetCodes = new Set((linkedData || []).map((l) => l.presetExamCode).filter(Boolean));
+            const linkedPresetIds = new Set((linkedData || []).map((l) => l.presetExamId).filter(Boolean));
+            const linkedCustomIds = new Set((linkedData || []).map((l) => l.customCountdownId).filter(Boolean));
+
+            availableData = allAvailable.map((item) => ({
+              ...item,
+              isAlreadyLinked:
+                (item.presetExamId && linkedPresetIds.has(item.presetExamId)) ||
+                (item.presetExamCode && linkedPresetCodes.has(item.presetExamCode)) ||
+                (item.customCountdownId && linkedCustomIds.has(item.customCountdownId)),
+            }));
+          } catch (fallbackErr) {
+            console.warn('Lỗi fallback available countdowns:', fallbackErr);
+          }
+        }
+
+        setAvailableEvents(Array.isArray(availableData) ? availableData : []);
+      }
     } catch (err) {
       toast?.error(err.message || t('load_countdowns_error'));
     } finally {
@@ -58,10 +87,18 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
 
     try {
       setActionLoading(true);
-      const [type, id] = selectedEventKey.split(':');
+      const parts = selectedEventKey.split(':');
+      const type = parts[0];
+      const id = parts[1];
       const payload = {};
-      if (type === 'PRESET' && id && id !== 'null') {
+
+      if (type === 'PRESET_ID' && id && id !== 'null') {
         payload.presetExamId = Number(id);
+      } else if (type === 'PRESET_CODE' && id && id !== 'null') {
+        payload.presetExamCode = id;
+      } else if (type === 'PRESET' && id && id !== 'null') {
+        if (!isNaN(id)) payload.presetExamId = Number(id);
+        else payload.presetExamCode = id;
       } else if (type === 'CUSTOM' && id && id !== 'null' && id !== 'undefined') {
         payload.customCountdownId = id;
       }
@@ -265,14 +302,15 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                         >
                           <option value="">{t('select_event_to_link')}</option>
                           {unlinkedAvailable
-                            .filter((ev) => (ev.isPreset && ev.presetExamId) || (!ev.isPreset && ev.customCountdownId))
+                            .filter((ev) => (ev.isPreset && (ev.presetExamId || ev.presetExamCode)) || (!ev.isPreset && ev.customCountdownId))
                             .map((ev, idx) => {
                               const key = ev.isPreset
-                                ? `PRESET:${ev.presetExamId}`
+                                ? (ev.presetExamId ? `PRESET_ID:${ev.presetExamId}` : `PRESET_CODE:${ev.presetExamCode}`)
                                 : `CUSTOM:${ev.customCountdownId}`;
+                              const badge = ev.isOfficialDate ? ` (${t('countdown_official_badge') || 'Chính thức'})` : '';
                               return (
                                 <option key={key || `ev-${idx}`} value={key}>
-                                  {ev.title} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
+                                  {ev.title}{badge} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
                                 </option>
                               );
                             })}
