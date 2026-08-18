@@ -311,7 +311,7 @@
 
 ### 6.13. Linking Countdown Milestones during Group Creation (`feature/community-realtime-chat`)
 - **Direct Event Linking on Group Creation**:
-  - Updated `CreateGroupRequest.java` and `GroupService.java` to support `linkedPresetExamId` and `linkedCustomCountdownId`.
+  - Updated `CreateGroupRequest.java` and `GroupService.java` to support `linkedPresetExamId`, `linkedPresetExamCode`, and `linkedCustomCountdownId`.
   - Added endpoint `GET /api/v1/chat/groups/countdowns/available` allowing the group creator to fetch active system preset exams and their own countdown events before the group is instantiated.
   - Automatically establishes the milestone link and creates the initial system announcement upon group creation.
 - **Frontend Integration (`Community.jsx` & `api.js`)**:
@@ -319,7 +319,17 @@
   - Enforced guaranteed auto-link call on group creation callback to ensure the milestone link is immediately active regardless of backend reload lifecycle.
   - Added an intuitive milestone selector dropdown in the Create Group Modal with remaining day counters and official badges.
   - Fully translated across Vietnamese, English, and Chinese in `LanguageContext.jsx`.
+
+### 6.14. Resilient Countdown Milestone Loading & Linking in Group Chat Modal (`feature/community-realtime-chat`)
+- **Fix Available Events Listing & Linking in [`GroupCountdownsModal.jsx`](file:///e:/Project/study-tracking/frontend/src/components/chat/GroupCountdownsModal.jsx)**:
+  - Updated `AvailableCountdownDto.java` and `GroupCountdownService.java` to expose `presetExamCode` and `presetExamId`.
+  - Ensured available countdowns load unconditionally using `communityChatApi.getAvailableCountdownsForCreation()` in parallel with group links, filtering already linked events instantly without role delay or route failures.
+  - Added support for `groupId` prop in addition to `group?.id` in `GroupCountdownsModal.jsx` and `GroupChatRoom.jsx` for instant availability even while group details are loading.
+  - Supported `PRESET_ID`, `PRESET_CODE`, and `CUSTOM` payload deserialization to ensure linking succeeds seamlessly from within active chat rooms.
+- **CI Build & Lombok Annotation Processing Fix**:
+  - Fixed `@JsonSetter("customCountdownId")` in `LinkCountdownRequest.java`.
+  - Configured `annotationProcessorPaths` for Lombok in `pom.xml` (`maven-compiler-plugin`) to guarantee 100% clean compilation on CI/CD runner.
 - **Verification**:
-  - Maven tests `GroupCountdownServiceTest` and `GroupServiceTest` passing (10/10 PASS).
-  - Vite production build completed with 0 errors.
+  - Full backend test suite passing (62/62 tests PASS 100%).
+  - Frontend production build passed with 0 errors.
 

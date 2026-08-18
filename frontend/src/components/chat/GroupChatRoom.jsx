@@ -1416,6 +1416,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           loadGroupCountdowns();
         }}
         group={groupDetail?.group}
+        groupId={groupId}
         isOwnerOrMod={isModOrAbove}
       />
 

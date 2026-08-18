@@ -15,9 +15,11 @@ import { communityChatApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 
-const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
+const GroupCountdownsModal = ({ isOpen, onClose, group, groupId: propGroupId, isOwnerOrMod }) => {
   const { t } = useLanguage();
   const { toast, confirm } = useToast();
+
+  const targetGroupId = group?.id || propGroupId;
 
   const [countdowns, setCountdowns] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
@@ -27,22 +29,36 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   const [selectedEventKey, setSelectedEventKey] = useState('');
 
   useEffect(() => {
-    if (isOpen && group?.id) {
+    if (isOpen && targetGroupId) {
       loadData();
     }
-  }, [isOpen, group?.id]);
+  }, [isOpen, targetGroupId]);
 
   const loadData = async () => {
+    if (!targetGroupId) return;
     try {
       setLoading(true);
-      const [linkedData, availableData] = await Promise.all([
-        communityChatApi.getGroupCountdowns(group.id),
-        isOwnerOrMod
-          ? communityChatApi.getAvailableCountdownsToLink(group.id).catch(() => [])
-          : Promise.resolve([]),
+      const [linkedData, allAvailable] = await Promise.all([
+        communityChatApi.getGroupCountdowns(targetGroupId).catch(() => []),
+        communityChatApi.getAvailableCountdownsForCreation().catch(() => []),
       ]);
-      setCountdowns(Array.isArray(linkedData) ? linkedData : []);
-      setAvailableEvents(Array.isArray(availableData) ? availableData : []);
+
+      const linked = Array.isArray(linkedData) ? linkedData : [];
+      setCountdowns(linked);
+
+      const linkedPresetCodes = new Set(linked.map((l) => l.presetExamCode).filter(Boolean));
+      const linkedPresetIds = new Set(linked.map((l) => l.presetExamId).filter(Boolean));
+      const linkedCustomIds = new Set(linked.map((l) => l.customCountdownId).filter(Boolean));
+
+      const availableData = (Array.isArray(allAvailable) ? allAvailable : []).map((item) => ({
+        ...item,
+        isAlreadyLinked:
+          (item.presetExamId && linkedPresetIds.has(item.presetExamId)) ||
+          (item.presetExamCode && linkedPresetCodes.has(item.presetExamCode)) ||
+          (item.customCountdownId && linkedCustomIds.has(item.customCountdownId)),
+      }));
+
+      setAvailableEvents(availableData);
     } catch (err) {
       toast?.error(err.message || t('load_countdowns_error'));
     } finally {
@@ -51,22 +67,30 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   };
 
   const handleLinkCountdown = async () => {
-    if (!selectedEventKey) {
+    if (!selectedEventKey || !targetGroupId) {
       toast?.warning(t('select_event_to_link'));
       return;
     }
 
     try {
       setActionLoading(true);
-      const [type, id] = selectedEventKey.split(':');
+      const parts = selectedEventKey.split(':');
+      const type = parts[0];
+      const id = parts[1];
       const payload = {};
-      if (type === 'PRESET' && id && id !== 'null') {
+
+      if (type === 'PRESET_ID' && id && id !== 'null') {
         payload.presetExamId = Number(id);
+      } else if (type === 'PRESET_CODE' && id && id !== 'null') {
+        payload.presetExamCode = id;
+      } else if (type === 'PRESET' && id && id !== 'null') {
+        if (!isNaN(id)) payload.presetExamId = Number(id);
+        else payload.presetExamCode = id;
       } else if (type === 'CUSTOM' && id && id !== 'null' && id !== 'undefined') {
         payload.customCountdownId = id;
       }
 
-      await communityChatApi.linkCountdownToGroup(group.id, payload);
+      await communityChatApi.linkCountdownToGroup(targetGroupId, payload);
       toast?.success(t('link_countdown_success'));
       setSelectedEventKey('');
       setShowAddSection(false);
@@ -79,6 +103,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   };
 
   const handleUnlinkCountdown = async (linkId, title) => {
+    if (!targetGroupId) return;
     const isConfirmed = confirm ? await confirm({
       title: t('unlink_countdown_btn'),
       message: `${t('unlink_countdown_confirm')} "${title}"?`,
@@ -90,7 +115,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
 
     try {
       setActionLoading(true);
-      await communityChatApi.unlinkCountdownFromGroup(group.id, linkId);
+      await communityChatApi.unlinkCountdownFromGroup(targetGroupId, linkId);
       toast?.success(t('unlink_countdown_success'));
       setCountdowns((prev) => prev.filter((c) => c.linkId !== linkId));
       await loadData();
@@ -265,14 +290,15 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                         >
                           <option value="">{t('select_event_to_link')}</option>
                           {unlinkedAvailable
-                            .filter((ev) => (ev.isPreset && ev.presetExamId) || (!ev.isPreset && ev.customCountdownId))
+                            .filter((ev) => (ev.isPreset && (ev.presetExamId || ev.presetExamCode)) || (!ev.isPreset && ev.customCountdownId))
                             .map((ev, idx) => {
                               const key = ev.isPreset
-                                ? `PRESET:${ev.presetExamId}`
+                                ? (ev.presetExamId ? `PRESET_ID:${ev.presetExamId}` : `PRESET_CODE:${ev.presetExamCode}`)
                                 : `CUSTOM:${ev.customCountdownId}`;
+                              const badge = ev.isOfficialDate ? ` (${t('countdown_official_badge') || 'Chính thức'})` : '';
                               return (
                                 <option key={key || `ev-${idx}`} value={key}>
-                                  {ev.title} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
+                                  {ev.title}{badge} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
                                 </option>
                               );
                             })}
