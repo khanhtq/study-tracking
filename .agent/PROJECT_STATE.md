@@ -309,3 +309,15 @@
   - Stripped all raw `**` markdown bold symbols and decorative emojis from system announcements across `GroupCountdownService.java` and `GroupChatRoom.jsx`.
   - Polished dropdown selector text in `GroupCountdownsModal.jsx` and added 100% i18n key coverage.
 
+### 6.13. Linking Countdown Milestones during Group Creation (`feature/community-realtime-chat`)
+- **Direct Event Linking on Group Creation**:
+  - Updated `CreateGroupRequest.java` and `GroupService.java` to support `linkedPresetExamId` and `linkedCustomCountdownId`.
+  - Added endpoint `GET /api/v1/chat/groups/countdowns/available` allowing the group creator to fetch active system preset exams and their own countdown events before the group is instantiated.
+  - Automatically establishes the milestone link and creates the initial system announcement upon group creation.
+- **Frontend Integration (`Community.jsx`)**:
+  - Added an intuitive milestone selector dropdown in the Create Group Modal with remaining day counters and official badges.
+  - Fully translated across Vietnamese, English, and Chinese in `LanguageContext.jsx`.
+- **Verification**:
+  - Maven tests `GroupCountdownServiceTest` and `GroupServiceTest` passing (10/10 PASS).
+  - Vite production build completed with 0 errors.
+
