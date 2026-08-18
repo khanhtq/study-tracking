@@ -82,7 +82,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
     const isConfirmed = confirm ? await confirm({
       title: t('unlink_countdown_btn'),
       message: `${t('unlink_countdown_confirm')} "${title}"?`,
-      confirmText: t('btn_delete') || t('delete') || 'Xóa',
+      confirmText: t('btn_delete'),
       type: 'danger',
     }) : window.confirm(`${t('unlink_countdown_confirm')} "${title}"?`);
 
