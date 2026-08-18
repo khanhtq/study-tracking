@@ -18,7 +18,7 @@ public class LinkCountdownRequest {
     private String presetExamCode;
     private UUID customCountdownId;
 
-    @JsonSetter(nulls = Nulls.SET_TO_NULL)
+    @JsonSetter("customCountdownId")
     public void setCustomCountdownId(String rawId) {
         if (rawId == null || rawId.isBlank() || "null".equalsIgnoreCase(rawId.trim()) || "undefined".equalsIgnoreCase(rawId.trim())) {
             this.customCountdownId = null;
