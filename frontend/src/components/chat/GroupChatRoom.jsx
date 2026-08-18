@@ -779,32 +779,107 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
               if (isSystem) {
                 const isCountdownBroadcast = msg.content?.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]');
-                const cleanedContent = msg.content
-                  ? msg.content.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').replace(/\s+/g, ' ').trim()
-                  : '';
 
                 if (isCountdownBroadcast) {
-                  const bodyContent = msg.content
-                    ? msg.content.replace('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]', '').replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').trim()
-                    : '';
+                  const lines = (msg.content || '')
+                    .split('\n')
+                    .map((l) => l.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').trim())
+                    .filter(Boolean);
+
+                  const localizedLines = [];
+                  localizedLines.push(t('sys_msg_daily_briefing_subtitle') || 'Mục tiêu học tập sắp tới của nhóm:');
+                  localizedLines.push('');
+
+                  for (const line of lines) {
+                    if (
+                      line.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]') ||
+                      line.includes('Mục tiêu học tập') ||
+                      line.includes('Chúc cả nhóm')
+                    ) {
+                      continue;
+                    }
+
+                    // Match "• Title: Còn X ngày (date)"
+                    const daysMatch = line.match(/[•\-\*]?\s*(.+?):\s*Còn\s*(\d+)\s*ngày(?: nữa)?\s*\(([^)]+)\)/i);
+                    if (daysMatch) {
+                      const itemText = (t('sys_msg_daily_days_left') || '• {title}: Còn {days} ngày ({date})')
+                        .replace('{title}', daysMatch[1].trim())
+                        .replace('{days}', daysMatch[2].trim())
+                        .replace('{date}', daysMatch[3].trim());
+                      localizedLines.push(itemText);
+                      continue;
+                    }
+
+                    // Match "• Title: Hôm nay là ngày..."
+                    const todayMatch = line.match(/[•\-\*]?\s*(.+?):\s*Hôm nay là ngày/i);
+                    if (todayMatch) {
+                      const itemText = (t('sys_msg_daily_today_event') || '• {title}: Hôm nay là ngày thi/sự kiện chính thức!')
+                        .replace('{title}', todayMatch[1].trim());
+                      localizedLines.push(itemText);
+                      continue;
+                    }
+
+                    localizedLines.push(line);
+                  }
+
+                  localizedLines.push('');
+                  localizedLines.push(t('sys_msg_daily_footer') || 'Chúc cả nhóm có một ngày học tập tập trung và hiệu quả!');
+
                   return (
                     <div key={msg.id} className="flex justify-center my-3 px-3">
                       <div className="max-w-md w-full p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-slate-200 shadow-sm">
                         <div className="text-indigo-400 font-semibold text-xs mb-2 pb-1.5 border-b border-slate-800">
-                          {t('daily_countdown_reminder_badge') || 'Bản tin đếm ngược mục tiêu'}
+                          {t('sys_msg_daily_briefing_title') || t('daily_countdown_reminder_badge') || 'Bản tin đếm ngược mục tiêu'}
                         </div>
                         <div className="text-xs leading-relaxed text-slate-300 whitespace-pre-line">
-                          {bodyContent}
+                          {localizedLines.join('\n')}
                         </div>
                       </div>
                     </div>
                   );
                 }
 
+                // Format single-line system messages dynamically
+                let localizedSingle = msg.content
+                  ? msg.content.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').replace(/\s+/g, ' ').trim()
+                  : '';
+
+                // 1. Link countdown: "[actor] đã liên kết mục tiêu đếm ngược [title] (còn [days] ngày)..."
+                const linkMatch = localizedSingle.match(/(?:\[?([^\]]+)\]?)\s+đã liên kết mục tiêu đếm ngược(?:\s*:)?\s*([^(]+?)\s*\(còn\s*(\d+)\s*ngày\)\s*vào nhóm/i);
+                if (linkMatch) {
+                  localizedSingle = (t('sys_msg_linked_countdown') || '{actor} đã liên kết mục tiêu đếm ngược {title} (còn {days} ngày) vào nhóm học tập.')
+                    .replace('{actor}', linkMatch[1].trim())
+                    .replace('{title}', linkMatch[2].trim())
+                    .replace('{days}', linkMatch[3].trim());
+                } else {
+                  // 2. Unlink countdown: "[actor] đã hủy liên kết mục tiêu đếm ngược [title] khỏi nhóm"
+                  const unlinkMatch = localizedSingle.match(/(?:\[?([^\]]+)\]?)\s+đã hủy liên kết mục tiêu đếm ngược(?:\s*:)?\s*(.+?)\s*khỏi nhóm/i);
+                  if (unlinkMatch) {
+                    localizedSingle = (t('sys_msg_unlinked_countdown') || '{actor} đã hủy liên kết mục tiêu đếm ngược {title} khỏi nhóm.')
+                      .replace('{actor}', unlinkMatch[1].trim())
+                      .replace('{title}', unlinkMatch[2].trim());
+                  } else {
+                    // 3. Mute member: "Thành viên [target] đã bị tắt quyền chat trong [duration] phút"
+                    const muteMatch = localizedSingle.match(/Thành viên\s*\[?([^\]]+)\]?\s*đã bị tắt quyền chat trong\s*(\d+)\s*phút/i);
+                    if (muteMatch) {
+                      localizedSingle = (t('sys_msg_muted_member') || 'Thành viên {target} đã bị tắt quyền chat trong {duration} phút.')
+                        .replace('{target}', muteMatch[1].trim())
+                        .replace('{duration}', muteMatch[2].trim());
+                    } else {
+                      // 4. Unmute member: "Thành viên [target] đã được mở lại quyền chat"
+                      const unmuteMatch = localizedSingle.match(/Thành viên\s*\[?([^\]]+)\]?\s*đã được mở lại quyền chat/i);
+                      if (unmuteMatch) {
+                        localizedSingle = (t('sys_msg_unmuted_member') || 'Thành viên {target} đã được mở lại quyền chat.')
+                          .replace('{target}', unmuteMatch[1].trim());
+                      }
+                    }
+                  }
+                }
+
                 return (
                   <div key={msg.id} className="flex justify-center my-2 px-3">
                     <span className="text-[11px] font-medium text-slate-400 bg-slate-900/60 px-3.5 py-1 rounded-full border border-slate-800/60 max-w-lg text-center leading-relaxed">
-                      {cleanedContent}
+                      {localizedSingle}
                     </span>
                   </div>
                 );

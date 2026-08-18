@@ -685,6 +685,15 @@ const translations = {
     today_is_event: "Hôm nay là ngày sự kiện!",
     only_owner_can_manage_countdowns: "Chỉ Trưởng nhóm hoặc Quản trị viên mới có quyền quản lý sự kiện đếm ngược.",
     must_join_group_first: "Bạn chưa tham gia nhóm này. Vui lòng bấm Tham gia nhóm để vào phòng chat.",
+    sys_msg_linked_countdown: "{actor} đã liên kết mục tiêu đếm ngược {title} (còn {days} ngày) vào nhóm học tập.",
+    sys_msg_unlinked_countdown: "{actor} đã hủy liên kết mục tiêu đếm ngược {title} khỏi nhóm.",
+    sys_msg_muted_member: "Thành viên {target} đã bị tắt quyền chat trong {duration} phút.",
+    sys_msg_unmuted_member: "Thành viên {target} đã được mở lại quyền chat.",
+    sys_msg_daily_briefing_title: "Bản tin đếm ngược mục tiêu",
+    sys_msg_daily_briefing_subtitle: "Mục tiêu học tập sắp tới của nhóm:",
+    sys_msg_daily_today_event: "• {title}: Hôm nay là ngày diễn ra sự kiện chính thức!",
+    sys_msg_daily_days_left: "• {title}: Còn {days} ngày ({date})",
+    sys_msg_daily_footer: "Chúc cả nhóm có một ngày học tập tập trung và hiệu quả!",
   },
   en: {
     // auth / login / register
@@ -1478,6 +1487,15 @@ const translations = {
     today_is_event: "Today is the event date!",
     only_owner_can_manage_countdowns: "Only the Group Owner or Admin can manage countdown links.",
     must_join_group_first: "You have not joined this group yet. Please click Join Group to enter the chat.",
+    sys_msg_linked_countdown: "{actor} linked the countdown milestone {title} ({days} days left) to the study group.",
+    sys_msg_unlinked_countdown: "{actor} unlinked the countdown milestone {title} from the group.",
+    sys_msg_muted_member: "Member {target} has been muted for {duration} minutes.",
+    sys_msg_unmuted_member: "Member {target} has been unmuted.",
+    sys_msg_daily_briefing_title: "Daily Milestone Briefing",
+    sys_msg_daily_briefing_subtitle: "Upcoming study milestones for our group:",
+    sys_msg_daily_today_event: "• {title}: Today is the official exam/event date!",
+    sys_msg_daily_days_left: "• {title}: {days} days left ({date})",
+    sys_msg_daily_footer: "Wishing everyone a focused and productive study day!",
   },
   zh: {
     // auth / login / register
@@ -2108,6 +2126,15 @@ const translations = {
     today_is_event: "今天是活动/考试日！",
     only_owner_can_manage_countdowns: "仅群主或管理员可以管理倒计时关联。",
     must_join_group_first: "您尚未加入此群组。请先点击“加入群组”后再进入聊天。",
+    sys_msg_linked_countdown: "{actor} 已将倒计时目标 {title}（还剩 {days} 天）关联至学习群组。",
+    sys_msg_unlinked_countdown: "{actor} 已取消群组的倒计时目标 {title} 关联。",
+    sys_msg_muted_member: "成员 {target} 已被禁言 {duration} 分钟。",
+    sys_msg_unmuted_member: "成员 {target} 已解除禁言。",
+    sys_msg_daily_briefing_title: "每日目标倒计时快报",
+    sys_msg_daily_briefing_subtitle: "本群组近期的学习目标：",
+    sys_msg_daily_today_event: "• {title}：今天是考试/活动正式举行日！",
+    sys_msg_daily_days_left: "• {title}：还剩 {days} 天（{date}）",
+    sys_msg_daily_footer: "祝大家今天学习专注、收获满满！",
 
     // admin dashboard zh
     admin_dashboard: "管理后台",
