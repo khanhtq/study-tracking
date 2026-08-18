@@ -547,36 +547,21 @@ export default function DocumentDrive({ onBackToDashboard }) {
             </button>
           </div>
 
-          {/* Storage Meter Card */}
-          <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-300">{t('drive_storage_header')}</span>
-              <span className="text-[11px] font-medium text-slate-400">{quota.usagePercentage || 0}%</span>
-            </div>
-            {/* Progress Bar */}
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className={`h-full transition-all duration-500 rounded-full ${
-                  quota.usagePercentage > 90
-                    ? 'bg-rose-500'
-                    : quota.usagePercentage > 75
-                    ? 'bg-amber-500'
-                    : 'bg-gradient-to-r from-indigo-500 to-sky-400'
-                }`}
-                style={{ width: `${Math.min(100, quota.usagePercentage || 0)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
-              <span>{t('drive_used')} {quota.formattedUsed}</span>
-              <span>/ {quota.formattedMax}</span>
-            </div>
-            <div className="pt-2 border-t border-slate-800/80 text-[10px] text-slate-500 flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-indigo-400/90">
-                <span>⚡ {t('drive_user_quota')}</span>
+          {/* Storage Used Card */}
+          <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 shadow-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
+                </svg>
               </div>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <span>📁 {t('drive_max_file_size')}</span>
+              <div className="min-w-0">
+                <span className="text-xs font-semibold text-slate-400 block leading-tight">{t('drive_storage_header')}</span>
+                <span className="text-sm font-bold text-slate-100">{quota.formattedUsed || '0 B'}</span>
               </div>
+            </div>
+            <div className="pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center gap-1.5 font-medium">
+              <span>📁 {t('drive_max_file_size')}</span>
             </div>
           </div>
         </aside>

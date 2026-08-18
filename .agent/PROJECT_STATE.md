@@ -369,6 +369,16 @@
 - **Verification**:
   - Frontend Vite build: 100% SUCCESS (0 errors).
 
+### 6.18. Drive Storage Display Simplification (Only Used Storage)
+- **Requirement & Fixes**:
+  - Simplified the storage card in [`DocumentDrive.jsx`](file:///e:/Project/study-tracking/frontend/src/pages/DocumentDrive.jsx).
+  - Removed user account storage quota limit (`/ 1 GB`), percentage progress bar, and user quota limit label (`drive_user_quota`).
+  - Redesigned the card to cleanly and prominently showcase only the current used storage (`Dung lượng đã dùng` + `quota.formattedUsed`), accompanied by the max single file size label (`Tối đa 200 MB / file`).
+  - Synchronized translations across `vi`, `en`, and `zh` in [`LanguageContext.jsx`](file:///e:/Project/study-tracking/frontend/src/context/LanguageContext.jsx).
+- **Verification**:
+  - Frontend Vite build: 100% SUCCESS (0 errors).
+
+
 
 
 
