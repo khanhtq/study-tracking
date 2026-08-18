@@ -7,12 +7,14 @@ import AdminOnlineTable from '../components/admin/AdminOnlineTable';
 import AdminUserStatsTable from '../components/admin/AdminUserStatsTable';
 import AdminSuspiciousAlerts from '../components/admin/AdminSuspiciousAlerts';
 import AdminPaymentPackages from '../components/admin/AdminPaymentPackages';
+import AdminGroupsManager from '../components/admin/AdminGroupsManager';
+import AdminCountdownsManager from '../components/admin/AdminCountdownsManager';
 import UserSessionDetailModal from '../components/admin/UserSessionDetailModal';
 import UserSearchModal from '../components/UserSearchModal';
 import PublicProfileModal from '../components/PublicProfileModal';
 import ChatModal from '../components/ChatModal';
 import Footer from '../components/Footer';
-import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, LogOut, ChevronDown, CreditCard } from 'lucide-react';
+import { ShieldCheck, Radio, BarChart3, RefreshCw, MessageSquare, Search, LogOut, ChevronDown, CreditCard, Users, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
@@ -141,10 +143,10 @@ export default function AdminDashboard() {
         <AdminSuspiciousAlerts onSelectUser={(u) => setSelectedUserForModal(u)} />
 
         {/* Main Tab Navigation */}
-        <div className="flex items-center gap-2 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80 w-fit">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80 w-fit">
           <button
             onClick={() => setActiveTab('online')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'online'
                 ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-950'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -155,7 +157,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'stats'
                 ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-950'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
@@ -163,6 +165,28 @@ export default function AdminDashboard() {
           >
             <BarChart3 className="w-4 h-4" />
             {t('admin_tab_users_stats')}
+          </button>
+          <button
+            onClick={() => setActiveTab('groups')}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'groups'
+                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-950'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <Users className="w-4 h-4 text-indigo-400" />
+            {t('admin_tab_groups') || 'Quản Lý Nhóm Học'}
+          </button>
+          <button
+            onClick={() => setActiveTab('countdowns')}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'countdowns'
+                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-950'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-emerald-400" />
+            {t('admin_tab_countdowns') || 'Quản Lý Sự Kiện & Lịch Thi'}
           </button>
           <button
             onClick={() => setActiveTab('packages')}
@@ -173,7 +197,7 @@ export default function AdminDashboard() {
             }`}
           >
             <CreditCard className="w-4 h-4 text-amber-400" />
-            Quản Lý Gói VIP
+            {t('admin_tab_packages') || 'Quản Lý Gói VIP'}
           </button>
         </div>
 
@@ -200,6 +224,10 @@ export default function AdminDashboard() {
                 setIsChatOpen(true);
               }}
             />
+          ) : activeTab === 'groups' ? (
+            <AdminGroupsManager />
+          ) : activeTab === 'countdowns' ? (
+            <AdminCountdownsManager />
           ) : (
             <AdminPaymentPackages />
           )}

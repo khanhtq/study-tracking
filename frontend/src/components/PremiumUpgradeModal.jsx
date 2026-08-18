@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Sparkles, Check, X, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { paymentApi } from '../api';
 
 const DEFAULT_PACKAGES = [
@@ -15,6 +16,7 @@ const DEFAULT_PACKAGES = [
 export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
   const { togglePremium } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [selectedPackage, setSelectedPackage] = useState('3_MONTHS');
   const [packages, setPackages] = useState(DEFAULT_PACKAGES);
   const [loadingPayment, setLoadingPayment] = useState(false);
@@ -59,7 +61,7 @@ export default function PremiumUpgradeModal({ isOpen, onClose, featureName }) {
       }
     } catch (err) {
       console.error('Lỗi tạo URL thanh toán VNPay:', err);
-      alert('Không thể kết nối cổng thanh toán VNPay. Vui lòng thử lại sau.');
+      toast.error('Không thể kết nối cổng thanh toán VNPay. Vui lòng thử lại sau.');
     } finally {
       setLoadingPayment(false);
     }

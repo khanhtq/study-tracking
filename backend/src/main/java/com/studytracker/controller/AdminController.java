@@ -1,13 +1,16 @@
 package com.studytracker.controller;
 
-import com.studytracker.dto.AdminOverviewStatsResponse;
-import com.studytracker.dto.OnlineUserResponse;
-import com.studytracker.dto.SuspiciousUserAlertDto;
-import com.studytracker.dto.UserSessionStatsDto;
+import com.studytracker.dto.*;
 import com.studytracker.model.StudySession;
+import com.studytracker.model.User;
 import com.studytracker.service.AdminService;
+import com.studytracker.service.CountdownService;
+import com.studytracker.service.GroupService;
+import com.studytracker.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,11 +18,7 @@ import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-import com.studytracker.dto.PaymentPackageDto;
-import com.studytracker.dto.SavePackageRequest;
-import com.studytracker.service.PaymentService;
-
-@Tag(name = "Admin", description = "APIs Quản trị hệ thống & cảnh báo gian lận")
+@Tag(name = "Admin", description = "APIs Quản trị hệ thống, nhóm học, sự kiện & cảnh báo gian lận")
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -27,6 +26,8 @@ public class AdminController {
 
     private final AdminService adminService;
     private final PaymentService paymentService;
+    private final GroupService groupService;
+    private final CountdownService countdownService;
 
     @GetMapping("/stats/overview")
     public ResponseEntity<AdminOverviewStatsResponse> getOverviewStats() {
@@ -75,7 +76,63 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
-    // Package Management APIs
+    // ==================== ADMIN GROUP MANAGEMENT ====================
+
+    @GetMapping("/groups")
+    public ResponseEntity<List<GroupSummaryDto>> getAllGroups(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean isArchived) {
+        return ResponseEntity.ok(groupService.getAllGroupsForAdmin(search, isArchived));
+    }
+
+    @PutMapping("/groups/{groupId}")
+    public ResponseEntity<GroupSummaryDto> adminUpdateGroup(
+            @PathVariable UUID groupId,
+            @Valid @RequestBody UpdateGroupRequest request) {
+        return ResponseEntity.ok(groupService.adminUpdateGroup(groupId, request));
+    }
+
+    @PutMapping("/groups/{groupId}/archive")
+    public ResponseEntity<GroupSummaryDto> adminArchiveGroup(
+            @PathVariable UUID groupId,
+            @RequestParam(defaultValue = "true") boolean isArchived) {
+        return ResponseEntity.ok(groupService.adminArchiveGroup(groupId, isArchived));
+    }
+
+    @DeleteMapping("/groups/{groupId}")
+    public ResponseEntity<Void> adminDeleteGroup(@PathVariable UUID groupId) {
+        groupService.adminDeleteGroup(groupId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ==================== ADMIN COUNTDOWN & PRESET MANAGEMENT ====================
+
+    @GetMapping("/countdowns/presets")
+    public ResponseEntity<List<SystemPresetExamDto>> getAllPresetCountdowns() {
+        return ResponseEntity.ok(countdownService.getAllPresetsForAdmin());
+    }
+
+    @PostMapping("/countdowns/presets")
+    public ResponseEntity<SystemPresetExamDto> adminCreatePreset(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody AdminSavePresetRequest request) {
+        return ResponseEntity.ok(countdownService.adminCreatePreset(request, currentUser));
+    }
+
+    @PutMapping("/countdowns/presets/{examCode}")
+    public ResponseEntity<SystemPresetExamDto> adminUpdatePreset(
+            @PathVariable String examCode,
+            @Valid @RequestBody AdminSavePresetRequest request) {
+        return ResponseEntity.ok(countdownService.adminUpdatePreset(examCode, request));
+    }
+
+    @DeleteMapping("/countdowns/presets/{examCode}")
+    public ResponseEntity<Void> adminDeletePreset(@PathVariable String examCode) {
+        countdownService.adminForceDeletePreset(examCode);
+        return ResponseEntity.ok().build();
+    }
+
+    // ==================== PACKAGE MANAGEMENT APIS ====================
     @GetMapping("/packages")
     public ResponseEntity<List<PaymentPackageDto>> getAllPackages() {
         return ResponseEntity.ok(paymentService.getAllPackages());

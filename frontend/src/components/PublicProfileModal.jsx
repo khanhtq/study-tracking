@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { userApi, friendsApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { X, Award, Flame, Clock, CheckCircle2, BookOpen, Loader2, Sparkles, User, Calendar, UserPlus, Check, MessageSquare, Lock, Unlock, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import BanUserModal from './admin/BanUserModal';
@@ -19,6 +20,7 @@ const getFullAvatarUrl = (url) => {
 
 export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
   const { t } = useLanguage();
+  const { toast, confirm } = useToast();
   const { user: currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ROLE_ADMIN';
   const [profile, setProfile] = useState(null);
@@ -305,8 +307,9 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                               try {
                                 const res = await friendsApi.sendRequest(userId);
                                 setProfile({ ...profile, friendshipStatus: 'PENDING_SENT', friendshipId: res?.friendshipId });
+                                toast.success('Đã gửi lời mời kết bạn thành công!');
                               } catch (err) {
-                                alert(err.message || 'Không thể gửi lời mời kết bạn.');
+                                toast.error(err.message || 'Không thể gửi lời mời kết bạn.');
                               }
                             }}
                             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
@@ -322,8 +325,9 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                               try {
                                 if (profile.friendshipId) await friendsApi.declineRequest(profile.friendshipId);
                                 setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
+                                toast.info('Đã hủy lời mời kết bạn.');
                               } catch (err) {
-                                alert(err.message || 'Không thể hủy lời mời.');
+                                toast.error(err.message || 'Không thể hủy lời mời.');
                               }
                             }}
                             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
@@ -340,8 +344,9 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                                 try {
                                   if (profile.friendshipId) await friendsApi.acceptRequest(profile.friendshipId);
                                   setProfile({ ...profile, friendshipStatus: 'FRIENDS' });
+                                  toast.success('Đã chấp nhận lời mời kết bạn!');
                                 } catch (err) {
-                                  alert(err.message || 'Không thể đồng ý.');
+                                  toast.error(err.message || 'Không thể đồng ý kết bạn.');
                                 }
                               }}
                               className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer flex items-center gap-1"
@@ -354,11 +359,12 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                                 try {
                                   if (profile.friendshipId) await friendsApi.declineRequest(profile.friendshipId);
                                   setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
+                                  toast.info('Đã từ chối lời mời kết bạn.');
                                 } catch (err) {
-                                  alert(err.message || 'Lỗi xử lý.');
+                                  toast.error(err.message || 'Lỗi xử lý.');
                                 }
                               }}
-                              className="px-3 py-1.5 bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                              className="px-3.5 py-1.5 bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
                             >
                               Từ chối
                             </button>
@@ -373,12 +379,20 @@ export default function PublicProfileModal({ userId, onClose, onOpenChat }) {
                             </span>
                             <button
                               onClick={async () => {
-                                if (!window.confirm('Bạn có chắc chắn muốn hủy kết bạn?')) return;
+                                const isConfirmed = await confirm({
+                                  title: 'Hủy kết bạn',
+                                  message: 'Bạn có chắc chắn muốn hủy kết bạn với người dùng này không?',
+                                  confirmText: 'Hủy kết bạn',
+                                  cancelText: 'Giữ lại',
+                                  type: 'danger'
+                                });
+                                if (!isConfirmed) return;
                                 try {
                                   await friendsApi.unfriend(userId);
                                   setProfile({ ...profile, friendshipStatus: 'NONE', friendshipId: null });
+                                  toast.success('Đã hủy kết bạn thành công.');
                                 } catch (err) {
-                                  alert(err.message || 'Không thể hủy kết bạn.');
+                                  toast.error(err.message || 'Không thể hủy kết bạn.');
                                 }
                               }}
                               className="px-2.5 py-1 bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-300 text-xs font-medium rounded-xl transition-all cursor-pointer"

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { sessionApi, countdownApi } from '../api';
 import XpBar from '../components/XpBar';
 import StudyTimer from '../components/StudyTimer';
@@ -31,22 +32,6 @@ const DEFAULT_GUEST_PRESETS = [
     isOfficialDate: false,
     color: 'indigo',
     description: 'Kỳ thi tốt nghiệp THPT Quốc Gia chính thức hàng năm'
-  },
-  {
-    examCode: 'DGNL_HCMUT_2027',
-    title: 'Kỳ thi ĐGNL Bách Khoa HCMUT 2027',
-    targetDate: '2027-04-04T07:30:00.000Z',
-    isOfficialDate: false,
-    color: 'cyan',
-    description: 'Kỳ thi Đánh giá năng lực Trường Đại học Bách Khoa TP.HCM'
-  },
-  {
-    examCode: 'DGNL_VNU_HCM_2027',
-    title: 'Kỳ thi ĐGNL ĐHQG TP.HCM Đợt 1 2027',
-    targetDate: '2027-03-28T07:30:00.000Z',
-    isOfficialDate: false,
-    color: 'emerald',
-    description: 'Kỳ thi Đánh giá năng lực Đại học Quốc gia TP.HCM'
   }
 ];
 
@@ -72,6 +57,7 @@ const getFullAvatarUrl = (url) => {
 export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavigateProfile, onNavigateDrive, onNavigateCommunity }) {
   const { user, token, progress, refreshProgress, activeSession } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [sessions, setSessions] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [sessionToast, setSessionToast] = useState(null);
@@ -302,6 +288,68 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
     }
   };
 
+  const handleUpdateCountdown = async (id, payload) => {
+    const isGuestUser = Boolean(user?.isGuest) || !localStorage.getItem('token');
+    const target = userCountdowns.find(e => e.id === id || e.presetExamCode === id);
+    if (!target) return;
+
+    const shouldPin = payload.isPinned === true;
+    const updatedItem = {
+      ...target,
+      title: payload.title !== undefined ? payload.title : target.title,
+      targetDate: payload.targetDate !== undefined ? payload.targetDate : target.targetDate,
+      note: payload.note !== undefined ? payload.note : target.note,
+      color: payload.color || target.color || 'indigo',
+      emailNotify: payload.emailNotify !== undefined ? payload.emailNotify : target.emailNotify,
+      isPinned: shouldPin ? true : (payload.isPinned !== undefined ? payload.isPinned : target.isPinned),
+      isCommunityEvent: payload.isCommunityEvent !== undefined ? payload.isCommunityEvent : target.isCommunityEvent
+    };
+
+    const updatedEvents = userCountdowns.map(e => {
+      if (e.id === target.id) return updatedItem;
+      if (shouldPin) return { ...e, isPinned: false };
+      return e;
+    });
+
+    setUserCountdowns(updatedEvents);
+    if (shouldPin || activeCountdown?.id === target.id || activeCountdown?.presetExamCode === target.presetExamCode) {
+      handleSetActiveCountdown(updatedItem);
+    }
+
+    if (isGuestUser) {
+      try {
+        localStorage.setItem('guest_countdowns', JSON.stringify(updatedEvents));
+      } catch (e) {
+        console.error('Failed to update guest countdowns', e);
+      }
+      return;
+    }
+
+    try {
+      const res = await countdownApi.updateEvent(target.id, {
+        title: payload.title,
+        targetDate: payload.targetDate,
+        note: payload.note,
+        category: payload.category || target.category,
+        color: payload.color || target.color,
+        icon: payload.icon || target.icon,
+        isPinned: payload.isPinned,
+        emailNotify: payload.emailNotify,
+        isCommunityEvent: payload.isCommunityEvent
+      });
+      setUserCountdowns(prev => prev.map(e => e.id === target.id ? res : (shouldPin ? { ...e, isPinned: false } : e)));
+      if (shouldPin || activeCountdown?.id === target.id || activeCountdown?.presetExamCode === target.presetExamCode) {
+        handleSetActiveCountdown(res);
+      }
+      fetchCountdowns();
+      toast.success(t('countdown_update_btn') || 'Cập nhật sự kiện thành công!');
+    } catch (err) {
+      console.error('Update countdown failed:', err);
+      fetchCountdowns();
+      toast.error(err.message || 'Không thể cập nhật sự kiện lúc này.');
+    }
+  };
+
   const handleDeleteCountdown = async (id) => {
     const targetToDelete = userCountdowns.find(e => e.id === id || e.presetExamCode === id);
     const targetId = targetToDelete ? targetToDelete.id : id;
@@ -343,7 +391,7 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
         setUserCountdowns(userCountdowns);
         handleSetActiveCountdown(activeCountdown);
       }
-      alert(err.message || 'Không thể xóa sự kiện lúc này.');
+      toast.error(err.message || 'Không thể xóa sự kiện lúc này.');
     }
   };
 
@@ -732,7 +780,9 @@ export default function Dashboard({ onNavigateAdmin, onNavigateRegister, onNavig
         activeCountdown={activeCountdown}
         presets={countdownPresets}
         events={userCountdowns}
+        currentUser={user}
         onSaveEvent={handleSaveCountdown}
+        onUpdateEvent={handleUpdateCountdown}
         onDeleteEvent={handleDeleteCountdown}
         onPinEvent={handlePinCountdown}
       />

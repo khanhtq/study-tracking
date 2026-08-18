@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { messageApi, friendsApi, getErrorMessage } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { subscribeToMessages } from '../websocket';
 import {
   MessageSquare, X, Send, Search, Smile, ShieldAlert, UserPlus, CheckCheck,
@@ -12,6 +13,7 @@ const PRESET_EMOJIS = ['😊', '👍', '🔥', '📚', '💪', '✨', '❤️', 
 
 export default function ChatModal({ isOpen, onClose, activeTargetUser = null, onSelectProfile = null }) {
   const { user, refreshProgress } = useAuth();
+  const { toast } = useToast();
   const [conversations, setConversations] = useState([]);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -201,9 +203,10 @@ export default function ChatModal({ isOpen, onClose, activeTargetUser = null, on
     if (!selectedPartner?.partnerId) return;
     try {
       await friendsApi.sendRequest(selectedPartner.partnerId);
+      toast.success('Đã gửi lời mời kết bạn thành công!');
       setRestrictionNotice('Đã gửi lời mời kết bạn! Vui lòng chờ đối phương chấp nhận để bắt đầu nhắn tin.');
     } catch (err) {
-      alert(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
     }
   };
 

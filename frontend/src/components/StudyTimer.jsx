@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { sessionApi, getServerClientOffset } from '../api';
 import { Play, Square, BookOpen, Clock, Loader2, Coffee, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,6 +45,7 @@ const playBreakChime = () => {
 function StudyTimer({ onStopResult }) {
   const { user, activeSession, setActiveSession, refreshProgress } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [subject, setSubject] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('FREE_MODE');
   const [seconds, setSeconds] = useState(0);
@@ -224,7 +226,7 @@ function StudyTimer({ onStopResult }) {
       setActiveSession(session);
     } catch (err) {
       console.error(err);
-      alert(err.message || t('timer_start_error'));
+      toast.error(err.message || t('timer_start_error'));
     } finally {
       setIsStarting(false);
     }
@@ -249,7 +251,7 @@ function StudyTimer({ onStopResult }) {
       }
     } catch (err) {
       console.error(err);
-      alert(err.message || t('timer_stop_error'));
+      toast.error(err.message || t('timer_stop_error'));
     } finally {
       setIsStopping(false);
     }

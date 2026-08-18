@@ -18,6 +18,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import BannedUserNoticeModal from './components/BannedUserNoticeModal';
 import PaymentResultModal from './components/PaymentResultModal';
 import { UploadProvider } from './context/UploadContext';
+import { ToastProvider } from './context/ToastContext';
 import UploadProgressPopup from './components/UploadProgressPopup';
 
 function MainApp() {
@@ -222,7 +223,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <UploadProvider>
-            <MainApp />
+            <ToastProvider>
+              <MainApp />
+            </ToastProvider>
           </UploadProvider>
         </AuthProvider>
       </ThemeProvider>

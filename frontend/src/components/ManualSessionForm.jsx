@@ -2,12 +2,14 @@ import React, { useState, useEffect, memo } from 'react';
 import { sessionApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { Play, Pause, Trash2, Plus, BookOpen, Clock, Loader2, CheckCircle2, Award, X, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function ManualSessionForm({ onSuccess }) {
   const { user, refreshProgress } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [goals, setGoals] = useState([]);
   const [subject, setSubject] = useState('');
   const [hours, setHours] = useState('');
@@ -147,9 +149,10 @@ function ManualSessionForm({ onSuccess }) {
             onSuccess(session);
           }
           await refreshProgress();
+          toast.success(t('goal_log_success') || 'Đã ghi nhận buổi học thành công!');
         } catch (err) {
           console.error('Lỗi khi ghi nhận buổi học:', err);
-          alert(t('goal_log_error') + ': ' + err.message);
+          toast.error(t('goal_log_error') + ': ' + err.message);
         } finally {
           setSyncingGoalId(null);
         }

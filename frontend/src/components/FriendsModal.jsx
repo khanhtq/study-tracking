@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { friendsApi, userApi, getErrorMessage } from '../api';
+import { useToast } from '../context/ToastContext';
 import { X, Users, UserPlus, Check, Trash2, Search, UserCheck, Shield, Clock, Flame, MessageSquare } from 'lucide-react';
 
 export default function FriendsModal({ isOpen, onClose, onViewProfile, onRefreshUserProgress, onOpenChat }) {
+  const { toast, confirm } = useToast();
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' | 'requests' | 'search'
   
   const [friends, setFriends] = useState([]);
@@ -95,14 +97,24 @@ export default function FriendsModal({ isOpen, onClose, onViewProfile, onRefresh
   };
 
   const handleUnfriend = async (friendId, name) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn hủy kết bạn với ${name}?`)) return;
+    const isConfirmed = await confirm({
+      title: 'Hủy kết bạn',
+      message: `Bạn có chắc chắn muốn hủy kết bạn với ${name}?`,
+      confirmText: 'Hủy kết bạn',
+      cancelText: 'Giữ lại',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
+
     try {
       await friendsApi.unfriend(friendId);
+      toast.success(`Đã hủy kết bạn với ${name}.`);
       setSuccessMsg(`Đã hủy kết bạn với ${name}.`);
       loadFriendsData();
       if (onRefreshUserProgress) onRefreshUserProgress();
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
+      toast.error(getErrorMessage(err));
       setErrorMsg(getErrorMessage(err));
     }
   };

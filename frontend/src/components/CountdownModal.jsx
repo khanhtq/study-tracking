@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useToast } from '../context/ToastContext';
 import { 
   X, 
   Plus, 
@@ -14,7 +15,9 @@ import {
   Pin, 
   Sparkles,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Pencil,
+  EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,14 +27,18 @@ export default function CountdownModal({
   activeCountdown, 
   presets = [], 
   events = [], 
+  currentUser,
   onSaveEvent, 
+  onUpdateEvent,
   onDeleteEvent, 
   onPinEvent 
 }) {
   const { t } = useLanguage();
+  const { toast, confirm } = useToast();
   const [activeTab, setActiveTab] = useState('presets'); // 'presets' | 'my_events'
   const [presetFilter, setPresetFilter] = useState('all'); // 'all' | 'official' | 'community'
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     presetExamCode: '',
@@ -44,9 +51,27 @@ export default function CountdownModal({
   });
   const [submitting, setSubmitting] = useState(false);
 
+  const formatDateTimeLocal = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      const pad = (num) => String(num).padStart(2, '0');
+      const year = d.getFullYear();
+      const month = pad(d.getMonth() + 1);
+      const day = pad(d.getDate());
+      const hours = pad(d.getHours());
+      const minutes = pad(d.getMinutes());
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (e) {
+      return '';
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       setIsFormOpen(false);
+      setEditingEventId(null);
       setSearchQuery('');
       setPresetFilter('all');
       setFormData({
@@ -63,6 +88,59 @@ export default function CountdownModal({
 
   if (!isOpen) return null;
 
+  const isEventOwner = (item) => {
+    if (!item) return false;
+    if (item.canEdit !== undefined) return Boolean(item.canEdit);
+    if (item.isOwner !== undefined) return Boolean(item.isOwner);
+
+    // Private custom events without preset code are created by the user
+    if (!item.presetExamCode) return true;
+
+    // Check against preset list
+    const matchedPreset = presets.find(p => p.examCode === item.presetExamCode);
+    if (!matchedPreset) return false;
+    if (matchedPreset.isOfficialDate || !matchedPreset.isCommunityEvent) return false;
+
+    if (currentUser) {
+      if (matchedPreset.createdByUserId && currentUser.id && matchedPreset.createdByUserId === currentUser.id) return true;
+      if (matchedPreset.creatorDisplayName && currentUser.displayName && matchedPreset.creatorDisplayName === currentUser.displayName) return true;
+    }
+    return false;
+  };
+
+  const handleOpenCreate = () => {
+    setEditingEventId(null);
+    setFormData({
+      presetExamCode: '',
+      title: '',
+      targetDate: new Date(Date.now() + 86400000 * 30).toISOString().slice(0, 16),
+      note: '',
+      emailNotify: true,
+      isPinned: events.length === 0,
+      isCommunityEvent: false
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (item) => {
+    if (!isEventOwner(item)) return;
+
+    setEditingEventId(item.id || item.presetExamCode);
+    const matchedPreset = presets.find(p => p.examCode === item.presetExamCode);
+    const isCommunity = Boolean(matchedPreset?.isCommunityEvent || item.isCommunityEvent);
+
+    setFormData({
+      presetExamCode: item.presetExamCode || '',
+      title: item.title || '',
+      targetDate: formatDateTimeLocal(item.targetDate),
+      note: item.note || '',
+      emailNotify: item.emailNotify ?? true,
+      isPinned: Boolean(item.isPinned),
+      isCommunityEvent: isCommunity
+    });
+    setIsFormOpen(true);
+  };
+
   const handleSubmitCustom = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.targetDate) return;
@@ -78,11 +156,16 @@ export default function CountdownModal({
         isPinned: formData.isPinned,
         isCommunityEvent: formData.isCommunityEvent
       };
-      await onSaveEvent(payload);
+      if (editingEventId && onUpdateEvent) {
+        await onUpdateEvent(editingEventId, payload);
+      } else {
+        await onSaveEvent(payload);
+      }
       setIsFormOpen(false);
+      setEditingEventId(null);
       setActiveTab('my_events');
     } catch (err) {
-      console.error('Submit custom event failed:', err);
+      console.error('Submit event failed:', err);
     } finally {
       setSubmitting(false);
     }
@@ -406,7 +489,7 @@ export default function CountdownModal({
                 {!isFormOpen ? (
                   <>
                     <button
-                      onClick={() => setIsFormOpen(true)}
+                      onClick={handleOpenCreate}
                       className="w-full py-3 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-300 border border-dashed border-indigo-500/40 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Plus className="w-4 h-4" /> {t('countdown_add_new')}
@@ -483,6 +566,15 @@ export default function CountdownModal({
 
                               {/* Actions */}
                               <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                {isEventOwner(item) && (
+                                  <button
+                                    onClick={() => handleOpenEdit(item)}
+                                    className="p-1.5 text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors cursor-pointer"
+                                    title={t('countdown_edit')}
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                )}
                                 {!isPinned && (
                                   <button
                                     onClick={() => onPinEvent(item.id)}
@@ -495,10 +587,10 @@ export default function CountdownModal({
                                 )}
                                 <button
                                   onClick={() => onDeleteEvent(item.id)}
-                                  className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                                  title={t('countdown_delete')}
+                                  className="p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors cursor-pointer"
+                                  title={t('countdown_unfollow')}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <EyeOff className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
@@ -508,13 +600,15 @@ export default function CountdownModal({
                     )}
                   </>
                 ) : (
-                  /* Custom Event Creation Form */
+                  /* Custom Event Creation / Editing Form */
                   <form onSubmit={handleSubmitCustom} className="space-y-4 bg-slate-950/60 border border-slate-800 p-4 rounded-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <h3 className="text-sm font-bold text-slate-200">{t('countdown_add_new')}</h3>
+                      <h3 className="text-sm font-bold text-slate-200">
+                        {editingEventId ? t('countdown_edit_title') : t('countdown_add_new')}
+                      </h3>
                       <button
                         type="button"
-                        onClick={() => setIsFormOpen(false)}
+                        onClick={() => { setIsFormOpen(false); setEditingEventId(null); }}
                         className="text-slate-400 hover:text-slate-200 p-1 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
@@ -604,22 +698,75 @@ export default function CountdownModal({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsFormOpen(false)}
-                        className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={submitting}
-                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-md shadow-indigo-600/30"
-                      >
-                        {t('countdown_save')}
-                      </button>
-                    </div>
+                    {(() => {
+                      const matchedPresetForEdit = formData.presetExamCode ? presets.find(p => p.examCode === formData.presetExamCode) : null;
+                      const isCommunityPreset = Boolean(matchedPresetForEdit?.isCommunityEvent || formData.isCommunityEvent);
+                      const otherTrackersCount = matchedPresetForEdit?.trackerCount ? Math.max(0, matchedPresetForEdit.trackerCount - 1) : 0;
+                      const isExpired = formData.targetDate ? new Date(formData.targetDate).getTime() <= Date.now() : false;
+                      const canDeleteEvent = !isCommunityPreset || otherTrackersCount === 0 || isExpired;
+
+                      return (
+                        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800/80 flex-wrap">
+                          {editingEventId ? (
+                            <div className="flex flex-col gap-1">
+                              <button
+                                type="button"
+                                disabled={!canDeleteEvent || submitting}
+                                onClick={async () => {
+                                  if (!canDeleteEvent) {
+                                    toast.warning(`${t('countdown_cannot_delete_has_trackers')} (${otherTrackersCount} ${t('countdown_trackers_count')})`);
+                                    return;
+                                  }
+                                  const isConfirmed = await confirm({
+                                    title: t('countdown_delete_event'),
+                                    message: t('countdown_delete_event_confirm'),
+                                    confirmText: t('countdown_delete_event'),
+                                    cancelText: t('countdown_cancel_edit'),
+                                    type: 'danger'
+                                  });
+                                  if (isConfirmed) {
+                                    onDeleteEvent(editingEventId);
+                                    setIsFormOpen(false);
+                                    setEditingEventId(null);
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                                  canDeleteEvent
+                                    ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 cursor-pointer'
+                                    : 'bg-slate-800/60 text-slate-500 border border-slate-700/60 cursor-not-allowed opacity-60'
+                                }`}
+                                title={canDeleteEvent ? t('countdown_delete_event') : `${t('countdown_cannot_delete_has_trackers')} (${otherTrackersCount} ${t('countdown_trackers_count')})`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>{t('countdown_delete_event')}</span>
+                              </button>
+                              {!canDeleteEvent && (
+                                <span className="text-[11px] text-amber-400/90 italic">
+                                  {t('countdown_cannot_delete_has_trackers')} ({otherTrackersCount} {t('countdown_trackers_count')})
+                                </span>
+                              )}
+                            </div>
+                          ) : <div />}
+
+                          <div className="flex items-center gap-2 ml-auto">
+                            <button
+                              type="button"
+                              onClick={() => { setIsFormOpen(false); setEditingEventId(null); }}
+                              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                            >
+                              {editingEventId ? t('countdown_cancel_edit') : 'Hủy'}
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={submitting}
+                              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-md shadow-indigo-600/30"
+                            >
+                              {editingEventId ? t('countdown_update_btn') : t('countdown_save')}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </form>
                 )}
               </div>
