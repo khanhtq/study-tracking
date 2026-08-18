@@ -317,9 +317,12 @@
 - **Frontend Integration (`Community.jsx` & `api.js`)**:
   - Direct retrieval of preset exams and user countdown events without 404 console errors.
   - Enforced guaranteed auto-link call on group creation callback to ensure the milestone link is immediately active regardless of backend reload lifecycle.
-  - Added an intuitive milestone selector dropdown in the Create Group Modal with remaining day counters and official badges.
-  - Fully translated across Vietnamese, English, and Chinese in `LanguageContext.jsx`.
+### 6.14. Resilient Countdown Milestone Loading in Group Chat Modal (`feature/community-realtime-chat`)
+- **Fix Available Events Listing & Linking in [`GroupCountdownsModal.jsx`](file:///e:/Project/study-tracking/frontend/src/components/chat/GroupCountdownsModal.jsx)**:
+  - Updated `AvailableCountdownDto.java` and `GroupCountdownService.java` to expose `presetExamCode` and `presetExamId`.
+  - Added dual loading with automatic fallback: if group-specific available endpoint is empty, dynamically retrieves active system preset exams and owner countdowns, computes `isAlreadyLinked`, and populates the selection dropdown.
+  - Supported `PRESET_ID`, `PRESET_CODE`, and `CUSTOM` payload deserialization to ensure linking succeeds seamlessly from within active chat rooms.
 - **Verification**:
-  - Maven tests `GroupCountdownServiceTest` and `GroupServiceTest` passing (10/10 PASS).
-  - Vite production build completed with 0 errors.
+  - Full backend test suite passing (62/62 tests PASS 100%).
+  - Frontend production build passed with 0 errors.
 
