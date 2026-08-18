@@ -140,12 +140,20 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
       setCreateError(null);
 
       let linkedPresetExamId = null;
+      let linkedPresetExamCode = null;
       let linkedCustomCountdownId = null;
 
       if (selectedCountdownKey) {
-        const [type, id] = selectedCountdownKey.split(':');
-        if (type === 'PRESET' && id && id !== 'null') {
+        const parts = selectedCountdownKey.split(':');
+        const type = parts[0];
+        const id = parts[1];
+        if (type === 'PRESET_ID' && id && id !== 'null' && id !== 'undefined') {
           linkedPresetExamId = Number(id);
+        } else if (type === 'PRESET_CODE' && id && id !== 'null' && id !== 'undefined') {
+          linkedPresetExamCode = id;
+        } else if (type === 'PRESET' && id && id !== 'null' && id !== 'undefined') {
+          if (!isNaN(id)) linkedPresetExamId = Number(id);
+          else linkedPresetExamCode = id;
         } else if (type === 'CUSTOM' && id && id !== 'null' && id !== 'undefined') {
           linkedCustomCountdownId = id;
         }
@@ -168,6 +176,7 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
         try {
           const linkPayload = {};
           if (linkedPresetExamId) linkPayload.presetExamId = linkedPresetExamId;
+          if (linkedPresetExamCode) linkPayload.presetExamCode = linkedPresetExamCode;
           if (linkedCustomCountdownId) linkPayload.customCountdownId = linkedCustomCountdownId;
           await communityChatApi.linkCountdownToGroup(created.id, linkPayload);
         } catch (linkErr) {
@@ -571,12 +580,14 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none cursor-pointer"
                   >
                     <option value="">{t('none_selected') || 'Không liên kết'}</option>
-                    {availableCountdowns.map((ev) => {
-                      const value = ev.isPreset ? `PRESET:${ev.presetExamId}` : `CUSTOM:${ev.customCountdownId}`;
+                    {availableCountdowns.map((ev, idx) => {
+                      const value = ev.isPreset
+                        ? (ev.presetExamId ? `PRESET_ID:${ev.presetExamId}` : `PRESET_CODE:${ev.presetExamCode}`)
+                        : `CUSTOM:${ev.customCountdownId}`;
                       const badge = ev.isOfficialDate ? ` (${t('countdown_official_badge') || 'Chính thức'})` : '';
                       const daysText = ev.daysRemaining === 0 ? t('today_is_event') : `(${ev.daysRemaining}d)`;
                       return (
-                        <option key={value} value={value}>
+                        <option key={value || `preset-opt-${idx}`} value={value}>
                           {ev.title}{badge} - {daysText}
                         </option>
                       );

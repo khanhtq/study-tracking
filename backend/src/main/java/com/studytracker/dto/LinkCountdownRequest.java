@@ -15,6 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class LinkCountdownRequest {
     private Long presetExamId;
+    private String presetExamCode;
     private UUID customCountdownId;
 
     @JsonSetter(nulls = Nulls.SET_TO_NULL)

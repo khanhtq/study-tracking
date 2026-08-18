@@ -140,7 +140,7 @@ public class GroupCountdownService {
         ChatGroup group = getGroupEntity(groupId);
         validateOwnerOrAdmin(groupId, currentUser);
 
-        if (request.getPresetExamId() == null && request.getCustomCountdownId() == null) {
+        if (request.getPresetExamId() == null && (request.getPresetExamCode() == null || request.getPresetExamCode().isBlank()) && request.getCustomCountdownId() == null) {
             throw new IllegalArgumentException("Vui lòng chọn sự kiện đếm ngược cần liên kết");
         }
 
@@ -151,9 +151,16 @@ public class GroupCountdownService {
 
         User managedUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
 
-        if (request.getPresetExamId() != null) {
-            SystemPresetExam preset = systemPresetExamRepository.findById(request.getPresetExamId())
-                    .orElseThrow(() -> new IllegalArgumentException("Kỳ thi hệ thống không tồn tại"));
+        if (request.getPresetExamId() != null || (request.getPresetExamCode() != null && !request.getPresetExamCode().isBlank())) {
+            SystemPresetExam preset;
+            if (request.getPresetExamId() != null) {
+                preset = systemPresetExamRepository.findById(request.getPresetExamId())
+                        .orElseThrow(() -> new IllegalArgumentException("Kỳ thi hệ thống không tồn tại"));
+            } else {
+                preset = systemPresetExamRepository.findByExamCode(request.getPresetExamCode().trim())
+                        .orElseThrow(() -> new IllegalArgumentException("Kỳ thi hệ thống không tồn tại"));
+            }
+
             if (preset.getTargetDate().isBefore(now)) {
                 throw new IllegalArgumentException("Kỳ thi này đã kết thúc, không thể liên kết");
             }

@@ -1116,7 +1116,8 @@ export const communityChatApi = {
           const diffDays = Math.ceil((targetDate - now) / (1000 * 60 * 60 * 24));
           if (diffDays >= 0) {
             result.push({
-              presetExamId: p.id,
+              presetExamId: p.id || null,
+              presetExamCode: p.examCode || null,
               customCountdownId: null,
               title: p.title,
               category: p.category,
