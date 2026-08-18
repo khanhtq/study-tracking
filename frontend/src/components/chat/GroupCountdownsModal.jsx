@@ -44,7 +44,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
       setCountdowns(Array.isArray(linkedData) ? linkedData : []);
       setAvailableEvents(Array.isArray(availableData) ? availableData : []);
     } catch (err) {
-      toast?.error(err.message || 'Lỗi tải danh sách đếm ngược');
+      toast?.error(err.message || t('load_countdowns_error'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
       setShowAddSection(false);
       await loadData();
     } catch (err) {
-      toast?.error(err.message || 'Không thể liên kết sự kiện');
+      toast?.error(err.message || t('link_countdown_error'));
     } finally {
       setActionLoading(false);
     }
@@ -82,7 +82,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
     const isConfirmed = confirm ? await confirm({
       title: t('unlink_countdown_btn'),
       message: `${t('unlink_countdown_confirm')} "${title}"?`,
-      confirmText: t('delete'),
+      confirmText: t('btn_delete') || t('delete') || 'Xóa',
       type: 'danger',
     }) : window.confirm(`${t('unlink_countdown_confirm')} "${title}"?`);
 
@@ -95,7 +95,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
       setCountdowns((prev) => prev.filter((c) => c.linkId !== linkId));
       await loadData();
     } catch (err) {
-      toast?.error(err.message || 'Không thể hủy liên kết sự kiện');
+      toast?.error(err.message || t('unlink_countdown_error'));
     } finally {
       setActionLoading(false);
     }
@@ -151,7 +151,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
               {loading ? (
                 <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
                   <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-                  <span className="text-xs">Đang tải dữ liệu mục tiêu...</span>
+                  <span className="text-xs">{t('loading_countdowns')}</span>
                 </div>
               ) : countdowns.length === 0 ? (
                 <div className="py-10 text-center space-y-3">
