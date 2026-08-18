@@ -696,6 +696,9 @@ const translations = {
     sys_msg_daily_today_event: "• {title}: Hôm nay là ngày diễn ra sự kiện chính thức!",
     sys_msg_daily_days_left: "• {title}: Còn {days} ngày ({date})",
     sys_msg_daily_footer: "Chúc cả nhóm có một ngày học tập tập trung và hiệu quả!",
+    link_event_on_create_group: "Liên kết sự kiện đếm ngược mục tiêu (Không bắt buộc)",
+    none_selected: "Không liên kết",
+    link_countdown_create_hint: "Sự kiện này sẽ được tự động liên kết để cả nhóm cùng theo dõi và đếm ngược mỗi ngày.",
   },
   en: {
     // auth / login / register
@@ -1500,6 +1503,9 @@ const translations = {
     sys_msg_daily_today_event: "• {title}: Today is the official exam/event date!",
     sys_msg_daily_days_left: "• {title}: {days} days left ({date})",
     sys_msg_daily_footer: "Wishing everyone a focused and productive study day!",
+    link_event_on_create_group: "Link Countdown Milestone (Optional)",
+    none_selected: "None",
+    link_countdown_create_hint: "This event will be automatically linked for the whole group to track and count down daily.",
   },
   zh: {
     // auth / login / register
@@ -2141,6 +2147,9 @@ const translations = {
     sys_msg_daily_today_event: "• {title}：今天是考试/活动正式举行日！",
     sys_msg_daily_days_left: "• {title}：还剩 {days} 天（{date}）",
     sys_msg_daily_footer: "祝大家今天学习专注、收获满满！",
+    link_event_on_create_group: "关联倒计时目标事件（可选）",
+    none_selected: "不关联",
+    link_countdown_create_hint: "该事件将自动关联，以便全群成员每天一起跟踪并倒计时。",
 
     // admin dashboard zh
     admin_dashboard: "管理后台",

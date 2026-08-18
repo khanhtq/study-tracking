@@ -1097,6 +1097,10 @@ export const communityChatApi = {
   getGroupCountdowns: (groupId) => {
     return apiCall(`/v1/chat/groups/${groupId}/countdowns`);
   },
+  getAvailableCountdownsForCreation: () => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall('/v1/chat/groups/countdowns/available');
+  },
   getAvailableCountdownsToLink: (groupId) => {
     if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
     return apiCall(`/v1/chat/groups/${groupId}/countdowns/available`);

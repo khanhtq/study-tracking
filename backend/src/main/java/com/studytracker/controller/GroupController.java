@@ -25,8 +25,16 @@ import java.util.UUID;
 public class GroupController {
 
     private final GroupService groupService;
+    private final com.studytracker.service.GroupCountdownService groupCountdownService;
 
     // ==================== 1. CRUD NHÓM ====================
+
+    @Operation(summary = "Lấy danh sách các sự kiện có thể liên kết khi tạo nhóm mới")
+    @GetMapping("/countdowns/available")
+    public ResponseEntity<List<AvailableCountdownDto>> getAvailableCountdownsForCreation(
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(groupCountdownService.getAvailableCountdowns(null, currentUser));
+    }
 
     @Operation(summary = "Tạo nhóm cộng đồng mới")
     @PostMapping

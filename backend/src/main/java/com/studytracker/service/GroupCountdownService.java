@@ -63,10 +63,14 @@ public class GroupCountdownService {
 
     @Transactional(readOnly = true)
     public List<AvailableCountdownDto> getAvailableCountdowns(UUID groupId, User currentUser) {
-        validateOwnerOrAdmin(groupId, currentUser);
+        if (groupId != null) {
+            validateOwnerOrAdmin(groupId, currentUser);
+        }
 
         Instant now = Instant.now();
-        List<GroupCountdownLink> existingLinks = groupCountdownLinkRepository.findByGroupIdWithDetails(groupId);
+        List<GroupCountdownLink> existingLinks = groupId != null
+                ? groupCountdownLinkRepository.findByGroupIdWithDetails(groupId)
+                : Collections.emptyList();
         Set<Long> linkedPresetIds = existingLinks.stream()
                 .map(l -> l.getPresetExam() != null ? l.getPresetExam().getId() : null)
                 .filter(Objects::nonNull)
