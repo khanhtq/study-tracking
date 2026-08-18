@@ -264,6 +264,20 @@
   - Added smooth `whileHover` and `whileTap` scale feedback on widget toggle items, reset button, close button, and save button.
   - Implemented `Escape` key shortcut listener for swift dismissal.
   - Added automatic background body scroll locking (`overflow: hidden`) during modal display to prevent jitter and accidental background scrolling.
-- **Verification**:
-  - Frontend production build (`npm run build`) completed with 0 errors (100% PASS).
+
+### 6.9. Message Editor UI & UX Enhancement (`GroupChatRoom.jsx`)
+- **Spacious Message Editing Experience**:
+  - Replaced the narrow inline bubble with an expanded, dedicated editor card (`max-w-full sm:max-w-xl md:max-w-2xl`).
+  - Textarea increased to comfortable multiline height (`min-h-[100px] sm:min-h-[120px] max-h-[320px] resize-y`) with smooth focus ring and clean border.
+  - Added keyboard shortcut support: `Enter` to save, `Shift + Enter` for new line, `Esc` to cancel editing.
+  - Added i18n keys for editor title and keyboard shortcuts (`edit_message_title`, `edit_message_hint`) across `vi`, `en`, `zh`.
+  - Added `savingEdit` state with spinner and disabled states during asynchronous update requests.
+
+### 6.10. Agent Rules Discovery Standardization & Strict UI Icon Policy
+- **System Rules Initialization (`GEMINI.md` & `AGENTS.md`)**:
+  - Established root-level `GEMINI.md` and `AGENTS.md` and synchronized with `.agents/rules/development_guidelines.md` and `.agent/rules/development_guidelines.md`.
+  - Configured mandatory pre-task context checking of `PROJECT_STATE.md` and post-task synchronization on every turn.
+- **Strict UI Icon Policy (`NO REDUNDANT / EXCESSIVE ICONS`)**:
+  - Prohibited adding unnecessary, repetitive, or decorative clutter icons across all UI components, buttons, badges, tables, and headers.
+  - Required icons to be used strictly when they provide clear visual utility or improve UX affordance (action triggers, status badges), avoiding icon-stuffing across plain text labels.
 

@@ -6,7 +6,7 @@ This document defines the strict rules, architectural standards, and coding conv
 
 ## 0. Meta-Rule: Mandatory Rule Review & Execution Awareness - STRICTLY ENFORCED
 
-- **RULE RE-READ ON EVERY RUN**: In **EVERY single turn, prompt, or execution**, the Agent **MUST review, internalize, and strictly abide by all rules** defined in this document before proposing or executing any action.
+- **RULE RE-READ ON EVERY RUN**: In **EVERY single turn, prompt, or execution**, the Agent **MUST review, internalize, and strictly abide by all rules** defined in this document and [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md) before proposing or executing any action.
 - **ZERO EXCUSES FOR FORGETTING**: Guidelines regarding Git push restrictions, feature branching, 3-language i18n, Flyway migrations, server-side anti-cheat calculations, comprehensive test writing, and project state synchronization apply unconditionally across all turns.
 
 ---
@@ -53,7 +53,7 @@ This document defines the strict rules, architectural standards, and coding conv
 ### 3.2. Database Management & Flyway Migrations - MANDATORY
 - Any database schema change (adding tables, altering columns, adding indexes or foreign keys) **MUST** be implemented via a new sequential Flyway migration file:
   `backend/src/main/resources/db/migration/V<NextVersion>__<description>.sql`
-- **STRICTLY PROHIBITED**: Modifying or deleting existing committed migration files (such as `V1__` through `V19__`), as this breaks Flyway schema history checksums in production.
+- **STRICTLY PROHIBITED**: Modifying or deleting existing committed migration files (such as `V1` through `V21`), as this breaks Flyway schema history checksums in production.
 
 ### 3.3. Security & Authorization
 - Retrieve current authenticated user details using `@AuthenticationPrincipal UserPrincipal currentUser` or `SecurityContextHolder`.
@@ -87,52 +87,14 @@ This document defines the strict rules, architectural standards, and coding conv
   - `refactor: <description>` (Code restructuring without feature change)
   - `chore: <description>` (Build, config, dependencies, documentation)
 
-### 4.4. Code Integrity
-- Preserve existing unrelated comments, docstrings, and functionalities.
-- When implementing features spanning both Frontend & Backend, verify API payload compatibility.
-
 ---
 
 ## 5. Feature Development Lifecycle & Workflow - MANDATORY
 
 Every time a new feature, improvement, refactoring, or bug fix is executed, the Agent **MUST** follow this structured 5-step workflow:
 
-```mermaid
-graph LR
-    A[1. Scan & Context] --> B[2. Impact Analysis]
-    B --> C[3. Implementation]
-    C --> D[4. Testing & Verification]
-    D --> E[5. Auto-Update PROJECT_STATE.md]
-```
-
-### Step 1: Scan & Context Acquisition
-- Review rules in this document and check [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md) for current database migrations (currently `V19`), active modules, endpoints, and components before writing code.
-- Read only relevant existing code, service interfaces, DTOs, or React components to understand patterns without unnecessarily scanning unrelated folders.
-
-### Step 2: Impact Analysis & Scoping (Khoanh vùng ảnh hưởng)
-- Explicitly identify all affected layers:
-  - **Database**: Is a new Flyway migration script needed (`V20__...sql`)?
-  - **Backend**: Which Entities, Repositories, Services, DTOs, and Controllers are impacted?
-  - **Frontend**: Which UI pages, components, modals, and API functions in `api.js` need modifications?
-  - **i18n**: What translation keys must be added to all 3 languages (`en`, `vi`, `zh`) in `LanguageContext.jsx`?
-  - **Security & Authorization**: Which permission checks and resource ownership validations must be enforced?
-
-### Step 3: Implementation
-- Implement backend and frontend changes following the layered architecture and Glassmorphism design system.
-- Ensure backwards compatibility and preserve existing unrelated features and comments.
-
-### Step 4: Verification & Comprehensive Testing
-- **Backend Unit & Integration Tests**:
-  - Implement test classes in `backend/src/test/java/com/studytracker/` using JUnit 5, Mockito, and `MockMvc` / `@SpringBootTest`.
-  - Cover both **Happy Paths** and **Edge / Error Cases** (unauthorized access, validation failures, boundary limits, anti-cheat violations, missing entities).
-  - Ensure all tests pass cleanly before completing the turn.
-- **Frontend Verification**:
-  - Run linter checks (`npm run lint` / `oxlint`) to ensure zero syntax or linting errors.
-  - Verify UI component state handling, responsive breakpoints, fallback error boundaries, and complete i18n coverage.
-
-### Step 5: Synchronize & Update PROJECT_STATE.md - MANDATORY AFTER EVERY SINGLE OPERATION
-- **MANDATORY FOR EVERY CHANGE (BIG OR SMALL)**: After **EVERY** task, modification, fix, refactor, or feature implementation, the Agent **MUST immediately update [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md)** to document:
-  - Any new Flyway database migration versions added (e.g. `V20`).
-  - Any new or modified backend API endpoints, DTOs, schedulers, or services.
-  - Any new frontend components, pages, modals, or widgets.
-  - The latest project progress, working branches, and system state so that all future sessions have 100% accurate, up-to-date context.
+1. **Step 1: Scan & Context Acquisition**: Review rules and check [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md).
+2. **Step 2: Impact Analysis & Scoping**: Identify affected layers (DB Flyway, Backend, Frontend, i18n, Security).
+3. **Step 3: Implementation**: Implement cleanly following architecture.
+4. **Step 4: Verification & Testing**: Run unit tests / linting.
+5. **Step 5: Synchronize & Update PROJECT_STATE.md**: Update [.agent/PROJECT_STATE.md](file:///e:/Project/study-tracking/.agent/PROJECT_STATE.md) with all changes.

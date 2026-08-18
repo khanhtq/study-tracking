@@ -375,6 +375,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   };
 
   // ==================== 5. ACTIONS: SỬA, XÓA, REACTION, GHIM & LƯU TÀI LIỆU ====================
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const handleStartEdit = (msg) => {
     setEditingMessage(msg);
@@ -382,13 +383,16 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingMessage || !editContent.trim()) return;
+    if (!editingMessage || !editContent.trim() || savingEdit) return;
     try {
+      setSavingEdit(true);
       await communityChatApi.editMessage(groupId, editingMessage.id, editContent.trim());
       setEditingMessage(null);
       setEditContent('');
     } catch (err) {
       console.error('Lỗi sửa tin nhắn:', err);
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -751,7 +755,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   </div>
 
                   {/* Message Bubble Container */}
-                  <div className={`flex flex-col max-w-[85%] sm:max-w-lg ${isMe ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col ${editingMessage?.id === msg.id ? 'w-full max-w-full sm:max-w-xl md:max-w-2xl' : 'max-w-[85%] sm:max-w-lg'} ${isMe ? 'items-end' : 'items-start'}`}>
                     {/* Header info (Name & Time) */}
                     <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-slate-400">
                       <span
@@ -774,48 +778,80 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                       </div>
                     )}
 
-                    {/* Main Bubble */}
-                    <div
-                      className={`relative p-3 sm:p-3.5 rounded-2xl text-[13.5px] sm:text-sm leading-relaxed ${
-                        isMe
-                          ? 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
-                          : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none shadow-sm'
-                      }`}
-                    >
-                      {/* Editing state */}
-                      {editingMessage?.id === msg.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-400"
-                            rows={2}
-                          />
-                          <div className="flex items-center justify-end gap-2">
+                    {/* Main Bubble or Spacious Edit Box */}
+                    {editingMessage?.id === msg.id ? (
+                      <div className="w-full bg-slate-900 border-2 border-indigo-500/60 rounded-2xl p-3.5 sm:p-4 shadow-xl space-y-2.5">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 text-xs text-indigo-500 dark:text-indigo-400 font-semibold">
+                          <div className="flex items-center gap-1.5">
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>{t('edit_message_title')}</span>
+                          </div>
+                          <button
+                            onClick={() => setEditingMessage(null)}
+                            className="p-1 rounded-lg text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                            title="Esc"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSaveEdit();
+                            } else if (e.key === 'Escape') {
+                              setEditingMessage(null);
+                            }
+                          }}
+                          autoFocus
+                          rows={4}
+                          placeholder={t('chat_input_placeholder')}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 leading-relaxed resize-y min-h-[96px] sm:min-h-[120px] max-h-[320px]"
+                        />
+
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-slate-400">
+                            {t('edit_message_hint')}
+                          </span>
+                          <div className="flex items-center gap-2 justify-end">
                             <button
+                              type="button"
                               onClick={() => setEditingMessage(null)}
-                              className="text-xs text-slate-300 hover:text-slate-100 font-medium cursor-pointer"
+                              className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
                             >
                               {t('drive_btn_cancel')}
                             </button>
                             <button
+                              type="button"
                               onClick={handleSaveEdit}
-                              className="px-3 py-1 bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-sm cursor-pointer"
+                              disabled={savingEdit || !editContent.trim()}
+                              className="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
                             >
-                              {t('drive_btn_save')}
+                              {savingEdit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                              <span>{t('drive_btn_save')}</span>
                             </button>
                           </div>
                         </div>
-                      ) : (
-                        <>
-                          <div className="whitespace-pre-wrap break-words">
-                            {msg.content}
-                            {msg.isEdited && (
-                              <span className="text-[11px] opacity-60 ml-1.5 italic">
-                                {t('edited_tag')}
-                              </span>
-                            )}
-                          </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`relative p-3 sm:p-3.5 rounded-2xl text-[13.5px] sm:text-sm leading-relaxed ${
+                          isMe
+                            ? 'bg-indigo-600 text-white rounded-tr-none shadow-sm'
+                            : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-tl-none shadow-sm'
+                        }`}
+                      >
+                        <div className="whitespace-pre-wrap break-words">
+                          {msg.content}
+                          {msg.isEdited && (
+                            <span className="text-[11px] opacity-60 ml-1.5 italic">
+                              {t('edited_tag')}
+                            </span>
+                          )}
+                        </div>
 
                           {/* Attachments rendering */}
                           {msg.attachments && msg.attachments.length > 0 && (
@@ -902,88 +938,87 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                               })}
                             </div>
                           )}
-                        </>
-                      )}
 
-                      {/* Floating Message Action Toolbar on Hover */}
-                      {!msg.isDeleted && editingMessage?.id !== msg.id && (
-                        <div
-                          className={`absolute -bottom-3.5 ${
-                            isMe ? 'right-2' : 'left-2'
-                          } opacity-0 group-hover:opacity-100 transition-all duration-150 flex items-center gap-0.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 text-slate-400 rounded-full px-2 py-0.5 shadow-xl z-20 pointer-events-none group-hover:pointer-events-auto`}
-                        >
-                          {/* Standard Reactions Picker */}
-                          {STANDARD_REACTIONS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleReaction(msg.id, emoji);
-                              }}
-                              className="hover:scale-125 transition-transform text-xs p-1 leading-none cursor-pointer"
+                          {/* Floating Message Action Toolbar on Hover */}
+                          {!msg.isDeleted && (
+                            <div
+                              className={`absolute -bottom-3.5 ${
+                                isMe ? 'right-2' : 'left-2'
+                              } opacity-0 group-hover:opacity-100 transition-all duration-150 flex items-center gap-0.5 bg-slate-900/95 backdrop-blur-md border border-slate-800 text-slate-400 rounded-full px-2 py-0.5 shadow-xl z-20 pointer-events-none group-hover:pointer-events-auto`}
                             >
-                              {emoji}
-                            </button>
-                          ))}
+                              {/* Standard Reactions Picker */}
+                              {STANDARD_REACTIONS.map((emoji) => (
+                                <button
+                                  key={emoji}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleReaction(msg.id, emoji);
+                                  }}
+                                  className="hover:scale-125 transition-transform text-xs p-1 leading-none cursor-pointer"
+                                >
+                                  {emoji}
+                                </button>
+                              ))}
 
-                          <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
+                              <div className="w-[1px] h-3 bg-slate-800 mx-0.5" />
 
-                          {/* Reply */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setReplyingTo(msg);
-                            }}
-                            className="p-1 text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer"
-                            title={t('reply')}
-                          >
-                            <CornerDownRight className="w-3.5 h-3.5" />
-                          </button>
+                              {/* Reply */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReplyingTo(msg);
+                                }}
+                                className="p-1 text-slate-400 hover:text-indigo-500 transition-colors cursor-pointer"
+                                title={t('reply')}
+                              >
+                                <CornerDownRight className="w-3.5 h-3.5" />
+                              </button>
 
-                          {/* Edit (if author) */}
-                          {isMe && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStartEdit(msg);
-                              }}
-                              className="p-1 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
-                              title={t('edit')}
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                              {/* Edit (if author) */}
+                              {isMe && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(msg);
+                                  }}
+                                  className="p-1 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+                                  title={t('edit')}
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
 
-                          {/* Pin/Unpin (if mod/admin) */}
-                          {isModOrAbove && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleTogglePin(msg.id);
-                              }}
-                              className="p-1 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
-                              title={msg.isPinned ? t('unpin') : t('pin')}
-                            >
-                              <Pin className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                              {/* Pin/Unpin (if mod/admin) */}
+                              {isModOrAbove && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTogglePin(msg.id);
+                                  }}
+                                  className="p-1 text-slate-400 hover:text-amber-500 transition-colors cursor-pointer"
+                                  title={msg.isPinned ? t('unpin') : t('pin')}
+                                >
+                                  <Pin className="w-3.5 h-3.5" />
+                                </button>
+                              )}
 
-                          {/* Delete */}
-                          {(isMe || isModOrAbove) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMessage(msg.id);
-                              }}
-                              className="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
-                              title={t('delete')}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              {/* Delete */}
+                              {(isMe || isModOrAbove) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteMessage(msg.id);
+                                  }}
+                                  className="p-1 text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                                  title={t('delete')}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}
-                    </div>
 
                     {/* Reactions Pill Display */}
                     {msg.reactions && msg.reactions.length > 0 && (
