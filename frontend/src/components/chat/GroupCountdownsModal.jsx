@@ -261,19 +261,18 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                         <select
                           value={selectedEventKey}
                           onChange={(e) => setSelectedEventKey(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500 cursor-pointer"
                         >
-                          <option value="">-- {t('select_event_to_link')} --</option>
+                          <option value="">{t('select_event_to_link')}</option>
                           {unlinkedAvailable
                             .filter((ev) => (ev.isPreset && ev.presetExamId) || (!ev.isPreset && ev.customCountdownId))
                             .map((ev, idx) => {
                               const key = ev.isPreset
                                 ? `PRESET:${ev.presetExamId}`
                                 : `CUSTOM:${ev.customCountdownId}`;
-                              const categoryTag = ev.isPreset ? `[${t('category_exam') || 'Kỳ thi'}]` : `[${t('category_custom') || 'Cá nhân'}]`;
                               return (
                                 <option key={key || `ev-${idx}`} value={key}>
-                                  {categoryTag} {ev.title} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
+                                  {ev.title} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
                                 </option>
                               );
                             })}
