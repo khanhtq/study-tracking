@@ -314,7 +314,9 @@
   - Updated `CreateGroupRequest.java` and `GroupService.java` to support `linkedPresetExamId` and `linkedCustomCountdownId`.
   - Added endpoint `GET /api/v1/chat/groups/countdowns/available` allowing the group creator to fetch active system preset exams and their own countdown events before the group is instantiated.
   - Automatically establishes the milestone link and creates the initial system announcement upon group creation.
-- **Frontend Integration (`Community.jsx`)**:
+- **Frontend Integration (`Community.jsx` & `api.js`)**:
+  - Direct retrieval of preset exams and user countdown events without 404 console errors.
+  - Enforced guaranteed auto-link call on group creation callback to ensure the milestone link is immediately active regardless of backend reload lifecycle.
   - Added an intuitive milestone selector dropdown in the Create Group Modal with remaining day counters and official badges.
   - Fully translated across Vietnamese, English, and Chinese in `LanguageContext.jsx`.
 - **Verification**:
