@@ -80,7 +80,11 @@ public class GroupCountdownService {
 
         // 1. System Presets
         List<SystemPresetExam> presets = systemPresetExamRepository.findAll();
+        Set<String> presetCodes = new HashSet<>();
         for (SystemPresetExam preset : presets) {
+            if (preset.getExamCode() != null) {
+                presetCodes.add(preset.getExamCode());
+            }
             if (preset.getTargetDate().isAfter(now)) {
                 long days = calculateDaysRemaining(preset.getTargetDate(), now);
                 result.add(AvailableCountdownDto.builder()
@@ -99,9 +103,12 @@ public class GroupCountdownService {
             }
         }
 
-        // 2. User's Own Countdown Events
+        // 2. User's Own Countdown Events (Loại trừ các event chỉ là tracking theo kỳ thi hệ thống để không bị trùng lặp)
         List<CountdownEvent> userEvents = countdownEventRepository.findByUserIdAndTargetDateAfterOrderByTargetDateAsc(currentUser.getId(), now);
         for (CountdownEvent event : userEvents) {
+            if (event.getPresetExamCode() != null && presetCodes.contains(event.getPresetExamCode())) {
+                continue;
+            }
             if (event.getTargetDate().isAfter(now)) {
                 long days = calculateDaysRemaining(event.getTargetDate(), now);
                 result.add(AvailableCountdownDto.builder()
