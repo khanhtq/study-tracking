@@ -197,13 +197,17 @@
 - Removed light mode text gradients to ensure solid, crisp typography.
 - Standardized official schedule badge key `countdown_official_badge` to `"Lịch chính thức"` (VI), `"Official Schedule"` (EN), and `"官方正式日程"` (ZH).
 
-### 6.5. Message Editor UI & UX Enhancement (`GroupChatRoom.jsx`)
-- **Spacious Message Editing Experience**:
-  - Replaced the narrow inline bubble with an expanded, dedicated editor card (`max-w-full sm:max-w-xl md:max-w-2xl`).
-  - Textarea increased to comfortable multiline height (`min-h-[100px] sm:min-h-[120px] max-h-[320px] resize-y`) with smooth focus ring and clean border.
-  - Added keyboard shortcut support: `Enter` to save, `Shift + Enter` for new line, `Esc` to cancel editing.
-  - Added i18n keys for editor title and keyboard shortcuts (`edit_message_title`, `edit_message_hint`) across `vi`, `en`, `zh`.
-  - Added `savingEdit` state with spinner and disabled states during asynchronous update requests.
+### 6.4. Countdown Multi-Event Tracking, Widget Pinning & Lifecycle Management (`feature/countdown-multi-events-lifecycle`)
+- **Multi-Event Tracking & Dashboard Widget Pinning**:
+  - Refactored `Dashboard.jsx`, `CountdownModal.jsx`, and `CountdownWidget.jsx` to allow users to track multiple exam presets and custom events simultaneously without overwriting previous events.
+  - Implemented dynamic widget pinning: Users can pin/unpin any tracked countdown to be prominently displayed on the Dashboard widget, with carousel `<` `>` navigation and quick switch dropdown.
+- **Event Lifecycle & Auto-Expiry**:
+  - **Backend Filtering**: `getAllPresets` and `getUserCountdowns` automatically filter out expired countdowns (`targetDate > Instant.now()`).
+  - **Daily Cleanup Job**: Scheduled task running daily at 2:00 AM (`cleanupExpiredCountdowns`) to purge expired countdown events and community presets.
+  - **Frontend Auto-Transition**: If an active pinned event expires, the UI automatically transitions to the next available future event.
+- **Creator Deletion Constraints & Cascading Cleanup**:
+  - **Active Tracking Deletion Guard**: If a creator attempts to delete a community event that is still active (`targetDate > now`) and has other active trackers (`totalTrackers > 1`), the deletion is blocked with a descriptive error message (`IllegalStateException`).
+  - **Cascading Deletion**: When an owner legitimately deletes their event (expired or no other trackers), all associated tracking records across all users are automatically cleaned up (`deleteByPresetExamCode`).
   - **Regular Tracker Untracking**: Non-creators can untrack events anytime from their personal list without deleting the community preset.
 - **Database Schema Fixes & Flyway Auto-Patching**:
   - Added migration `V16__add_community_events_and_tracker_counts.sql` and enabled `spring.flyway.out-of-order: true`.
@@ -260,10 +264,16 @@
   - Added smooth `whileHover` and `whileTap` scale feedback on widget toggle items, reset button, close button, and save button.
   - Implemented `Escape` key shortcut listener for swift dismissal.
   - Added automatic background body scroll locking (`overflow: hidden`) during modal display to prevent jitter and accidental background scrolling.
-- **Verification**:
-  - Frontend production build (`npm run build`) completed with 0 errors (100% PASS).
 
-### 6.9. Agent Rules Discovery Standardization & Strict UI Icon Policy
+### 6.9. Message Editor UI & UX Enhancement (`GroupChatRoom.jsx`)
+- **Spacious Message Editing Experience**:
+  - Replaced the narrow inline bubble with an expanded, dedicated editor card (`max-w-full sm:max-w-xl md:max-w-2xl`).
+  - Textarea increased to comfortable multiline height (`min-h-[100px] sm:min-h-[120px] max-h-[320px] resize-y`) with smooth focus ring and clean border.
+  - Added keyboard shortcut support: `Enter` to save, `Shift + Enter` for new line, `Esc` to cancel editing.
+  - Added i18n keys for editor title and keyboard shortcuts (`edit_message_title`, `edit_message_hint`) across `vi`, `en`, `zh`.
+  - Added `savingEdit` state with spinner and disabled states during asynchronous update requests.
+
+### 6.10. Agent Rules Discovery Standardization & Strict UI Icon Policy
 - **System Rules Initialization (`GEMINI.md` & `AGENTS.md`)**:
   - Established root-level `GEMINI.md` and `AGENTS.md` and synchronized with `.agents/rules/development_guidelines.md` and `.agent/rules/development_guidelines.md`.
   - Configured mandatory pre-task context checking of `PROJECT_STATE.md` and post-task synchronization on every turn.
