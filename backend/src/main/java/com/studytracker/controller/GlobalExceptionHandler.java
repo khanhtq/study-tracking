@@ -40,6 +40,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Map<String, String>> handleSecurityException(SecurityException ex) {
+        log.warn("Access denied / Security error: {}", ex.getMessage());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", ex.getMessage() != null ? ex.getMessage() : "Bạn không có quyền thực hiện thao tác này.");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
     @ExceptionHandler({BadCredentialsException.class, UsernameNotFoundException.class})
     public ResponseEntity<Map<String, String>> handleBadCredentialsException(Exception ex) {
         log.warn("Authentication failed due to invalid credentials: {}", ex.getMessage());

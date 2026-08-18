@@ -17,7 +17,7 @@ import { useToast } from '../../context/ToastContext';
 
 const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   const { t } = useLanguage();
-  const toast = useToast();
+  const { toast, confirm } = useToast();
 
   const [countdowns, setCountdowns] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
@@ -44,7 +44,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
       setCountdowns(Array.isArray(linkedData) ? linkedData : []);
       setAvailableEvents(Array.isArray(availableData) ? availableData : []);
     } catch (err) {
-      toast.error(err.message || 'Lỗi tải danh sách đếm ngược');
+      toast?.error(err.message || 'Lỗi tải danh sách đếm ngược');
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
 
   const handleLinkCountdown = async () => {
     if (!selectedEventKey) {
-      toast.warning(t('select_event_to_link'));
+      toast?.warning(t('select_event_to_link'));
       return;
     }
 
@@ -65,35 +65,35 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
       };
 
       await communityChatApi.linkCountdownToGroup(group.id, payload);
-      toast.success(t('link_countdown_success'));
+      toast?.success(t('link_countdown_success'));
       setSelectedEventKey('');
       setShowAddSection(false);
       await loadData();
     } catch (err) {
-      toast.error(err.message || 'Không thể liên kết sự kiện');
+      toast?.error(err.message || 'Không thể liên kết sự kiện');
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleUnlinkCountdown = async (linkId, title) => {
-    const isConfirmed = await toast.confirm({
+    const isConfirmed = confirm ? await confirm({
       title: t('unlink_countdown_btn'),
       message: `${t('unlink_countdown_confirm')} "${title}"?`,
       confirmText: t('delete'),
       type: 'danger',
-    });
+    }) : window.confirm(`${t('unlink_countdown_confirm')} "${title}"?`);
 
     if (!isConfirmed) return;
 
     try {
       setActionLoading(true);
       await communityChatApi.unlinkCountdownFromGroup(group.id, linkId);
-      toast.success(t('unlink_countdown_success'));
+      toast?.success(t('unlink_countdown_success'));
       setCountdowns((prev) => prev.filter((c) => c.linkId !== linkId));
       await loadData();
     } catch (err) {
-      toast.error(err.message || 'Không thể hủy liên kết sự kiện');
+      toast?.error(err.message || 'Không thể hủy liên kết sự kiện');
     } finally {
       setActionLoading(false);
     }
@@ -167,13 +167,13 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {countdowns.map((item) => {
+                  {countdowns.map((item, idx) => {
                     const isToday = item.daysRemaining === 0;
                     const isPast = item.daysRemaining < 0;
 
                     return (
                       <div
-                        key={item.linkId}
+                        key={item.linkId || item.id || `countdown-${idx}`}
                         className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700/80 transition-all flex items-center justify-between gap-3 group"
                       >
                         <div className="flex-1 min-w-0">
@@ -262,12 +262,12 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                           className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
                         >
                           <option value="">-- {t('select_event_to_link')} --</option>
-                          {unlinkedAvailable.map((ev) => {
+                          {unlinkedAvailable.map((ev, idx) => {
                             const key = ev.isPreset
                               ? `PRESET:${ev.presetExamId}`
                               : `CUSTOM:${ev.customCountdownId}`;
                             return (
-                              <option key={key} value={key}>
+                              <option key={key || `ev-${idx}`} value={key}>
                                 {ev.title} ({t('days_remaining_label').replace('{count}', ev.daysRemaining)})
                               </option>
                             );
