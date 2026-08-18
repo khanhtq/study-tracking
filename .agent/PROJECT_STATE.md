@@ -140,3 +140,43 @@
 - Direct Messages: `/user/queue/messages` or `/topic/messages.{userId}`
 - Friend Presence Updates: `/topic/presence`
 - Live Leaderboard Updates: `/topic/leaderboard`
+
+### 5.5. Theme & Design System Standards (Tailwind v4 Inverted Slate)
+- **Palette Definition in `index.css`**:
+  - `--slate-950`: `#F4F4F6` (Light mode page background) / `#020617` (Dark mode page background).
+  - `--slate-900`: `#FFFFFF` (Light mode card background) / `#0f172a` (Dark mode card background).
+  - `--slate-800`: `#E5E7EB` (Light border card nhạt) / `#1e293b` (Dark border).
+  - `--slate-700`: `#D1D5DB` (Light border rõ / dividers) / `#334155` (Dark divider).
+  - `--slate-500`: `#6B7280` (Muted secondary metrics).
+  - `--slate-400`: `#4B5563` (Muted labels & placeholders: `placeholder:text-slate-400`).
+  - `--slate-200`: `#1F2937` (Strong text / subheadings).
+  - `--slate-100`: `#111827` (Darkest primary text in light mode / `#f1f5f9` bright text in dark mode).
+- **Rule for Text Contrast**:
+  - ALWAYS use `text-slate-100` for primary text / numbers and `text-slate-200` for strong text across BOTH themes.
+  - NEVER use `text-slate-900` or `text-slate-800` as text colors (in light mode, `--slate-900` is white `#FFFFFF` causing invisible text on light backgrounds).
+  - Explicitly use `placeholder:text-slate-400` on input fields.
+- **Text Gradient Policy**:
+  - In Light Mode, `.light .bg-clip-text` is automatically reset via CSS to solid `var(--slate-100)` (`#111827`) to prevent washed-out text and preserve readability.
+  - In Dark Mode, text gradients remain enabled.
+- **Study Calendar Heatmap Green Tiers**:
+  - Level 0 (0h): `#E5E7EB` (border `#D1D5DB`)
+  - Level 1 (< 1h): `#86efac` (border `#4ade80`)
+  - Level 2 (1h - 2h): `#22c55e` (border `#16a34a`)
+  - Level 3 (2h - 3h): `#15803d` (border `#166534`)
+  - Level 4 (≥ 3h): `#14532d` (border `#052e16`)
+
+---
+
+## 6. Recent Changelog & Completed Tasks
+
+- **Theme Contrast & Light Mode Overhaul**:
+  - Replaced washed-out text in `TrendingGroupsWidget`, `SessionHistoryList`, `OnlineUsersList`, `XpBar`, `CountdownWidget`, and `ManualSessionForm` with high-contrast `text-slate-100` / `text-slate-200`.
+  - Fixed white-on-white text in `CountdownWidget` (HRS/MINS) and `ManualSessionForm` inputs.
+  - Enhanced green heatmap tiers in `StudyCalendar` for WCAG AA compliance.
+  - Removed light mode text gradients to ensure solid, crisp typography.
+- **Bug Fixes**:
+  - Fixed `ReferenceError: Flame is not defined` in `Community.jsx` by importing `Flame` from `lucide-react`.
+  - Fixed `ReferenceError: joiningGroupId is not defined` in `Community.jsx` by declaring state and binding `handleJoinViaInvite`.
+- **Localization (i18n)**:
+  - Standardized official schedule badge key `countdown_official_badge` to `"Lịch chính thức"` (VI), `"Official Schedule"` (EN), and `"官方正式日程"` (ZH).
+
