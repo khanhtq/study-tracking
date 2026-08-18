@@ -32,6 +32,7 @@ public class GroupCountdownService {
     private final SystemPresetExamRepository systemPresetExamRepository;
     private final CountdownEventRepository countdownEventRepository;
     private final GroupMessageRepository groupMessageRepository;
+    private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -137,6 +138,8 @@ public class GroupCountdownService {
         String eventTitle;
         long daysRemaining;
 
+        User managedUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+
         if (request.getPresetExamId() != null) {
             SystemPresetExam preset = systemPresetExamRepository.findById(request.getPresetExamId())
                     .orElseThrow(() -> new IllegalArgumentException("Kỳ thi hệ thống không tồn tại"));
@@ -151,7 +154,7 @@ public class GroupCountdownService {
                     .group(group)
                     .presetExam(preset)
                     .customCountdown(null)
-                    .createdBy(currentUser)
+                    .createdBy(managedUser)
                     .build();
             eventTitle = preset.getTitle();
             daysRemaining = calculateDaysRemaining(preset.getTargetDate(), now);
@@ -169,19 +172,19 @@ public class GroupCountdownService {
                     .group(group)
                     .presetExam(null)
                     .customCountdown(event)
-                    .createdBy(currentUser)
+                    .createdBy(managedUser)
                     .build();
             eventTitle = event.getTitle();
             daysRemaining = calculateDaysRemaining(event.getTargetDate(), now);
         }
 
         GroupCountdownLink saved = groupCountdownLinkRepository.save(link);
-        log.info("User [{}] linked countdown [{}] to group [{}]", currentUser.getUsername(), eventTitle, group.getName());
+        log.info("User [{}] linked countdown [{}] to group [{}]", managedUser.getEmail(), eventTitle, group.getName());
 
         // Bắn tin nhắn thông báo vào phòng chat
-        String actorName = currentUser.getDisplayName() != null ? currentUser.getDisplayName() : currentUser.getUsername();
+        String actorName = managedUser.getDisplayName() != null ? managedUser.getDisplayName() : managedUser.getEmail();
         String announcement = String.format("🎯 [%s] đã liên kết mục tiêu đếm ngược: **%s** (Còn **%d ngày**) vào nhóm học tập!", actorName, eventTitle, daysRemaining);
-        broadcastSystemMessage(group, currentUser, announcement);
+        broadcastSystemMessage(group, managedUser, announcement);
 
         return mapToGroupCountdownDto(saved, now);
     }

@@ -46,6 +46,9 @@ public class GroupCountdownServiceTest {
     private GroupMessageRepository groupMessageRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
