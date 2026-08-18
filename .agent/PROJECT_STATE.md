@@ -319,8 +319,8 @@
   - Enforced guaranteed auto-link call on group creation callback to ensure the milestone link is immediately active regardless of backend reload lifecycle.
 ### 6.14. Resilient Countdown Milestone Loading in Group Chat Modal (`feature/community-realtime-chat`)
 - **Fix Available Events Listing & Linking in [`GroupCountdownsModal.jsx`](file:///e:/Project/study-tracking/frontend/src/components/chat/GroupCountdownsModal.jsx)**:
-  - Updated `AvailableCountdownDto.java` and `GroupCountdownService.java` to expose `presetExamCode` and `presetExamId`.
-  - Added dual loading with automatic fallback: if group-specific available endpoint is empty, dynamically retrieves active system preset exams and owner countdowns, computes `isAlreadyLinked`, and populates the selection dropdown.
+  - Ensured available countdowns load unconditionally using `communityChatApi.getAvailableCountdownsForCreation()` in parallel with group links, filtering already linked events instantly without role delay or route failures.
+  - Added support for `groupId` prop in addition to `group?.id` for instant availability even while group details are loading.
   - Supported `PRESET_ID`, `PRESET_CODE`, and `CUSTOM` payload deserialization to ensure linking succeeds seamlessly from within active chat rooms.
 - **Verification**:
   - Full backend test suite passing (62/62 tests PASS 100%).
