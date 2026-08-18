@@ -59,10 +59,12 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
     try {
       setActionLoading(true);
       const [type, id] = selectedEventKey.split(':');
-      const payload = {
-        presetExamId: type === 'PRESET' ? Number(id) : null,
-        customCountdownId: type === 'CUSTOM' ? id : null,
-      };
+      const payload = {};
+      if (type === 'PRESET' && id && id !== 'null') {
+        payload.presetExamId = Number(id);
+      } else if (type === 'CUSTOM' && id && id !== 'null' && id !== 'undefined') {
+        payload.customCountdownId = id;
+      }
 
       await communityChatApi.linkCountdownToGroup(group.id, payload);
       toast?.success(t('link_countdown_success'));
