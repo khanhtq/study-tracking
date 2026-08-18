@@ -169,14 +169,28 @@
 
 ## 6. Recent Changelog & Completed Tasks
 
-- **Theme Contrast & Light Mode Overhaul**:
-  - Replaced washed-out text in `TrendingGroupsWidget`, `SessionHistoryList`, `OnlineUsersList`, `XpBar`, `CountdownWidget`, and `ManualSessionForm` with high-contrast `text-slate-100` / `text-slate-200`.
-  - Fixed white-on-white text in `CountdownWidget` (HRS/MINS) and `ManualSessionForm` inputs.
-  - Enhanced green heatmap tiers in `StudyCalendar` for WCAG AA compliance.
-  - Removed light mode text gradients to ensure solid, crisp typography.
-- **Bug Fixes**:
-  - Fixed `ReferenceError: Flame is not defined` in `Community.jsx` by importing `Flame` from `lucide-react`.
-  - Fixed `ReferenceError: joiningGroupId is not defined` in `Community.jsx` by declaring state and binding `handleJoinViaInvite`.
-- **Localization (i18n)**:
-  - Standardized official schedule badge key `countdown_official_badge` to `"Lịch chính thức"` (VI), `"Official Schedule"` (EN), and `"官方正式日程"` (ZH).
+### 6.1. Community Group Chat & Realtime Communication
+- **Group Settings & Info Modification (`EditGroupModal.jsx`)**:
+  - Implemented group metadata editing modal (Group Name, Description, Avatar upload via storage API, Privacy `PUBLIC`/`PRIVATE`, Join Policy `OPEN`/`APPROVAL_REQUIRED`, Max Members count with validation).
+  - Added Owner Danger Zone: Permanent group deletion with double-confirmation dialog and cascade cleanup.
+  - Fully synchronized all labels, placeholders, and error toasts with `LanguageContext.jsx` in 3 languages (`vi`, `en`, `zh`).
+- **Comprehensive Light & Dark Theme Overhaul**:
+  - Solved root-cause color token inversion in `index.css` for `.light` mode (`--slate-950: #f8fafc`, `--slate-900: #ffffff`, `--slate-800: #e2e8f0`, `--slate-700: #cbd5e1`, `--slate-100: #0f172a`, `--slate-50: #f1f5f9`).
+  - Completely overhauled all chat components (`GroupChatRoom.jsx`, `GroupMembersModal.jsx`, `GroupMediaModal.jsx`, `GroupInviteModal.jsx`, `ShareDocumentModal.jsx`, `EditGroupModal.jsx`, `ConfirmModal.jsx`, `Community.jsx`, `TrendingGroupsWidget.jsx`) to eliminate hardcoded dark containers and ensure 100% WCAG AA contrast on light mode.
+  - Aligned Trending Groups widget color palette to Indigo/Violet brand theme.
+- **Bug Fixes & Hardening**:
+  - Fixed `ReferenceError: formatBytes is not defined` and missing `formatDate` in `GroupMediaModal.jsx`.
+  - Fixed JSX root container duplication and duplicate closing tags in `GroupMediaModal.jsx` and `EditGroupModal.jsx`.
+  - Fixed backend REST routing `api/v1/chat/groups` vs `/api/groups` and verified production Flyway migration `V18`/`V19`.
+
+### 6.2. Donation & Footer Section
+- **MB Bank Donation Block (`Footer.jsx` & `LanguageContext.jsx`)**:
+  - Added MB Bank donation column (STK: `0946931005`, Chủ TK: `TRAN QUOC KHANH`), 1-click clipboard copy with visual feedback, and VietQR scan preview.
+  - Added i18n translation keys (`donation_title`, `donation_bank`, `donation_account_num`, `donation_account_holder`, `donation_copy_btn`, `donation_copied`, `donation_qr_tooltip`) across `vi`, `en`, and `zh`.
+
+### 6.3. Theme Contrast & Light Mode Standards
+- Replaced washed-out text in `TrendingGroupsWidget`, `SessionHistoryList`, `OnlineUsersList`, `XpBar`, `CountdownWidget`, and `ManualSessionForm` with high-contrast `text-slate-100` / `text-slate-200`.
+- Enhanced green heatmap tiers in `StudyCalendar` for WCAG AA compliance.
+- Removed light mode text gradients to ensure solid, crisp typography.
+- Standardized official schedule badge key `countdown_official_badge` to `"Lịch chính thức"` (VI), `"Official Schedule"` (EN), and `"官方正式日程"` (ZH).
 
