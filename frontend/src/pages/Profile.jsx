@@ -33,7 +33,7 @@ export default function Profile({ onBackToDashboard }) {
   const [selectedTitle, setSelectedTitle] = useState('Tân Binh Tập Trung');
   const [themeAccent, setThemeAccent] = useState('indigo');
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [preferredLanguage, setPreferredLanguage] = useState('en');
+  const [preferredLanguage, setPreferredLanguage] = useState(() => localStorage.getItem('language') || 'vi');
   const [activityStatusVisibility, setActivityStatusVisibility] = useState('EVERYONE');
   const [messagePermission, setMessagePermission] = useState('EVERYONE');
   const [availableTitles, setAvailableTitles] = useState([]);
@@ -53,7 +53,7 @@ export default function Profile({ onBackToDashboard }) {
       setSelectedTitle(user.selectedTitle || 'Tân Binh Tập Trung');
       setThemeAccent(user.themeAccent || 'indigo');
       setSoundEnabled(user.soundEnabled !== undefined ? user.soundEnabled : true);
-      setPreferredLanguage(user.preferredLanguage || language || 'en');
+      setPreferredLanguage(localStorage.getItem('language') || user.preferredLanguage || language || 'vi');
       setActivityStatusVisibility(user.activityStatusVisibility || progress?.activityStatusVisibility || 'EVERYONE');
       setMessagePermission(user.messagePermission || progress?.messagePermission || 'EVERYONE');
     }

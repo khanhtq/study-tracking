@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { userApi } from '../api';
 
 const LanguageContext = createContext(null);
 
@@ -2163,20 +2164,35 @@ const translations = {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
+  const [language, setLanguageState] = useState(() => {
     const saved = localStorage.getItem('language');
     if (saved && (saved === 'vi' || saved === 'en' || saved === 'zh')) {
       return saved;
     }
-    // Default to English
-    return 'en';
+    // Default to Vietnamese
+    return 'vi';
   });
+
+  const setLanguage = (newLang) => {
+    if (newLang && (newLang === 'vi' || newLang === 'en' || newLang === 'zh')) {
+      localStorage.setItem('language', newLang);
+      setLanguageState(newLang);
+
+      // If user is authenticated, sync language preference to backend profile
+      const token = localStorage.getItem('token');
+      const isGuest = localStorage.getItem('isGuest') === 'true';
+      if (token && !isGuest) {
+        userApi.updateProfile({ preferredLanguage: newLang }).catch(() => {});
+      }
+    }
+  };
 
   useEffect(() => {
     const handleCustomLangChange = (e) => {
       const newLang = e.detail || localStorage.getItem('language');
       if (newLang && (newLang === 'vi' || newLang === 'en' || newLang === 'zh')) {
-        setLanguage(newLang);
+        localStorage.setItem('language', newLang);
+        setLanguageState(newLang);
       }
     };
     window.addEventListener('language-change', handleCustomLangChange);
