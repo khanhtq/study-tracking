@@ -235,7 +235,6 @@
   - Built a centralized, highly aesthetic Toast notification and Promise-based Confirm/Alert dialog system.
   - **Toasts**: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()` with animated stacked list, auto-dismiss, smooth exit animations via Framer Motion, and high contrast styling in dark/light mode.
   - **Confirm Modal**: Promise-based `confirm({ title, message, confirmText, cancelText, type: 'danger'|'warning'|'info' })` replacing all native `window.confirm()` with custom glassmorphism modal, backdrop blur, and custom action buttons.
-  - **Alert Modal**: Promise-based `alertModal({ title, message, buttonText, type })` replacing all generic `window.alert()`.
 - **Codebase Migration**:
   - Removed all raw `alert()` and `window.confirm()` calls across all components (`CountdownModal.jsx`, `Dashboard.jsx`, `FriendsModal.jsx`, `PublicProfileModal.jsx`, `ChatModal.jsx`, `StudyTimer.jsx`, `ManualSessionForm.jsx`, `PremiumUpgradeModal.jsx`, `AdminPaymentPackages.jsx`).
 
@@ -253,10 +252,18 @@
   - 55/55 backend unit tests passing (100% PASS).
   - Frontend production build completed with 0 errors (100% PASS).
 
-
-
-
-
-
-
+### 6.8. Dashboard Layout Settings Popup Smoothness & Animation Optimization
+- **Exit Animation & Flickering Fix (`DashboardCustomizerModal.jsx`)**:
+  - Encapsulated `{isOpen && ...}` inside `<AnimatePresence>` instead of returning `null` before `AnimatePresence`. Resolved the abrupt disappearance bug, ensuring the fade-out and scale-down exit animations play smoothly upon dismissal.
+- **Tuned Spring Dynamics & GPU Acceleration**:
+  - Configured optimized Spring Physics (`mass: 0.7, stiffness: 380, damping: 28`) for the modal window and smooth backdrop fade (`0.22s easeOut`).
+  - Added `transform-gpu` and refined backdrop blur (`backdrop-blur-xl`) to eliminate frame stuttering on high-refresh rate displays (120Hz/144Hz).
+- **Fluid Toggle Switch Motion**:
+  - Replaced abrupt CSS step transitions with Framer Motion `motion.span` (`spring` physics: `stiffness: 500, damping: 30`), achieving iOS/macOS-style gliding transitions when toggling widget visibility.
+- **Micro-Interactions & UX Polish**:
+  - Added smooth `whileHover` and `whileTap` scale feedback on widget toggle items, reset button, close button, and save button.
+  - Implemented `Escape` key shortcut listener for swift dismissal.
+  - Added automatic background body scroll locking (`overflow: hidden`) during modal display to prevent jitter and accidental background scrolling.
+- **Verification**:
+  - Frontend production build (`npm run build`) completed with 0 errors (100% PASS).
 
