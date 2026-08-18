@@ -301,3 +301,11 @@
   - 62/62 full Maven backend unit tests passing (100% PASS).
   - Vite production build completed with 0 errors (100% PASS).
 
+### 6.12. Unjoined Group Toast Protection & Clean System Messages Refinement
+- **Unjoined Group Toast Guard (`Community.jsx` & `TrendingGroupsWidget.jsx`)**:
+  - When clicking on any group card that the current user has not joined, the UI immediately notifies the user via Toast notification (`must_join_group_first`) instead of navigating into the room and failing with a 403 error.
+  - Added fallback auto-exit in `GroupChatRoom.jsx` if a non-member direct URL access occurs.
+- **Clean System Messages Formatting**:
+  - Stripped all raw `**` markdown bold symbols and decorative emojis from system announcements across `GroupCountdownService.java` and `GroupChatRoom.jsx`.
+  - Polished dropdown selector text in `GroupCountdownsModal.jsx` and added 100% i18n key coverage.
+
