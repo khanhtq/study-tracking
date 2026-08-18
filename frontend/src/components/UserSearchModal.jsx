@@ -51,11 +51,11 @@ export default function UserSearchModal({ isOpen, onClose, onSelectUser }) {
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          transition={{ duration: 0.2 }}
-          className="w-full max-w-lg glass-panel rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+          className="w-full max-w-lg h-[520px] max-h-[85vh] glass-panel rounded-3xl border border-slate-800 bg-slate-900/95 shadow-2xl overflow-hidden flex flex-col transform-gpu"
         >
           {/* Search Header */}
           <div className="p-4 border-b border-slate-800/80 flex items-center gap-3 bg-slate-900/60">

@@ -57,13 +57,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await userApi.getMe();
       setProgress(data);
-      if (data.preferredLanguage && (data.preferredLanguage === 'vi' || data.preferredLanguage === 'en' || data.preferredLanguage === 'zh')) {
-        const savedLang = localStorage.getItem('language');
-        if (savedLang !== data.preferredLanguage) {
-          localStorage.setItem('language', data.preferredLanguage);
-          window.dispatchEvent(new CustomEvent('language-change', { detail: data.preferredLanguage }));
+      const savedLang = localStorage.getItem('language');
+      // Respect client's explicit language preference in localStorage
+      if (savedLang && (savedLang === 'vi' || savedLang === 'en' || savedLang === 'zh')) {
+        if (data.preferredLanguage !== savedLang && !isGuest) {
+          userApi.updateProfile({ preferredLanguage: savedLang }).catch(() => {});
         }
+      } else if (data.preferredLanguage && (data.preferredLanguage === 'vi' || data.preferredLanguage === 'en' || data.preferredLanguage === 'zh')) {
+        // Only if localStorage is empty, populate from profile
+        localStorage.setItem('language', data.preferredLanguage);
+        window.dispatchEvent(new CustomEvent('language-change', { detail: data.preferredLanguage }));
       }
+
+      const activeLang = savedLang || data.preferredLanguage || 'vi';
+
       if (!isGuest) {
         setUser({
           id: data.userId,
@@ -76,7 +83,7 @@ export const AuthProvider = ({ children }) => {
           selectedTitle: data.selectedTitle,
           themeAccent: data.themeAccent,
           soundEnabled: data.soundEnabled,
-          preferredLanguage: data.preferredLanguage || 'en',
+          preferredLanguage: activeLang,
           activityStatusVisibility: data.activityStatusVisibility || 'EVERYONE',
           authProvider: data.authProvider,
           role: data.role || 'ROLE_USER',
@@ -97,7 +104,7 @@ export const AuthProvider = ({ children }) => {
           selectedTitle: data.selectedTitle,
           themeAccent: data.themeAccent,
           soundEnabled: data.soundEnabled,
-          preferredLanguage: data.preferredLanguage || 'en',
+          preferredLanguage: activeLang,
           activityStatusVisibility: data.activityStatusVisibility || 'EVERYONE',
           isPremium: !!data.isPremium,
           currentLevel: data.currentLevel,

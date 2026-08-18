@@ -369,7 +369,7 @@ public class UserService {
                 .selectedTitle(u.getSelectedTitle() != null ? u.getSelectedTitle() : "Tân Binh Tập Trung")
                 .themeAccent(u.getThemeAccent() != null ? u.getThemeAccent() : "indigo")
                 .soundEnabled(u.getSoundEnabled() != null ? u.getSoundEnabled() : true)
-                .preferredLanguage(u.getPreferredLanguage() != null ? u.getPreferredLanguage() : "en")
+                .preferredLanguage(u.getPreferredLanguage() != null ? u.getPreferredLanguage() : "vi")
                 .activityStatusVisibility(u.getActivityStatusVisibility() != null ? u.getActivityStatusVisibility().name() : "EVERYONE")
                 .messagePermission(u.getMessagePermission() != null ? u.getMessagePermission().name() : "EVERYONE")
                 .authProvider(u.getAuthProvider() != null ? u.getAuthProvider().name() : "LOCAL")

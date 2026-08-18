@@ -52,7 +52,7 @@ public class User implements UserDetails {
     private Boolean soundEnabled = true;
 
     @Builder.Default
-    private String preferredLanguage = "en";
+    private String preferredLanguage = "vi";
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
