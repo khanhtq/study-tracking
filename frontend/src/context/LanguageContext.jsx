@@ -684,6 +684,7 @@ const translations = {
     days_remaining_label: "Còn {count} ngày",
     today_is_event: "Hôm nay là ngày sự kiện!",
     only_owner_can_manage_countdowns: "Chỉ Trưởng nhóm hoặc Quản trị viên mới có quyền quản lý sự kiện đếm ngược.",
+    must_join_group_first: "Bạn chưa tham gia nhóm này. Vui lòng bấm Tham gia nhóm để vào phòng chat.",
   },
   en: {
     // auth / login / register
@@ -1476,6 +1477,7 @@ const translations = {
     days_remaining_label: "{count} days left",
     today_is_event: "Today is the event date!",
     only_owner_can_manage_countdowns: "Only the Group Owner or Admin can manage countdown links.",
+    must_join_group_first: "You have not joined this group yet. Please click Join Group to enter the chat.",
   },
   zh: {
     // auth / login / register
@@ -2105,6 +2107,7 @@ const translations = {
     days_remaining_label: "剩余 {count} 天",
     today_is_event: "今天是活动/考试日！",
     only_owner_can_manage_countdowns: "仅群主或管理员可以管理倒计时关联。",
+    must_join_group_first: "您尚未加入此群组。请先点击“加入群组”后再进入聊天。",
 
     // admin dashboard zh
     admin_dashboard: "管理后台",

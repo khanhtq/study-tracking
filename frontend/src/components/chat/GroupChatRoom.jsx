@@ -99,10 +99,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       setPinnedMessages(data?.pinnedMessages || []);
     } catch (err) {
       console.error('Lỗi tải chi tiết nhóm:', err);
+      if (err?.message?.includes('không phải là thành viên') || err?.response?.status === 403) {
+        if (onBack) onBack();
+      }
     } finally {
       setLoadingDetail(false);
     }
-  }, [groupId]);
+  }, [groupId, onBack]);
 
   const loadGroupCountdowns = useCallback(async () => {
     try {
@@ -123,10 +126,13 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
       setTimeout(scrollToBottom, 100);
     } catch (err) {
       console.error('Lỗi tải tin nhắn:', err);
+      if (err?.message?.includes('không phải là thành viên') || err?.response?.status === 403) {
+        if (onBack) onBack();
+      }
     } finally {
       setLoadingMessages(false);
     }
-  }, [groupId]);
+  }, [groupId, onBack]);
 
   useEffect(() => {
     loadGroupDetail();
@@ -773,7 +779,14 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
               if (isSystem) {
                 const isCountdownBroadcast = msg.content?.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]');
+                const cleanedContent = msg.content
+                  ? msg.content.replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').replace(/\s+/g, ' ').trim()
+                  : '';
+
                 if (isCountdownBroadcast) {
+                  const bodyContent = msg.content
+                    ? msg.content.replace('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]', '').replace(/\*\*/g, '').replace(/[🎯🗑️🔔🔥⏰💪📅]/gu, '').trim()
+                    : '';
                   return (
                     <div key={msg.id} className="flex justify-center my-3 px-3">
                       <div className="max-w-md w-full p-3.5 rounded-xl bg-slate-900/80 border border-indigo-500/20 text-slate-200 shadow-sm">
@@ -781,7 +794,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                           {t('daily_countdown_reminder_badge') || 'Bản tin đếm ngược mục tiêu'}
                         </div>
                         <div className="text-xs leading-relaxed text-slate-300 whitespace-pre-line">
-                          {msg.content.replace('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]', '').trim()}
+                          {bodyContent}
                         </div>
                       </div>
                     </div>
@@ -791,7 +804,7 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                 return (
                   <div key={msg.id} className="flex justify-center my-2 px-3">
                     <span className="text-[11px] font-medium text-slate-400 bg-slate-900/60 px-3.5 py-1 rounded-full border border-slate-800/60 max-w-lg text-center leading-relaxed">
-                      {msg.content}
+                      {cleanedContent}
                     </span>
                   </div>
                 );

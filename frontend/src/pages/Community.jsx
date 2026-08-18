@@ -309,13 +309,20 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displayedGroups.map((group) => {
-              const isMember = group.isMember;
+              const isMember = group.isMember || !!group.currentUserRole;
               const hasPending = group.hasPendingRequest;
 
               return (
                 <div
                   key={group.id}
-                  className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 transition-all shadow-sm hover:shadow-md group"
+                  onClick={() => {
+                    if (isMember) {
+                      setActiveGroupId(group.id);
+                    } else {
+                      showToast(t('must_join_group_first') || 'Bạn chưa tham gia nhóm này. Vui lòng bấm Tham gia nhóm để vào phòng chat.', 'info');
+                    }
+                  }}
+                  className="flex flex-col justify-between p-5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-900 transition-all shadow-sm hover:shadow-md group cursor-pointer"
                 >
                   <div>
                     {/* Top Group Badges */}
@@ -381,7 +388,10 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                     <div className="flex items-center gap-2">
                       {isMember ? (
                         <button
-                          onClick={() => setActiveGroupId(group.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveGroupId(group.id);
+                          }}
                           className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600 text-indigo-600 dark:text-indigo-300 hover:text-white border border-indigo-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -389,7 +399,10 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleJoinGroup(group)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJoinGroup(group);
+                          }}
                           disabled={joiningGroupId === group.id || hasPending}
                           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
                             hasPending
