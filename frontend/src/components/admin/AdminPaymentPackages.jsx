@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../api';
+import { useToast } from '../../context/ToastContext';
 import { Plus, Edit2, Trash2, CheckCircle2, XCircle, Tag, Clock, CreditCard, RefreshCw, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminPaymentPackages() {
+  const { toast, confirm } = useToast();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
@@ -79,13 +81,23 @@ export default function AdminPaymentPackages() {
   };
 
   const handleDeletePackage = async (id, name) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa hẳn gói "${name}"?`)) return;
+    const isConfirmed = await confirm({
+      title: 'Xóa gói thanh toán',
+      message: `Bạn có chắc chắn muốn xóa hẳn gói "${name}" không? Thao tác này không thể hoàn tác.`,
+      confirmText: 'Xóa gói',
+      cancelText: 'Hủy bỏ',
+      type: 'danger'
+    });
+    if (!isConfirmed) return;
+
     try {
       await adminApi.deletePackage(id);
+      toast.success(`Đã xóa gói ${name}`);
       setSuccessMsg(`Đã xóa gói ${name}`);
       fetchPackages();
     } catch (err) {
       console.error('Lỗi xóa gói cước:', err);
+      toast.error('Không thể xóa gói cước này.');
       setErrorMsg('Không thể xóa gói cước này.');
     }
   };

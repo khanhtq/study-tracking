@@ -1,35 +1,31 @@
 package com.studytracker.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CountdownDto {
-    private UUID id;
-    private String presetExamCode;
+public class AdminSavePresetRequest {
+    private String examCode;
+
+    @NotBlank(message = "Title is required")
     private String title;
+
+    @NotNull(message = "Target date is required")
     private Instant targetDate;
+
     private String category;
-    private String color;
-    private String icon;
-    private String note;
-    private Boolean isPinned;
-    private Boolean emailNotify;
     private Boolean isOfficialDate;
     private String sourceUrl;
-    private Integer trackerCount;
-    private Boolean isOwner;
-    private Boolean canEdit;
-    private String createdByUserId;
+    private String description;
+    private String color;
     private Boolean isCommunityEvent;
-    private Instant createdAt;
 }
-

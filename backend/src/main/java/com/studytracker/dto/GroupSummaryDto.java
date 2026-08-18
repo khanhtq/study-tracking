@@ -35,5 +35,7 @@ public class GroupSummaryDto {
     private Instant currentUserMutedUntil;
     private Boolean isMember;
     private Boolean hasPendingRequest;
+    private Boolean isArchived;
+    private Instant deletedAt;
     private Instant createdAt;
 }

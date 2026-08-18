@@ -1,8 +1,6 @@
 package com.studytracker.service;
 
-import com.studytracker.dto.CountdownDto;
-import com.studytracker.dto.CreateCountdownRequest;
-import com.studytracker.dto.SystemPresetExamDto;
+import com.studytracker.dto.*;
 import com.studytracker.model.CountdownEvent;
 import com.studytracker.model.SystemPresetExam;
 import com.studytracker.model.User;
@@ -172,6 +170,56 @@ public class CountdownService {
         if (request.getIsPinned() != null) event.setIsPinned(request.getIsPinned());
         if (request.getEmailNotify() != null) event.setEmailNotify(request.getEmailNotify());
 
+        String presetCode = event.getPresetExamCode();
+        if (presetCode != null && !presetCode.isBlank()) {
+            Optional<SystemPresetExam> presetOpt = presetExamRepository.findByExamCode(presetCode);
+            if (presetOpt.isPresent()) {
+                SystemPresetExam preset = presetOpt.get();
+                boolean isOwner = preset.getCreatedByUser() != null && preset.getCreatedByUser().getId().equals(userId);
+                if (!isOwner) {
+                    throw new IllegalStateException("Bạn chỉ có thể chỉnh sửa lịch do chính mình tạo. Không thể sửa lịch thi hoặc sự kiện bạn đang theo dõi.");
+                }
+
+                if (request.getTitle() != null && !request.getTitle().isBlank()) preset.setTitle(request.getTitle());
+                if (request.getTargetDate() != null) preset.setTargetDate(request.getTargetDate());
+                if (request.getNote() != null) preset.setDescription(request.getNote());
+                if (request.getColor() != null) preset.setColor(request.getColor());
+                if (request.getCategory() != null) preset.setCategory(request.getCategory());
+                preset.setLastSyncedAt(Instant.now());
+                presetExamRepository.save(preset);
+
+                // Sync updated date & title to other users tracking this community event
+                List<CountdownEvent> subscribers = countdownEventRepository.findByPresetExamCode(presetCode);
+                for (CountdownEvent subEvent : subscribers) {
+                    if (!subEvent.getId().equals(event.getId())) {
+                        if (request.getTitle() != null && !request.getTitle().isBlank()) subEvent.setTitle(request.getTitle());
+                        if (request.getTargetDate() != null) subEvent.setTargetDate(request.getTargetDate());
+                        if (request.getColor() != null) subEvent.setColor(request.getColor());
+                        countdownEventRepository.save(subEvent);
+                    }
+                }
+                log.info("Creator [{}] updated community preset [{}] and synced to [{}] subscribers.", userId, presetCode, subscribers.size());
+            }
+        } else if (Boolean.TRUE.equals(request.getIsCommunityEvent())) {
+            // User upgraded a private custom event to a community shared preset
+            String newPresetCode = "COMMUNITY_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            SystemPresetExam communityExam = SystemPresetExam.builder()
+                    .examCode(newPresetCode)
+                    .title(event.getTitle())
+                    .category(event.getCategory() != null ? event.getCategory() : "event")
+                    .targetDate(event.getTargetDate())
+                    .isOfficialDate(false)
+                    .description(event.getNote())
+                    .color(event.getColor() != null ? event.getColor() : "indigo")
+                    .createdByUser(event.getUser())
+                    .isCommunityEvent(true)
+                    .trackerCount(1)
+                    .build();
+            presetExamRepository.saveAndFlush(communityExam);
+            event.setPresetExamCode(newPresetCode);
+            log.info("User [{}] published existing countdown [{}] to community preset [{}]", userId, event.getId(), newPresetCode);
+        }
+
         CountdownEvent updated = countdownEventRepository.saveAndFlush(event);
         return toCountdownDto(updated);
     }
@@ -303,6 +351,9 @@ public class CountdownService {
         Boolean isOfficial = false;
         String sourceUrl = null;
         Integer trackerCount = 0;
+        boolean isOwner = true;
+        boolean isCommunity = false;
+        String createdByUserId = null;
 
         if (event.getPresetExamCode() != null && !event.getPresetExamCode().isBlank()) {
             long liveCount = countdownEventRepository.countByPresetExamCode(event.getPresetExamCode());
@@ -311,6 +362,9 @@ public class CountdownService {
                 SystemPresetExam preset = presetOpt.get();
                 isOfficial = preset.getIsOfficialDate();
                 sourceUrl = preset.getSourceUrl();
+                isCommunity = Boolean.TRUE.equals(preset.getIsCommunityEvent());
+                createdByUserId = preset.getCreatedByUser() != null ? preset.getCreatedByUser().getId().toString() : null;
+                isOwner = preset.getCreatedByUser() != null && event.getUser() != null && preset.getCreatedByUser().getId().equals(event.getUser().getId());
                 int storedCount = preset.getTrackerCount() != null ? preset.getTrackerCount() : 0;
                 trackerCount = (int) Math.max(liveCount, storedCount);
             } else {
@@ -332,7 +386,99 @@ public class CountdownService {
                 .isOfficialDate(isOfficial)
                 .sourceUrl(sourceUrl)
                 .trackerCount(trackerCount)
+                .isOwner(isOwner)
+                .canEdit(isOwner)
+                .createdByUserId(createdByUserId)
+                .isCommunityEvent(isCommunity)
                 .createdAt(event.getCreatedAt())
                 .build();
+    }
+
+    // ==================== ADMIN PRESET & EVENT MANAGEMENT ====================
+
+    @Transactional(readOnly = true)
+    public List<SystemPresetExamDto> getAllPresetsForAdmin() {
+        return presetExamRepository.findAll().stream()
+                .sorted((a, b) -> {
+                    Instant aDate = a.getTargetDate() != null ? a.getTargetDate() : Instant.EPOCH;
+                    Instant bDate = b.getTargetDate() != null ? b.getTargetDate() : Instant.EPOCH;
+                    return aDate.compareTo(bDate);
+                })
+                .map(this::toPresetDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public SystemPresetExamDto adminCreatePreset(AdminSavePresetRequest request, User adminUser) {
+        String examCode = request.getExamCode();
+        if (examCode == null || examCode.isBlank()) {
+            examCode = "PRESET_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        } else {
+            examCode = examCode.trim().toUpperCase().replaceAll("\\s+", "_");
+        }
+
+        if (presetExamRepository.existsByExamCode(examCode)) {
+            throw new IllegalArgumentException("Mã sự kiện / kỳ thi đã tồn tại: " + examCode);
+        }
+
+        SystemPresetExam preset = SystemPresetExam.builder()
+                .examCode(examCode)
+                .title(request.getTitle().trim())
+                .targetDate(request.getTargetDate())
+                .category(request.getCategory() != null ? request.getCategory() : "exam")
+                .isOfficialDate(Boolean.TRUE.equals(request.getIsOfficialDate()))
+                .sourceUrl(request.getSourceUrl())
+                .description(request.getDescription())
+                .color(request.getColor() != null ? request.getColor() : "indigo")
+                .isCommunityEvent(Boolean.TRUE.equals(request.getIsCommunityEvent()))
+                .createdByUser(adminUser)
+                .trackerCount(0)
+                .lastSyncedAt(Instant.now())
+                .build();
+
+        SystemPresetExam saved = presetExamRepository.save(preset);
+        log.info("Admin created new preset exam: [{}] ({})", saved.getTitle(), saved.getExamCode());
+        return toPresetDto(saved);
+    }
+
+    @Transactional
+    public SystemPresetExamDto adminUpdatePreset(String examCode, AdminSavePresetRequest request) {
+        SystemPresetExam preset = presetExamRepository.findByExamCode(examCode)
+                .orElseThrow(() -> new IllegalArgumentException("Preset không tồn tại: " + examCode));
+
+        if (request.getTitle() != null && !request.getTitle().isBlank()) preset.setTitle(request.getTitle().trim());
+        if (request.getTargetDate() != null) preset.setTargetDate(request.getTargetDate());
+        if (request.getCategory() != null) preset.setCategory(request.getCategory());
+        if (request.getIsOfficialDate() != null) preset.setIsOfficialDate(request.getIsOfficialDate());
+        if (request.getSourceUrl() != null) preset.setSourceUrl(request.getSourceUrl());
+        if (request.getDescription() != null) preset.setDescription(request.getDescription());
+        if (request.getColor() != null) preset.setColor(request.getColor());
+        if (request.getIsCommunityEvent() != null) preset.setIsCommunityEvent(request.getIsCommunityEvent());
+        preset.setLastSyncedAt(Instant.now());
+
+        SystemPresetExam saved = presetExamRepository.save(preset);
+
+        // Sync date, title, and color to all subscribers
+        List<CountdownEvent> subscribers = countdownEventRepository.findByPresetExamCode(examCode);
+        for (CountdownEvent sub : subscribers) {
+            if (request.getTitle() != null && !request.getTitle().isBlank()) sub.setTitle(request.getTitle().trim());
+            if (request.getTargetDate() != null) sub.setTargetDate(request.getTargetDate());
+            if (request.getColor() != null) sub.setColor(request.getColor());
+            countdownEventRepository.save(sub);
+        }
+
+        log.info("Admin updated preset exam [{}] and synced to [{}] subscribers.", examCode, subscribers.size());
+        return toPresetDto(saved);
+    }
+
+    @Transactional
+    public void adminForceDeletePreset(String examCode) {
+        SystemPresetExam preset = presetExamRepository.findByExamCode(examCode)
+                .orElseThrow(() -> new IllegalArgumentException("Preset không tồn tại: " + examCode));
+
+        // Unconditionally delete all countdown events linked to this preset and delete the preset itself
+        countdownEventRepository.deleteByPresetExamCode(examCode);
+        presetExamRepository.delete(preset);
+        log.info("Admin force-deleted preset exam [{}] and all its associated tracker events.", examCode);
     }
 }

@@ -607,6 +607,23 @@ export const adminApi = {
   createPackage: (data) => apiCall('/admin/packages', { method: 'POST', body: JSON.stringify(data) }),
   updatePackage: (id, data) => apiCall(`/admin/packages/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePackage: (id) => apiCall(`/admin/packages/${id}`, { method: 'DELETE' }),
+
+  // Group Management APIs
+  getAllGroups: (search = '', isArchived = null) => {
+    let url = '/admin/groups?';
+    if (search) url += `search=${encodeURIComponent(search)}&`;
+    if (isArchived !== null) url += `isArchived=${isArchived}&`;
+    return apiCall(url.replace(/&$/, ''));
+  },
+  updateGroup: (groupId, data) => apiCall(`/admin/groups/${groupId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  archiveGroup: (groupId, isArchived) => apiCall(`/admin/groups/${groupId}/archive?isArchived=${isArchived}`, { method: 'PUT' }),
+  deleteGroup: (groupId) => apiCall(`/admin/groups/${groupId}`, { method: 'DELETE' }),
+
+  // Countdown & Preset Management APIs
+  getAllPresetCountdowns: () => apiCall('/admin/countdowns/presets'),
+  createPresetCountdown: (data) => apiCall('/admin/countdowns/presets', { method: 'POST', body: JSON.stringify(data) }),
+  updatePresetCountdown: (examCode, data) => apiCall(`/admin/countdowns/presets/${examCode}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deletePresetCountdown: (examCode) => apiCall(`/admin/countdowns/presets/${examCode}`, { method: 'DELETE' }),
 };
 
 export const friendsApi = {

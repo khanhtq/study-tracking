@@ -16,7 +16,7 @@
 
 ---
 
-## 2. Database State & Flyway Migrations (Current: `V19`)
+## 2. Database State & Flyway Migrations (Current: `V20`)
 
 | Version | Migration Script | Description & Table Changes |
 | :--- | :--- | :--- |
@@ -39,8 +39,10 @@
 | **V17** | `V17__add_community_events_and_tracker_counts.sql` | Schema consistency check for community exam sharing & tracker counter sync |
 | **V18** | `V18__create_community_chat_tables.sql` | Comprehensive Community Group Chat system: `chat_groups`, `group_members`, `group_join_requests`, `group_messages`, `message_mentions`, `message_attachments`, `message_reactions`, `group_pinned_messages`, `group_invite_links` |
 | **V19** | `V19__add_soft_delete_to_chat_groups.sql` | Added soft delete columns `deleted_at` and `deleted_by` to `chat_groups` with indexes |
+| **V20** | `V20__remove_non_thpt_presets.sql` | Purged default non-THPT preset exams and decoupled existing foreign keys to NULL |
+| **V21** | `V21__assign_thpt_to_admin.sql` | Assigned national THPT QG exam preset creator to Admin user |
 
-> **Next Flyway Migration to use**: `V20__<description>.sql`. **Never alter `V1` - `V19`**.
+> **Next Flyway Migration to use**: `V22__<description>.sql`. **Never alter `V1` - `V21`**.
 
 ---
 
@@ -112,6 +114,7 @@
 - `AuthContext.jsx`: Authentication state, user profile, token persistence, and logout flow.
 - `LanguageContext.jsx`: Centralized i18n supporting **`en`** (English), **`vi`** (Vietnamese), and **`zh`** (Chinese).
 - `ThemeContext.jsx`: Dark and Light mode state and root class binding.
+- `ToastContext.jsx`: Centralized Toast notifications (`success`, `error`, `warning`, `info`) and Promise-based Confirm/Alert popup dialogs.
 - `UploadContext.jsx`: Global background upload queue state.
 
 ---
@@ -193,4 +196,67 @@
 - Enhanced green heatmap tiers in `StudyCalendar` for WCAG AA compliance.
 - Removed light mode text gradients to ensure solid, crisp typography.
 - Standardized official schedule badge key `countdown_official_badge` to `"Lịch chính thức"` (VI), `"Official Schedule"` (EN), and `"官方正式日程"` (ZH).
+
+### 6.4. Countdown Multi-Event Tracking, Widget Pinning & Lifecycle Management (`feature/countdown-multi-events-lifecycle`)
+- **Multi-Event Tracking & Dashboard Widget Pinning**:
+  - Refactored `Dashboard.jsx`, `CountdownModal.jsx`, and `CountdownWidget.jsx` to allow users to track multiple exam presets and custom events simultaneously without overwriting previous events.
+  - Implemented dynamic widget pinning: Users can pin/unpin any tracked countdown to be prominently displayed on the Dashboard widget, with carousel `<` `>` navigation and quick switch dropdown.
+- **Event Lifecycle & Auto-Expiry**:
+  - **Backend Filtering**: `getAllPresets` and `getUserCountdowns` automatically filter out expired countdowns (`targetDate > Instant.now()`).
+  - **Daily Cleanup Job**: Scheduled task running daily at 2:00 AM (`cleanupExpiredCountdowns`) to purge expired countdown events and community presets.
+  - **Frontend Auto-Transition**: If an active pinned event expires, the UI automatically transitions to the next available future event.
+- **Creator Deletion Constraints & Cascading Cleanup**:
+  - **Active Tracking Deletion Guard**: If a creator attempts to delete a community event that is still active (`targetDate > now`) and has other active trackers (`totalTrackers > 1`), the deletion is blocked with a descriptive error message (`IllegalStateException`).
+  - **Cascading Deletion**: When an owner legitimately deletes their event (expired or no other trackers), all associated tracking records across all users are automatically cleaned up (`deleteByPresetExamCode`).
+  - **Regular Tracker Untracking**: Non-creators can untrack events anytime from their personal list without deleting the community preset.
+- **Database Schema Fixes & Flyway Auto-Patching**:
+  - Added migration `V16__add_community_events_and_tracker_counts.sql` and enabled `spring.flyway.out-of-order: true`.
+  - Added startup auto-patching via `JdbcTemplate` in `DataInitializer.java` to ensure `created_by_user_id`, `is_community_event`, and `tracker_count` columns always exist in PostgreSQL.
+- **Automated Verification**:
+  - Added comprehensive test suites: `CountdownControllerTest.java` (5 tests) and `CountdownServiceTest.java` (8 tests) - 13/13 tests passing (100% PASS).
+
+### 6.5. Official THPT QG Preset Exclusivity & User-Created Countdown Editing (`feature/countdown-edit-and-thpt-filter`)
+- **Default Preset Clean-up**:
+  - Exclusively retained `THPT_QG_2027` (Kỳ thi Tốt nghiệp THPT Quốc Gia 2027) as the sole default official preset exam across the backend database and frontend guest presets fallback.
+  - Added Flyway migration `V20__remove_non_thpt_presets.sql` and startup auto-patching in `DataInitializer.java` to purge non-THPT preset exams (`DGNL_...`, `TET_AM_...`).
+- **Owner-Only Countdown Event Editing & Safe Deletion**:
+  - **Strict Ownership Guard**: Users can ONLY edit countdown events they created themselves (custom private events or community events where `created_by_user_id == user.id`). If a user attempts to edit a preset or another user's community event that they are merely tracking, the backend rejects it with an `IllegalStateException`.
+  - **Unfollow Icon in List (`EyeOff`)**: In `CountdownModal.jsx` under "Sự kiện của tôi" (My Countdowns), the button next to Edit/Pin is converted into an `EyeOff` icon (con mắt gạch chéo) representing unfollowing / untracking an event.
+  - **Permanent Event Deletion in Edit Form**: In the Edit form, creators can delete their event. However, if the community event still has active followers (`otherTrackers > 0` and `targetDate > now`), deletion is blocked and a warning is displayed. An event can only be deleted if created by the user and has 0 other followers.
+  - **Backend Support**: Extended `CountdownService.updateCountdown` and `CountdownService.deleteCountdown` to update `SystemPresetExam` and propagate changes to subscribers or guard deletion when followers exist. `CountdownDto` includes `isOwner`, `canEdit`, `createdByUserId`, and `isCommunityEvent`.
+  - **Multi-language Support**: Added i18n keys for editing countdowns, deleting events, and unfollowing in Vietnamese, English, and Chinese.
+- **Verification & Environment Startup**:
+  - Successfully verified live startup with `./scripts/environment/set-env.ps1` connecting to Azure PostgreSQL & Upstash Redis with Flyway v20.
+  - 54/54 backend unit tests passing (100% PASS).
+  - Frontend production build completed cleanly with Vite (100% PASS).
+
+### 6.6. Modern Global Toast & Confirm/Alert Dialog System (`feature/modern-toast-and-dialogs`)
+- **Global Toast & Dialog Context (`ToastContext.jsx`)**:
+  - Built a centralized, highly aesthetic Toast notification and Promise-based Confirm/Alert dialog system.
+  - **Toasts**: `toast.success()`, `toast.error()`, `toast.warning()`, `toast.info()` with animated stacked list, auto-dismiss, smooth exit animations via Framer Motion, and high contrast styling in dark/light mode.
+  - **Confirm Modal**: Promise-based `confirm({ title, message, confirmText, cancelText, type: 'danger'|'warning'|'info' })` replacing all native `window.confirm()` with custom glassmorphism modal, backdrop blur, and custom action buttons.
+  - **Alert Modal**: Promise-based `alertModal({ title, message, buttonText, type })` replacing all generic `window.alert()`.
+- **Codebase Migration**:
+  - Removed all raw `alert()` and `window.confirm()` calls across all components (`CountdownModal.jsx`, `Dashboard.jsx`, `FriendsModal.jsx`, `PublicProfileModal.jsx`, `ChatModal.jsx`, `StudyTimer.jsx`, `ManualSessionForm.jsx`, `PremiumUpgradeModal.jsx`, `AdminPaymentPackages.jsx`).
+
+### 6.7. Admin Group & Event/Countdown Management with Full Override Privileges (`feature/admin-group-and-event-management`)
+- **THPT QG Exam Assigned to Admin**:
+  - Automatically assigned `THPT_QG_2027` creator to the system admin user via Flyway migration `V21__assign_thpt_to_admin.sql` and startup auto-patching in `DataInitializer.java`.
+- **Admin Full Override Authority**:
+  - **Group Management (`AdminGroupsManager.jsx`)**: Admin can view all public, private, and archived groups; edit group metadata (name, description, privacy, join policy, max members, avatars); toggle soft-delete/archive state; or permanently delete groups.
+  - **Event & Countdown Management (`AdminCountdownsManager.jsx`)**: Admin can create official or community preset exams; edit any preset and auto-sync changes to all subscribers; and **force-delete** any event or preset unconditionally without tracker count restrictions.
+- **Admin UI & API Integration**:
+  - Added dedicated tabs in `AdminDashboard.jsx`: **Quản Lý Nhóm Học** and **Quản Lý Sự Kiện & Lịch Thi**.
+  - Extended `AdminController.java`, `GroupService.java`, `CountdownService.java`, and `frontend/src/api.js`.
+  - Added full multi-language translations (VI, EN, ZH) in `LanguageContext.jsx`.
+- **Verification**:
+  - 55/55 backend unit tests passing (100% PASS).
+  - Frontend production build completed with 0 errors (100% PASS).
+
+
+
+
+
+
+
 

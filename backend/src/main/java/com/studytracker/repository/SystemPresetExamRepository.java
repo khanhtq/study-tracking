@@ -14,6 +14,7 @@ import java.util.Optional;
 @Repository
 public interface SystemPresetExamRepository extends JpaRepository<SystemPresetExam, Long> {
     Optional<SystemPresetExam> findByExamCode(String examCode);
+    boolean existsByExamCode(String examCode);
 
     List<SystemPresetExam> findAllByOrderByIsOfficialDateDescTrackerCountDescTargetDateAsc();
 

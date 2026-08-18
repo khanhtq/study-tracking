@@ -1,7 +1,6 @@
 package com.studytracker.service;
 
-import com.studytracker.dto.CountdownDto;
-import com.studytracker.dto.CreateCountdownRequest;
+import com.studytracker.dto.*;
 import com.studytracker.model.CountdownEvent;
 import com.studytracker.model.SystemPresetExam;
 import com.studytracker.model.User;
@@ -287,5 +286,165 @@ public class CountdownServiceTest {
         verify(presetExamRepository).decrementTrackerCount(communityCode);
         verify(countdownEventRepository).delete(trackerEvent);
         verify(presetExamRepository, never()).delete(communityPreset);
+    }
+
+    @Test
+    @DisplayName("Người dùng có thể sửa sự kiện do chính mình tạo và đồng bộ sự kiện cộng đồng")
+    void shouldAllowUserToUpdateOwnCountdownAndSyncCommunityPreset() {
+        UUID eventId = UUID.randomUUID();
+        String communityCode = "COMMUNITY_CHEM2027";
+
+        CountdownEvent event = CountdownEvent.builder()
+                .id(eventId)
+                .user(testUser)
+                .presetExamCode(communityCode)
+                .title("Kỳ thi thử Hoá cũ")
+                .targetDate(Instant.now().plusSeconds(86400 * 10))
+                .note("Ghi chú cũ")
+                .build();
+
+        SystemPresetExam communityPreset = SystemPresetExam.builder()
+                .examCode(communityCode)
+                .title("Kỳ thi thử Hoá cũ")
+                .targetDate(Instant.now().plusSeconds(86400 * 10))
+                .createdByUser(testUser)
+                .isCommunityEvent(true)
+                .trackerCount(2)
+                .build();
+
+        CountdownEvent otherSubscriberEvent = CountdownEvent.builder()
+                .id(UUID.randomUUID())
+                .user(User.builder().id(UUID.randomUUID()).build())
+                .presetExamCode(communityCode)
+                .title("Kỳ thi thử Hoá cũ")
+                .targetDate(Instant.now().plusSeconds(86400 * 10))
+                .build();
+
+        when(countdownEventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(presetExamRepository.findByExamCode(communityCode)).thenReturn(Optional.of(communityPreset));
+        when(countdownEventRepository.findByPresetExamCode(communityCode)).thenReturn(List.of(event, otherSubscriberEvent));
+        when(countdownEventRepository.saveAndFlush(any(CountdownEvent.class))).thenAnswer(i -> i.getArgument(0));
+
+        Instant newDate = Instant.now().plusSeconds(86400 * 20);
+        CreateCountdownRequest updateRequest = CreateCountdownRequest.builder()
+                .title("Kỳ thi thử Hoá mới 2027")
+                .targetDate(newDate)
+                .note("Ghi chú mới")
+                .color("amber")
+                .build();
+
+        CountdownDto updatedDto = countdownService.updateCountdown(userId, eventId.toString(), updateRequest);
+
+        assertNotNull(updatedDto);
+        assertEquals("Kỳ thi thử Hoá mới 2027", updatedDto.getTitle());
+        assertEquals("Ghi chú mới", updatedDto.getNote());
+
+        // Verify community preset was updated
+        assertEquals("Kỳ thi thử Hoá mới 2027", communityPreset.getTitle());
+        assertEquals("Ghi chú mới", communityPreset.getDescription());
+        verify(presetExamRepository).save(communityPreset);
+
+        // Verify other subscriber was synced
+        assertEquals("Kỳ thi thử Hoá mới 2027", otherSubscriberEvent.getTitle());
+        verify(countdownEventRepository).save(otherSubscriberEvent);
+    }
+
+    @Test
+    @DisplayName("Từ chối chỉnh sửa khi người dùng chỉ đang theo dõi lịch của người khác hoặc lịch chính thức")
+    void shouldRejectUpdateWhenUserIsNotTheCreatorOfPreset() {
+        UUID eventId = UUID.randomUUID();
+        String officialExamCode = "THPT_QG_2027";
+
+        CountdownEvent subscriberEvent = CountdownEvent.builder()
+                .id(eventId)
+                .user(testUser)
+                .presetExamCode(officialExamCode)
+                .title("Kỳ thi THPT QG 2027")
+                .targetDate(Instant.now().plusSeconds(86400 * 100))
+                .build();
+
+        SystemPresetExam officialPreset = SystemPresetExam.builder()
+                .examCode(officialExamCode)
+                .title("Kỳ thi THPT QG 2027")
+                .targetDate(Instant.now().plusSeconds(86400 * 100))
+                .createdByUser(null) // Official preset has no user owner
+                .isOfficialDate(true)
+                .build();
+
+        when(countdownEventRepository.findById(eventId)).thenReturn(Optional.of(subscriberEvent));
+        when(presetExamRepository.findByExamCode(officialExamCode)).thenReturn(Optional.of(officialPreset));
+
+        CreateCountdownRequest updateRequest = CreateCountdownRequest.builder()
+                .title("Tự ý đổi tên kỳ thi THPT QG")
+                .targetDate(Instant.now().plusSeconds(86400 * 50))
+                .build();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> {
+            countdownService.updateCountdown(userId, eventId.toString(), updateRequest);
+        });
+
+        assertTrue(ex.getMessage().contains("Bạn chỉ có thể chỉnh sửa lịch do chính mình tạo"));
+        verify(countdownEventRepository, never()).saveAndFlush(any());
+        verify(presetExamRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Admin có toàn quyền tạo, sửa và xóa cưỡng chế preset kỳ thi bất kể số lượng người theo dõi")
+    void shouldAllowAdminToCreateUpdateAndForceDeletePresetWithoutRestrictions() {
+        User adminUser = User.builder()
+                .id(UUID.randomUUID())
+                .email("admin@studyxp.com")
+                .displayName("Admin System")
+                .role(com.studytracker.model.Role.ROLE_ADMIN)
+                .build();
+
+        // 1. Admin Create Preset
+        AdminSavePresetRequest createReq = AdminSavePresetRequest.builder()
+                .examCode("THPT_QG_2027")
+                .title("Kỳ thi Tốt nghiệp THPT Quốc Gia 2027 (Admin)")
+                .targetDate(Instant.now().plusSeconds(86400 * 300))
+                .category("exam")
+                .isOfficialDate(true)
+                .build();
+
+        when(presetExamRepository.existsByExamCode("THPT_QG_2027")).thenReturn(false);
+        when(presetExamRepository.save(any(SystemPresetExam.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var created = countdownService.adminCreatePreset(createReq, adminUser);
+        assertNotNull(created);
+        assertEquals("THPT_QG_2027", created.getExamCode());
+        assertEquals(adminUser.getId().toString(), created.getCreatedByUserId());
+
+        // 2. Admin Update Preset and sync to subscribers
+        SystemPresetExam existing = SystemPresetExam.builder()
+                .examCode("THPT_QG_2027")
+                .title("THPT QG Old")
+                .targetDate(Instant.now().plusSeconds(86400 * 100))
+                .createdByUser(adminUser)
+                .build();
+
+        when(presetExamRepository.findByExamCode("THPT_QG_2027")).thenReturn(Optional.of(existing));
+
+        CountdownEvent subEvent = CountdownEvent.builder()
+                .id(UUID.randomUUID())
+                .presetExamCode("THPT_QG_2027")
+                .title("THPT QG Old")
+                .targetDate(Instant.now().plusSeconds(86400 * 100))
+                .build();
+        when(countdownEventRepository.findByPresetExamCode("THPT_QG_2027")).thenReturn(List.of(subEvent));
+
+        AdminSavePresetRequest updateReq = AdminSavePresetRequest.builder()
+                .title("Kỳ thi Tốt nghiệp THPT Quốc Gia 2027 (Đã cập nhật)")
+                .targetDate(Instant.now().plusSeconds(86400 * 350))
+                .build();
+
+        var updated = countdownService.adminUpdatePreset("THPT_QG_2027", updateReq);
+        assertEquals("Kỳ thi Tốt nghiệp THPT Quốc Gia 2027 (Đã cập nhật)", updated.getTitle());
+        verify(countdownEventRepository).save(subEvent);
+
+        // 3. Admin Force Delete Preset (even if many trackers exist)
+        countdownService.adminForceDeletePreset("THPT_QG_2027");
+        verify(countdownEventRepository).deleteByPresetExamCode("THPT_QG_2027");
+        verify(presetExamRepository).delete(existing);
     }
 }

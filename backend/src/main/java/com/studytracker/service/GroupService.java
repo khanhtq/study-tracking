@@ -735,6 +735,8 @@ public class GroupService {
                 .currentUserMutedUntil(mutedUntil)
                 .isMember(isMember)
                 .hasPendingRequest(hasPendingRequest)
+                .isArchived(group.getIsArchived())
+                .deletedAt(group.getDeletedAt())
                 .createdAt(group.getCreatedAt())
                 .build();
     }
@@ -816,5 +818,100 @@ public class GroupService {
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
         String slug = NONLATIN.matcher(normalized).replaceAll("");
         return slug.replaceAll("-+", "-").replaceAll("^-|-$", "");
+    }
+
+    // ==================== ADMIN GROUP MANAGEMENT ====================
+
+    @Transactional(readOnly = true)
+    public List<GroupSummaryDto> getAllGroupsForAdmin(String search, Boolean isArchived) {
+        List<ChatGroup> allGroups = chatGroupRepository.findAll();
+        return allGroups.stream()
+                .filter(g -> {
+                    if (search != null && !search.isBlank()) {
+                        String s = search.toLowerCase();
+                        boolean matchName = g.getName() != null && g.getName().toLowerCase().contains(s);
+                        boolean matchSlug = g.getSlug() != null && g.getSlug().toLowerCase().contains(s);
+                        boolean matchOwner = g.getOwner() != null && (
+                                (g.getOwner().getDisplayName() != null && g.getOwner().getDisplayName().toLowerCase().contains(s)) ||
+                                (g.getOwner().getEmail() != null && g.getOwner().getEmail().toLowerCase().contains(s))
+                        );
+                        if (!matchName && !matchSlug && !matchOwner) return false;
+                    }
+                    if (isArchived != null) {
+                        if (!Boolean.valueOf(Boolean.TRUE.equals(g.getIsArchived())).equals(isArchived)) return false;
+                    }
+                    return true;
+                })
+                .sorted((a, b) -> {
+                    Instant aTime = a.getCreatedAt() != null ? a.getCreatedAt() : Instant.EPOCH;
+                    Instant bTime = b.getCreatedAt() != null ? b.getCreatedAt() : Instant.EPOCH;
+                    return bTime.compareTo(aTime);
+                })
+                .map(g -> mapToSummaryDto(g, null))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public GroupSummaryDto adminUpdateGroup(UUID groupId, UpdateGroupRequest request) {
+        ChatGroup group = chatGroupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Nhóm không tồn tại: " + groupId));
+
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            group.setName(request.getName().trim());
+        }
+        if (request.getDescription() != null) {
+            group.setDescription(request.getDescription().trim());
+        }
+        if (request.getPrivacy() != null) {
+            group.setPrivacy(request.getPrivacy());
+            if (request.getPrivacy() == GroupPrivacy.PRIVATE) {
+                groupRankingService.removeGroup(groupId);
+            } else {
+                groupRankingService.updateGroupScore(groupId, group.getPopularityScore());
+            }
+        }
+        if (request.getJoinPolicy() != null) {
+            group.setJoinPolicy(request.getJoinPolicy());
+        }
+        if (request.getAvatarUrl() != null) {
+            group.setAvatarUrl(request.getAvatarUrl());
+        }
+        if (request.getCoverUrl() != null) {
+            group.setCoverUrl(request.getCoverUrl());
+        }
+        if (request.getMaxMembers() != null && request.getMaxMembers() > 0) {
+            group.setMaxMembers(request.getMaxMembers());
+        }
+
+        ChatGroup saved = chatGroupRepository.save(group);
+        log.info("Admin updated group [{}] ({})", saved.getName(), saved.getId());
+        return mapToSummaryDto(saved, null);
+    }
+
+    @Transactional
+    public GroupSummaryDto adminArchiveGroup(UUID groupId, boolean isArchived) {
+        ChatGroup group = chatGroupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Nhóm không tồn tại: " + groupId));
+
+        group.setIsArchived(isArchived);
+        if (isArchived) {
+            groupRankingService.removeGroup(groupId);
+        } else if (group.getPrivacy() == GroupPrivacy.PUBLIC) {
+            groupRankingService.updateGroupScore(groupId, group.getPopularityScore());
+        }
+
+        ChatGroup saved = chatGroupRepository.save(group);
+        log.info("Admin {} group [{}] ({})", isArchived ? "archived" : "unarchived", saved.getName(), saved.getId());
+        return mapToSummaryDto(saved, null);
+    }
+
+    @Transactional
+    public void adminDeleteGroup(UUID groupId) {
+        ChatGroup group = chatGroupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Nhóm không tồn tại: " + groupId));
+
+        groupRankingService.removeGroup(groupId);
+        chatGroupRepository.delete(group);
+        log.info("Admin permanently deleted group [{}] ({})", group.getName(), groupId);
     }
 }

@@ -155,6 +155,38 @@ public class CountdownControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /api/countdowns/{id} - Chỉnh sửa sự kiện đếm ngược thành công")
+    void shouldUpdateCountdownSuccessfully() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        CreateCountdownRequest request = CreateCountdownRequest.builder()
+                .title("Kỳ thi thử Toán mới")
+                .targetDate(Instant.parse("2027-06-25T07:30:00.000Z"))
+                .note("Ghi chú ôn thi mới")
+                .color("amber")
+                .build();
+
+        CountdownDto updatedDto = CountdownDto.builder()
+                .id(eventId)
+                .title(request.getTitle())
+                .targetDate(request.getTargetDate())
+                .note(request.getNote())
+                .color("amber")
+                .build();
+
+        when(countdownService.updateCountdown(eq(userId), eq(eventId.toString()), any(CreateCountdownRequest.class)))
+                .thenReturn(updatedDto);
+
+        mockMvc.perform(put("/api/countdowns/" + eventId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Kỳ thi thử Toán mới"))
+                .andExpect(jsonPath("$.note").value("Ghi chú ôn thi mới"));
+
+        verify(countdownService).updateCountdown(eq(userId), eq(eventId.toString()), any(CreateCountdownRequest.class));
+    }
+
+    @Test
     @DisplayName("DELETE /api/countdowns/{id} - Xóa/Hủy theo dõi sự kiện")
     void shouldDeleteCountdownSuccessfully() throws Exception {
         UUID eventId = UUID.randomUUID();
