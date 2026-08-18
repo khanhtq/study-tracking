@@ -8,13 +8,14 @@ import GroupMembersModal from './GroupMembersModal';
 import GroupInviteModal from './GroupInviteModal';
 import GroupMediaModal from './GroupMediaModal';
 import EditGroupModal from './EditGroupModal';
+import GroupCountdownsModal from './GroupCountdownsModal';
 import ChatToast from './ChatToast';
 import ConfirmModal from './ConfirmModal';
 import {
   ArrowLeft, Search, Pin, Users, Link2, FileText, Send, Paperclip,
   Smile, CornerDownRight, X, Edit2, Trash2, ChevronDown, Check,
   Download, Loader2, Play, Image as ImageIcon, Volume2, VolumeX, ShieldCheck,
-  Shield, Crown, Eye, Settings
+  Shield, Crown, Eye, Settings, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -65,6 +66,8 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [isCountdownsModalOpen, setIsCountdownsModalOpen] = useState(false);
+  const [groupCountdowns, setGroupCountdowns] = useState([]);
   const [isShareDocOpen, setIsShareDocOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +104,15 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
     }
   }, [groupId]);
 
+  const loadGroupCountdowns = useCallback(async () => {
+    try {
+      const data = await communityChatApi.getGroupCountdowns(groupId);
+      setGroupCountdowns(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Lỗi tải đếm ngược nhóm:', err);
+    }
+  }, [groupId]);
+
   const loadInitialMessages = useCallback(async () => {
     try {
       setLoadingMessages(true);
@@ -118,8 +130,9 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
 
   useEffect(() => {
     loadGroupDetail();
+    loadGroupCountdowns();
     loadInitialMessages();
-  }, [loadGroupDetail, loadInitialMessages]);
+  }, [loadGroupDetail, loadGroupCountdowns, loadInitialMessages]);
 
   // Đăng ký STOMP Broker Topics
   useEffect(() => {
@@ -535,15 +548,55 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">
-                {groupDetail?.group?.memberCount || 0} {t('members_count')}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] text-slate-400">
+                  {groupDetail?.group?.memberCount || 0} {t('members_count')}
+                </p>
+                {groupCountdowns.length > 0 && (
+                  <button
+                    onClick={() => setIsCountdownsModalOpen(true)}
+                    className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-400 text-[10px] font-semibold transition-all cursor-pointer truncate max-w-[200px]"
+                    title={t('group_countdowns')}
+                  >
+                    <Calendar className="w-3 h-3 flex-shrink-0 text-indigo-400" />
+                    <span className="truncate">{groupCountdowns[0].title}:</span>
+                    <span className="font-bold text-indigo-300 flex-shrink-0">
+                      {groupCountdowns[0].daysRemaining === 0
+                        ? t('today_is_event')
+                        : t('days_remaining_label').replace('{count}', groupCountdowns[0].daysRemaining)}
+                    </span>
+                    {groupCountdowns.length > 1 && (
+                      <span className="text-[9px] px-1 bg-indigo-500/30 rounded-full font-bold flex-shrink-0">
+                        +{groupCountdowns.length - 1}
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Header Action Buttons */}
         <div className="flex items-center gap-1.5">
+          {/* Group Countdowns Button */}
+          <button
+            onClick={() => setIsCountdownsModalOpen(true)}
+            className={`relative p-2 rounded-xl border transition-colors cursor-pointer ${
+              groupCountdowns.length > 0
+                ? 'bg-indigo-500/10 hover:bg-indigo-500/20 border-indigo-500/30 text-indigo-400 hover:text-indigo-300'
+                : 'bg-slate-800 hover:bg-slate-700 border-slate-700/50 text-slate-300 hover:text-slate-100'
+            }`}
+            title={t('group_countdowns')}
+          >
+            <Calendar className="w-4 h-4" />
+            {groupCountdowns.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center">
+                {groupCountdowns.length}
+              </span>
+            )}
+          </button>
+
           {/* Pinned Messages Button */}
           {pinnedMessages.length > 0 && (
             <button
@@ -719,9 +772,26 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
               const isSystem = msg.messageType === 'SYSTEM';
 
               if (isSystem) {
+                const isCountdownBroadcast = msg.content?.includes('[BẢN TIN ĐẾM NGƯỢC HÔM NAY]');
+                if (isCountdownBroadcast) {
+                  return (
+                    <div key={msg.id} className="flex justify-center my-3 px-2">
+                      <div className="max-w-md w-full p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-slate-100 shadow-xl backdrop-blur-md">
+                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-indigo-500/20 text-indigo-400 font-bold text-xs">
+                          <Calendar className="w-4 h-4 text-indigo-400" />
+                          <span>{t('daily_countdown_reminder_badge')}</span>
+                        </div>
+                        <div className="text-xs sm:text-sm whitespace-pre-line leading-relaxed text-slate-200">
+                          {msg.content}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div key={msg.id} className="flex justify-center my-2">
-                    <span className="text-xs text-slate-300 bg-slate-900/90 px-3.5 py-1.5 rounded-full border border-slate-800 shadow-sm">
+                  <div key={msg.id} className="flex justify-center my-2 px-2">
+                    <span className="text-xs text-slate-300 bg-slate-900/90 px-3.5 py-1.5 rounded-2xl border border-slate-800 shadow-sm max-w-md text-center whitespace-pre-line">
                       {msg.content}
                     </span>
                   </div>
@@ -1250,6 +1320,16 @@ export default function GroupChatRoom({ groupId, onBack, onSelectUser }) {
           onBack();
         }}
         isOwner={currentRole === 'OWNER'}
+      />
+
+      <GroupCountdownsModal
+        isOpen={isCountdownsModalOpen}
+        onClose={() => {
+          setIsCountdownsModalOpen(false);
+          loadGroupCountdowns();
+        }}
+        group={groupDetail?.group}
+        isOwnerOrMod={isModOrAbove}
       />
 
       {/* Image Preview Modal */}

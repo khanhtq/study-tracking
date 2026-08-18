@@ -1092,6 +1092,28 @@ export const communityChatApi = {
     const query = type ? `?type=${encodeURIComponent(type)}` : '';
     return apiCall(`/v1/chat/groups/${groupId}/attachments${query}`);
   },
+
+  // Group Countdowns & Daily Milestone Links
+  getGroupCountdowns: (groupId) => {
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns`);
+  },
+  getAvailableCountdownsToLink: (groupId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/available`);
+  },
+  linkCountdownToGroup: (groupId, payload) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/link`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  unlinkCountdownFromGroup: (groupId, linkId) => {
+    if (isGuestMode()) return Promise.reject(new Error('Vui lòng đăng nhập.'));
+    return apiCall(`/v1/chat/groups/${groupId}/countdowns/${linkId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 
