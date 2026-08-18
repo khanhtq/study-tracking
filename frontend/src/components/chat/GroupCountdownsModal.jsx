@@ -163,8 +163,8 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
                   </div>
                   <p className="text-xs text-slate-400 max-w-xs mx-auto">
                     {isOwnerOrMod
-                      ? 'Trưởng nhóm có thể liên kết kỳ thi THPT hoặc sự kiện mục tiêu để cả nhóm cùng đếm ngược mỗi ngày.'
-                      : 'Khi Trưởng nhóm liên kết kỳ thi, thông tin đếm ngược sẽ hiển thị ở đây.'}
+                      ? t('group_countdowns_empty_owner_hint')
+                      : t('group_countdowns_empty_member_hint')}
                   </p>
                 </div>
               ) : (
