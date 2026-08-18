@@ -15,9 +15,11 @@ import { communityChatApi } from '../../api';
 import { useLanguage } from '../../context/LanguageContext';
 import { useToast } from '../../context/ToastContext';
 
-const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
+const GroupCountdownsModal = ({ isOpen, onClose, group, groupId: propGroupId, isOwnerOrMod }) => {
   const { t } = useLanguage();
   const { toast, confirm } = useToast();
+
+  const targetGroupId = group?.id || propGroupId;
 
   const [countdowns, setCountdowns] = useState([]);
   const [availableEvents, setAvailableEvents] = useState([]);
@@ -27,51 +29,36 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   const [selectedEventKey, setSelectedEventKey] = useState('');
 
   useEffect(() => {
-    if (isOpen && group?.id) {
+    if (isOpen && targetGroupId) {
       loadData();
     }
-  }, [isOpen, group?.id]);
+  }, [isOpen, targetGroupId]);
 
   const loadData = async () => {
+    if (!targetGroupId) return;
     try {
       setLoading(true);
-      let linkedData = [];
-      try {
-        linkedData = await communityChatApi.getGroupCountdowns(group.id);
-      } catch (e) {
-        console.warn('Lỗi lấy sự kiện đếm ngược của nhóm:', e);
-      }
-      setCountdowns(Array.isArray(linkedData) ? linkedData : []);
+      const [linkedData, allAvailable] = await Promise.all([
+        communityChatApi.getGroupCountdowns(targetGroupId).catch(() => []),
+        communityChatApi.getAvailableCountdownsForCreation().catch(() => []),
+      ]);
 
-      if (isOwnerOrMod) {
-        let availableData = [];
-        try {
-          availableData = await communityChatApi.getAvailableCountdownsToLink(group.id);
-        } catch (e) {
-          console.warn('Lỗi lấy available countdowns từ endpoint nhóm, thử fallback:', e);
-        }
+      const linked = Array.isArray(linkedData) ? linkedData : [];
+      setCountdowns(linked);
 
-        if (!Array.isArray(availableData) || availableData.length === 0) {
-          try {
-            const allAvailable = await communityChatApi.getAvailableCountdownsForCreation();
-            const linkedPresetCodes = new Set((linkedData || []).map((l) => l.presetExamCode).filter(Boolean));
-            const linkedPresetIds = new Set((linkedData || []).map((l) => l.presetExamId).filter(Boolean));
-            const linkedCustomIds = new Set((linkedData || []).map((l) => l.customCountdownId).filter(Boolean));
+      const linkedPresetCodes = new Set(linked.map((l) => l.presetExamCode).filter(Boolean));
+      const linkedPresetIds = new Set(linked.map((l) => l.presetExamId).filter(Boolean));
+      const linkedCustomIds = new Set(linked.map((l) => l.customCountdownId).filter(Boolean));
 
-            availableData = allAvailable.map((item) => ({
-              ...item,
-              isAlreadyLinked:
-                (item.presetExamId && linkedPresetIds.has(item.presetExamId)) ||
-                (item.presetExamCode && linkedPresetCodes.has(item.presetExamCode)) ||
-                (item.customCountdownId && linkedCustomIds.has(item.customCountdownId)),
-            }));
-          } catch (fallbackErr) {
-            console.warn('Lỗi fallback available countdowns:', fallbackErr);
-          }
-        }
+      const availableData = (Array.isArray(allAvailable) ? allAvailable : []).map((item) => ({
+        ...item,
+        isAlreadyLinked:
+          (item.presetExamId && linkedPresetIds.has(item.presetExamId)) ||
+          (item.presetExamCode && linkedPresetCodes.has(item.presetExamCode)) ||
+          (item.customCountdownId && linkedCustomIds.has(item.customCountdownId)),
+      }));
 
-        setAvailableEvents(Array.isArray(availableData) ? availableData : []);
-      }
+      setAvailableEvents(availableData);
     } catch (err) {
       toast?.error(err.message || t('load_countdowns_error'));
     } finally {
@@ -80,7 +67,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   };
 
   const handleLinkCountdown = async () => {
-    if (!selectedEventKey) {
+    if (!selectedEventKey || !targetGroupId) {
       toast?.warning(t('select_event_to_link'));
       return;
     }
@@ -103,7 +90,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
         payload.customCountdownId = id;
       }
 
-      await communityChatApi.linkCountdownToGroup(group.id, payload);
+      await communityChatApi.linkCountdownToGroup(targetGroupId, payload);
       toast?.success(t('link_countdown_success'));
       setSelectedEventKey('');
       setShowAddSection(false);
@@ -116,6 +103,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
   };
 
   const handleUnlinkCountdown = async (linkId, title) => {
+    if (!targetGroupId) return;
     const isConfirmed = confirm ? await confirm({
       title: t('unlink_countdown_btn'),
       message: `${t('unlink_countdown_confirm')} "${title}"?`,
@@ -127,7 +115,7 @@ const GroupCountdownsModal = ({ isOpen, onClose, group, isOwnerOrMod }) => {
 
     try {
       setActionLoading(true);
-      await communityChatApi.unlinkCountdownFromGroup(group.id, linkId);
+      await communityChatApi.unlinkCountdownFromGroup(targetGroupId, linkId);
       toast?.success(t('unlink_countdown_success'));
       setCountdowns((prev) => prev.filter((c) => c.linkId !== linkId));
       await loadData();
