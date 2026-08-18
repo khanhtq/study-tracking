@@ -79,10 +79,11 @@ public class GroupService {
         }
 
         // Tự động liên kết sự kiện đếm ngược nếu người dùng chọn khi tạo nhóm
-        if (request.getLinkedPresetExamId() != null || request.getLinkedCustomCountdownId() != null) {
+        if (request.getLinkedPresetExamId() != null || (request.getLinkedPresetExamCode() != null && !request.getLinkedPresetExamCode().isBlank()) || request.getLinkedCustomCountdownId() != null) {
             try {
                 com.studytracker.dto.LinkCountdownRequest linkReq = com.studytracker.dto.LinkCountdownRequest.builder()
                         .presetExamId(request.getLinkedPresetExamId())
+                        .presetExamCode(request.getLinkedPresetExamCode())
                         .customCountdownId(request.getLinkedCustomCountdownId())
                         .build();
                 groupCountdownService.linkCountdown(savedGroup.getId(), linkReq, currentUser);

@@ -166,12 +166,13 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
         joinPolicy: newGroupJoinPolicy,
         maxMembers: Number(newGroupMaxMembers) || 1000,
         linkedPresetExamId,
+        linkedPresetExamCode,
         linkedCustomCountdownId,
       };
 
       const created = await communityChatApi.createGroup(payload);
 
-      // Tự động liên kết sự kiện vào nhóm mới tạo
+      // Fallback nếu backend cũ chưa hỗ trợ link trực tiếp trong createGroup
       if (selectedCountdownKey && created?.id) {
         try {
           const linkPayload = {};
@@ -180,7 +181,9 @@ export default function Community({ onBackToDashboard, initialGroupId = null }) 
           if (linkedCustomCountdownId) linkPayload.customCountdownId = linkedCustomCountdownId;
           await communityChatApi.linkCountdownToGroup(created.id, linkPayload);
         } catch (linkErr) {
-          console.warn('Lỗi liên kết sự kiện khi tạo nhóm:', linkErr);
+          if (!linkErr.message?.includes('đã được liên kết')) {
+            console.warn('Lỗi liên kết sự kiện khi tạo nhóm:', linkErr);
+          }
         }
       }
 

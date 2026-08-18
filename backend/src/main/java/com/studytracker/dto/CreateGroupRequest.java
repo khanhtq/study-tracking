@@ -37,6 +37,8 @@ public class CreateGroupRequest {
 
     private Long linkedPresetExamId;
 
+    private String linkedPresetExamCode;
+
     private java.util.UUID linkedCustomCountdownId;
 
     @com.fasterxml.jackson.annotation.JsonSetter("linkedCustomCountdownId")
